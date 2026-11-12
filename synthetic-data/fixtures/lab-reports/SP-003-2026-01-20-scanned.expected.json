@@ -1,0 +1,16 @@
+{
+  "fixtureId": "SP-003-2026-01-20-scanned",
+  "synthetic": true,
+  "layout": "scanned",
+  "patient": {
+    "syntheticId": "SP-003",
+    "sex": "F",
+    "birthDate": "1961-01-27"
+  },
+  "tags": [
+    "scanned-no-text-layer"
+  ],
+  "expected": {
+    "status": "UNSUPPORTED_SCANNED"
+  }
+}

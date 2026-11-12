@@ -1,0 +1,330 @@
+{
+  "fixtureId": "SP-001-2021-09-15-alfa",
+  "synthetic": true,
+  "layout": "alfa",
+  "patient": {
+    "syntheticId": "SP-001",
+    "sex": "F",
+    "birthDate": "1988-04-12"
+  },
+  "tags": [
+    "lab-flag",
+    "layout:alfa",
+    "sex-specific-range"
+  ],
+  "expected": {
+    "status": "SUCCEEDED",
+    "report": {
+      "laboratoryName": "Laboratório Sintético Alfa",
+      "collectedAt": "2021-09-15",
+      "collectedAtRaw": "15/09/2021 07:42",
+      "reportedAt": "2021-09-16",
+      "pageCount": 1,
+      "warnings": [],
+      "results": [
+        {
+          "sequence": 1,
+          "rawName": "Colesterol total",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "197",
+            "valueNumeric": "197"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: Inferior a 190",
+            "low": null,
+            "high": "190",
+            "appliesTo": null
+          },
+          "labFlag": "HIGH",
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Colesterol total                             197 mg/dL     H  Desejável: Inferior a 190"
+          }
+        },
+        {
+          "sequence": 2,
+          "rawName": "Colesterol HDL",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "50",
+            "valueNumeric": "50"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: Superior a 40",
+            "low": "40",
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Colesterol HDL                                50 mg/dL        Desejável: Superior a 40"
+          }
+        },
+        {
+          "sequence": 3,
+          "rawName": "Colesterol LDL",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "121",
+            "valueNumeric": "121"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: Inferior a 130",
+            "low": null,
+            "high": "130",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Colesterol LDL                               121 mg/dL        Desejável: Inferior a 130"
+          }
+        },
+        {
+          "sequence": 4,
+          "rawName": "Triglicerídeos",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "164",
+            "valueNumeric": "164"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: Inferior a 150",
+            "low": null,
+            "high": "150",
+            "appliesTo": null
+          },
+          "labFlag": "HIGH",
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Triglicerídeos                               164 mg/dL     H  Desejável: Inferior a 150"
+          }
+        },
+        {
+          "sequence": 5,
+          "rawName": "Glicose",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "89",
+            "valueNumeric": "89"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "70 a 99",
+            "low": "70",
+            "high": "99",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Glicose                                       89 mg/dL        70 a 99"
+          }
+        },
+        {
+          "sequence": 6,
+          "rawName": "Hemoglobina glicada (HbA1c)",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "5,4",
+            "valueNumeric": "5.4"
+          },
+          "unit": {
+            "raw": "%"
+          },
+          "referenceRange": {
+            "rawText": "4 a 5,6",
+            "low": "4",
+            "high": "5.6",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Hemoglobina glicada (HbA1c)                  5,4 %            4 a 5,6"
+          }
+        },
+        {
+          "sequence": 7,
+          "rawName": "Creatinina",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "0,86",
+            "valueNumeric": "0.86"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Mulheres: 0,50 a 0,90",
+            "low": "0.50",
+            "high": "0.90",
+            "appliesTo": "Mulheres"
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Creatinina                                  0,86 mg/dL        Mulheres: 0,50 a 0,90"
+          }
+        },
+        {
+          "sequence": 8,
+          "rawName": "Ureia",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "31",
+            "valueNumeric": "31"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "17 a 43",
+            "low": "17",
+            "high": "43",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Ureia                                         31 mg/dL        17 a 43"
+          }
+        },
+        {
+          "sequence": 9,
+          "rawName": "Potássio",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "4,2",
+            "valueNumeric": "4.2"
+          },
+          "unit": {
+            "raw": "mmol/L"
+          },
+          "referenceRange": {
+            "rawText": "3,5 a 5,1",
+            "low": "3.5",
+            "high": "5.1",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Potássio                                     4,2 mmol/L       3,5 a 5,1"
+          }
+        },
+        {
+          "sequence": 10,
+          "rawName": "Sódio",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "139",
+            "valueNumeric": "139"
+          },
+          "unit": {
+            "raw": "mmol/L"
+          },
+          "referenceRange": {
+            "rawText": "136 a 145",
+            "low": "136",
+            "high": "145",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Sódio                                        139 mmol/L       136 a 145"
+          }
+        },
+        {
+          "sequence": 11,
+          "rawName": "TSH - Hormônio tireoestimulante",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "2,64",
+            "valueNumeric": "2.64"
+          },
+          "unit": {
+            "raw": "µUI/mL"
+          },
+          "referenceRange": {
+            "rawText": "0,27 a 4,20",
+            "low": "0.27",
+            "high": "4.20",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "TSH - Hormônio tireoestimulante             2,64 µUI/mL       0,27 a 4,20"
+          }
+        },
+        {
+          "sequence": 12,
+          "rawName": "T4 livre",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "1,29",
+            "valueNumeric": "1.29"
+          },
+          "unit": {
+            "raw": "ng/dL"
+          },
+          "referenceRange": {
+            "rawText": "0,93 a 1,70",
+            "low": "0.93",
+            "high": "1.70",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "T4 livre                                    1,29 ng/dL        0,93 a 1,70"
+          }
+        }
+      ]
+    }
+  },
+  "analyteCodes": {
+    "1": "CHOL_TOTAL",
+    "2": "HDL",
+    "3": "LDL",
+    "4": "TRIG",
+    "5": "GLUCOSE",
+    "6": "HBA1C",
+    "7": "CREAT",
+    "8": "UREA",
+    "9": "K",
+    "10": "NA",
+    "11": "TSH",
+    "12": "T4L"
+  }
+}

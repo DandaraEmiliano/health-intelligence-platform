@@ -1,0 +1,338 @@
+{
+  "generator": "synthetic-data/generator",
+  "count": 32,
+  "fixtures": [
+    {
+      "fixtureId": "SP-001-2021-09-15-alfa",
+      "tags": [
+        "lab-flag",
+        "layout:alfa",
+        "sex-specific-range"
+      ],
+      "pdfSha256": "bd9278029768db481b7de240dbd5b552430749142445f635bb95279a4ecc4610"
+    },
+    {
+      "fixtureId": "SP-001-2022-03-16-beta",
+      "tags": [
+        "lab-flag",
+        "layout:beta",
+        "multi-page",
+        "multiple-ranges",
+        "thousands-separator",
+        "unusual-unit"
+      ],
+      "pdfSha256": "59ce6a871a03470e0d7c213b230d1bff8df3f8cf4f5e39e106a4a15ede8beada"
+    },
+    {
+      "fixtureId": "SP-001-2022-09-14-gama",
+      "tags": [
+        "censored-value",
+        "layout:gama",
+        "multi-page",
+        "qualitative",
+        "sex-specific-range",
+        "thousands-separator"
+      ],
+      "pdfSha256": "6b9a95fad4e07fc5206c729ad6945ed9639150e956a2b1a695ea14f64cd887df"
+    },
+    {
+      "fixtureId": "SP-001-2023-03-15-delta",
+      "tags": [
+        "lab-flag",
+        "layout:delta",
+        "multiple-ranges",
+        "prompt-injection",
+        "unusual-unit"
+      ],
+      "pdfSha256": "ed8a489d7ca8299828fa034420e2b4abb72a4af38542d5156c8583c9100f32f2"
+    },
+    {
+      "fixtureId": "SP-001-2023-09-13-alfa",
+      "tags": [
+        "lab-flag",
+        "layout:alfa",
+        "qualitative",
+        "sex-specific-range"
+      ],
+      "pdfSha256": "cfb998f4b0c56ef16357cfd0c87c085d6a68ffaaac2865bda358c0a3de0e15e9"
+    },
+    {
+      "fixtureId": "SP-001-2024-03-13-beta",
+      "tags": [
+        "collection-date-missing",
+        "lab-flag",
+        "layout:beta",
+        "multi-page",
+        "multiple-ranges",
+        "qualitative",
+        "thousands-separator",
+        "unusual-unit"
+      ],
+      "pdfSha256": "f296b4e43e92b02c14e59bb852f0244d2f66fdfbfd4c240cb89057fc41a01091"
+    },
+    {
+      "fixtureId": "SP-001-2024-09-11-gama",
+      "tags": [
+        "layout:gama",
+        "multi-page",
+        "sex-specific-range",
+        "thousands-separator"
+      ],
+      "pdfSha256": "0ef5245cabd8e9031eab7c8e625b57e14999078ebb5b7a5592381ebde75de413"
+    },
+    {
+      "fixtureId": "SP-001-2025-03-12-delta",
+      "tags": [
+        "lab-flag",
+        "layout:delta",
+        "multiple-ranges",
+        "prompt-injection",
+        "unusual-unit"
+      ],
+      "pdfSha256": "0ea668865307fc5269e64098d274639f9bad2b7e09f5240b9084bb5cade3ed53"
+    },
+    {
+      "fixtureId": "SP-001-2025-06-02-scanned",
+      "tags": [
+        "scanned-no-text-layer"
+      ],
+      "pdfSha256": "74be61bf7cfe9647aa8e7954f347cb701808fb3dc3a3a109b353061a996b4fa4"
+    },
+    {
+      "fixtureId": "SP-001-2025-09-10-alfa",
+      "tags": [
+        "lab-flag",
+        "layout:alfa",
+        "qualitative",
+        "sex-specific-range",
+        "thousands-separator"
+      ],
+      "pdfSha256": "f3dcbf3c30018cab8aefb4d0e4752583823ad7478d36fcff1869c3b5e96a11e6"
+    },
+    {
+      "fixtureId": "SP-001-2026-03-11-beta",
+      "tags": [
+        "lab-flag",
+        "layout:beta",
+        "multiple-ranges",
+        "qualitative"
+      ],
+      "pdfSha256": "d7db17434fa005c7d6d2203a82b74d35001ade0994deca53edaae5bbbb2d80df"
+    },
+    {
+      "fixtureId": "SP-002-2021-09-26-beta",
+      "tags": [
+        "lab-flag",
+        "layout:beta",
+        "multi-page",
+        "multiple-ranges",
+        "thousands-separator",
+        "unusual-unit"
+      ],
+      "pdfSha256": "a0eed1efeb52990d69980c5b00f7aacdb96a353a010dd85ada0047e2b0f956c4"
+    },
+    {
+      "fixtureId": "SP-002-2022-03-27-gama",
+      "tags": [
+        "censored-value",
+        "layout:gama",
+        "multi-page",
+        "sex-specific-range"
+      ],
+      "pdfSha256": "8d8b3af2fd9f95e55620ef50898479e5892a74552c1684948387a3863b120fcf"
+    },
+    {
+      "fixtureId": "SP-002-2022-09-25-delta",
+      "tags": [
+        "lab-flag",
+        "layout:delta",
+        "multiple-ranges",
+        "qualitative",
+        "thousands-separator",
+        "unusual-unit"
+      ],
+      "pdfSha256": "acff74258e19a2fe0353d320bcaed7bc6f1b18fb52de1db865a36a89fab50be2"
+    },
+    {
+      "fixtureId": "SP-002-2023-03-26-alfa",
+      "tags": [
+        "lab-flag",
+        "layout:alfa",
+        "qualitative",
+        "sex-specific-range"
+      ],
+      "pdfSha256": "9c80f4bcf0eefb7ce357c43544ccc6fa8c989fec5c26644ed13fc4d81d61de4b"
+    },
+    {
+      "fixtureId": "SP-002-2023-09-24-beta",
+      "tags": [
+        "lab-flag",
+        "layout:beta",
+        "multiple-ranges"
+      ],
+      "pdfSha256": "386ccbce515cc47c591637274ebbe68f48682a89b34c4b32f999a81fdb7b95d5"
+    },
+    {
+      "fixtureId": "SP-002-2024-03-24-gama",
+      "tags": [
+        "layout:gama",
+        "multi-page",
+        "qualitative",
+        "sex-specific-range",
+        "thousands-separator"
+      ],
+      "pdfSha256": "6c13a678d70b80ad2a7f4cd69101a0234b5e5cf4f68d5c3bf60733e9778f9a66"
+    },
+    {
+      "fixtureId": "SP-002-2024-09-22-delta",
+      "tags": [
+        "censored-value",
+        "lab-flag",
+        "layout:delta",
+        "multiple-ranges",
+        "unusual-unit"
+      ],
+      "pdfSha256": "ee6a237ef9f4f09441cda219f571f8ca978669b9c00d859428696c790e6240dd"
+    },
+    {
+      "fixtureId": "SP-002-2025-03-23-alfa",
+      "tags": [
+        "lab-flag",
+        "layout:alfa",
+        "sex-specific-range"
+      ],
+      "pdfSha256": "4bcc72bd988502b4a5dab5583f0d5a880bf507ec308874de1cf8742c8212236d"
+    },
+    {
+      "fixtureId": "SP-002-2025-09-21-beta",
+      "tags": [
+        "lab-flag",
+        "layout:beta",
+        "multi-page",
+        "multiple-ranges",
+        "qualitative",
+        "thousands-separator",
+        "unusual-unit"
+      ],
+      "pdfSha256": "bd7bc96baadf92824b04317d9e3b8e1cfbf65fc18ebe31cf8d32e2b402696edc"
+    },
+    {
+      "fixtureId": "SP-002-2026-03-22-gama",
+      "tags": [
+        "layout:gama",
+        "multi-page",
+        "sex-specific-range"
+      ],
+      "pdfSha256": "97d25e1ec0443f43a997bdddcb18541a5e10b6566d9284d28a1eb9d929264862"
+    },
+    {
+      "fixtureId": "SP-003-2021-10-07-gama",
+      "tags": [
+        "layout:gama",
+        "multi-page",
+        "sex-specific-range"
+      ],
+      "pdfSha256": "98f5e58448ec38d8d7be8d0a64564b0403098cde099efd4a3b1ceff7e0f48210"
+    },
+    {
+      "fixtureId": "SP-003-2022-04-07-delta",
+      "tags": [
+        "lab-flag",
+        "layout:delta",
+        "multiple-ranges",
+        "unusual-unit"
+      ],
+      "pdfSha256": "dee3f04a1919feb4cd188e53ca16a10a357525712ff8c49aa99803e0e82f1a95"
+    },
+    {
+      "fixtureId": "SP-003-2022-10-06-alfa",
+      "tags": [
+        "lab-flag",
+        "layout:alfa",
+        "qualitative",
+        "sex-specific-range",
+        "thousands-separator"
+      ],
+      "pdfSha256": "4b502c7e4db21d18e51e1dfcea7f925e12b0c58ffa532ebd4b5f7ab209fd5c01"
+    },
+    {
+      "fixtureId": "SP-003-2023-04-06-beta",
+      "tags": [
+        "lab-flag",
+        "layout:beta",
+        "multiple-ranges"
+      ],
+      "pdfSha256": "75fe6fc43d2aad4cacc826417eb8826a0f53bd303b83f4405e35f875f670afb5"
+    },
+    {
+      "fixtureId": "SP-003-2023-10-05-gama",
+      "tags": [
+        "layout:gama",
+        "multi-page",
+        "sex-specific-range",
+        "thousands-separator"
+      ],
+      "pdfSha256": "263a1d6fc4ef979581ca918bfca6c958d39bfaadc5abcf20d1da78e049ad9d82"
+    },
+    {
+      "fixtureId": "SP-003-2024-04-04-delta",
+      "tags": [
+        "lab-flag",
+        "layout:delta",
+        "multiple-ranges",
+        "qualitative",
+        "thousands-separator",
+        "unusual-unit"
+      ],
+      "pdfSha256": "8977784be9321cafcb22601a73c8bc7b573a1b4ded79e945786992f1d31423f8"
+    },
+    {
+      "fixtureId": "SP-003-2024-10-03-alfa",
+      "tags": [
+        "lab-flag",
+        "layout:alfa",
+        "sex-specific-range"
+      ],
+      "pdfSha256": "e31e21606cc90908f4c9505049a28548fd030ff07c4cf2d950e7d1bf532582e9"
+    },
+    {
+      "fixtureId": "SP-003-2025-04-03-beta",
+      "tags": [
+        "lab-flag",
+        "layout:beta",
+        "multiple-ranges",
+        "qualitative"
+      ],
+      "pdfSha256": "9cf7131ecb93ffa9b9b5ab003da8a6ec715d6d3195b1ecff4708c8d65f2acc0c"
+    },
+    {
+      "fixtureId": "SP-003-2025-10-02-gama",
+      "tags": [
+        "layout:gama",
+        "multi-page",
+        "qualitative",
+        "sex-specific-range",
+        "thousands-separator"
+      ],
+      "pdfSha256": "859e0d5ed6a64a419179e6ef85f1dcfd91750f162bda4c604aad76346c5a4288"
+    },
+    {
+      "fixtureId": "SP-003-2026-01-20-scanned",
+      "tags": [
+        "scanned-no-text-layer"
+      ],
+      "pdfSha256": "c04889564673693d4e52aeed4a976b73f9996013c4b9b8177687c3bd0c51d5b6"
+    },
+    {
+      "fixtureId": "SP-003-2026-04-02-delta",
+      "tags": [
+        "lab-flag",
+        "layout:delta",
+        "multiple-ranges",
+        "thousands-separator",
+        "unusual-unit"
+      ],
+      "pdfSha256": "aad9b3aa8b0a78ea4a430820e9a5878ad5b0d0d61244c75b037334fd4da8205a"
+    }
+  ]
+}

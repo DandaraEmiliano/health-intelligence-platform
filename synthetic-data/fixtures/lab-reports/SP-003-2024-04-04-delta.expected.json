@@ -1,0 +1,633 @@
+{
+  "fixtureId": "SP-003-2024-04-04-delta",
+  "synthetic": true,
+  "layout": "delta",
+  "patient": {
+    "syntheticId": "SP-003",
+    "sex": "F",
+    "birthDate": "1961-01-27"
+  },
+  "tags": [
+    "lab-flag",
+    "layout:delta",
+    "multiple-ranges",
+    "qualitative",
+    "thousands-separator",
+    "unusual-unit"
+  ],
+  "expected": {
+    "status": "SUCCEEDED",
+    "report": {
+      "laboratoryName": "Delta Medicina Laboratorial - Unidade Teste",
+      "collectedAt": "2024-04-04",
+      "collectedAtRaw": "04/04/24",
+      "reportedAt": "2024-04-05",
+      "pageCount": 1,
+      "warnings": [],
+      "results": [
+        {
+          "sequence": 1,
+          "rawName": "Colesterol total",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "232",
+            "valueNumeric": "232"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: < 190",
+            "low": null,
+            "high": "190",
+            "appliesTo": null
+          },
+          "labFlag": "ABNORMAL",
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Colesterol total 232 mg/dL A Desejável: < 190"
+          }
+        },
+        {
+          "sequence": 2,
+          "rawName": "HDL Colesterol",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "42",
+            "valueNumeric": "42"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: > 40",
+            "low": "40",
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "HDL Colesterol 42 mg/dL Desejável: > 40"
+          }
+        },
+        {
+          "sequence": 3,
+          "rawName": "Colesterol LDL",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "131",
+            "valueNumeric": "131"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: < 130",
+            "low": null,
+            "high": "130",
+            "appliesTo": null
+          },
+          "labFlag": "ABNORMAL",
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Colesterol LDL 131 mg/dL A Desejável: < 130"
+          }
+        },
+        {
+          "sequence": 4,
+          "rawName": "Triglicerídeos",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "154",
+            "valueNumeric": "154"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: < 150",
+            "low": null,
+            "high": "150",
+            "appliesTo": null
+          },
+          "labFlag": "ABNORMAL",
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Triglicerídeos 154 mg/dL A Desejável: < 150"
+          }
+        },
+        {
+          "sequence": 5,
+          "rawName": "Glicemia de jejum",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "5,3",
+            "valueNumeric": "5.3"
+          },
+          "unit": {
+            "raw": "mmol/L"
+          },
+          "referenceRange": {
+            "rawText": "3,9 a 5,5",
+            "low": "3.9",
+            "high": "5.5",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Glicemia de jejum 5,3 mmol/L 3,9 a 5,5"
+          }
+        },
+        {
+          "sequence": 6,
+          "rawName": "Hemoglobina glicada (HbA1c)",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "5,7",
+            "valueNumeric": "5.7"
+          },
+          "unit": {
+            "raw": "%"
+          },
+          "referenceRange": {
+            "rawText": "4 a 5,6",
+            "low": "4",
+            "high": "5.6",
+            "appliesTo": null
+          },
+          "labFlag": "ABNORMAL",
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Hemoglobina glicada (HbA1c) 5,7 % A 4 a 5,6"
+          }
+        },
+        {
+          "sequence": 7,
+          "rawName": "Creatinina",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "0,86",
+            "valueNumeric": "0.86"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "F: 0,50 a 0,90 / M: 0,70 a 1,20",
+            "low": null,
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Creatinina 0,86 mg/dL F: 0,50 a 0,90 / M: 0,70 a 1,20"
+          },
+          "warnings": [
+            {
+              "code": "MULTIPLE_RANGES"
+            }
+          ]
+        },
+        {
+          "sequence": 8,
+          "rawName": "Ureia",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "34",
+            "valueNumeric": "34"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "17 a 43",
+            "low": "17",
+            "high": "43",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Ureia 34 mg/dL 17 a 43"
+          }
+        },
+        {
+          "sequence": 9,
+          "rawName": "Potássio",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "4,3",
+            "valueNumeric": "4.3"
+          },
+          "unit": {
+            "raw": "mmol/L"
+          },
+          "referenceRange": {
+            "rawText": "3,5 a 5,1",
+            "low": "3.5",
+            "high": "5.1",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Potássio 4,3 mmol/L 3,5 a 5,1"
+          }
+        },
+        {
+          "sequence": 10,
+          "rawName": "Sódio",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "139",
+            "valueNumeric": "139"
+          },
+          "unit": {
+            "raw": "mmol/L"
+          },
+          "referenceRange": {
+            "rawText": "136 a 145",
+            "low": "136",
+            "high": "145",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Sódio 139 mmol/L 136 a 145"
+          }
+        },
+        {
+          "sequence": 11,
+          "rawName": "TSH",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "4,43",
+            "valueNumeric": "4.43"
+          },
+          "unit": {
+            "raw": "µUI/mL"
+          },
+          "referenceRange": {
+            "rawText": "0,27 a 4,20",
+            "low": "0.27",
+            "high": "4.20",
+            "appliesTo": null
+          },
+          "labFlag": "ABNORMAL",
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "TSH 4,43 µUI/mL A 0,27 a 4,20"
+          }
+        },
+        {
+          "sequence": 12,
+          "rawName": "T4 livre",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "1,26",
+            "valueNumeric": "1.26"
+          },
+          "unit": {
+            "raw": "ng/dL"
+          },
+          "referenceRange": {
+            "rawText": "0,93 a 1,70",
+            "low": "0.93",
+            "high": "1.70",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "T4 livre 1,26 ng/dL 0,93 a 1,70"
+          }
+        },
+        {
+          "sequence": 13,
+          "rawName": "Hemoglobina",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "13,4",
+            "valueNumeric": "13.4"
+          },
+          "unit": {
+            "raw": "g/dL"
+          },
+          "referenceRange": {
+            "rawText": "F: 12 a 15,5 / M: 13,5 a 17,5",
+            "low": null,
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Hemoglobina 13,4 g/dL F: 12 a 15,5 / M: 13,5 a 17,5"
+          },
+          "warnings": [
+            {
+              "code": "MULTIPLE_RANGES"
+            }
+          ]
+        },
+        {
+          "sequence": 14,
+          "rawName": "Leucócitos",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "6.780",
+            "valueNumeric": "6780"
+          },
+          "unit": {
+            "raw": "/mm³"
+          },
+          "referenceRange": {
+            "rawText": "4000 a 11.000",
+            "low": "4000",
+            "high": "11000",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Leucócitos 6.780 /mm³ 4000 a 11.000"
+          }
+        },
+        {
+          "sequence": 15,
+          "rawName": "Plaquetas",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "205.000",
+            "valueNumeric": "205000"
+          },
+          "unit": {
+            "raw": "/mm³"
+          },
+          "referenceRange": {
+            "rawText": "150.000 a 450.000",
+            "low": "150000",
+            "high": "450000",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Plaquetas 205.000 /mm³ 150.000 a 450.000"
+          }
+        },
+        {
+          "sequence": 16,
+          "rawName": "Ferritina",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "100,9",
+            "valueNumeric": "100.9"
+          },
+          "unit": {
+            "raw": "ng/mL"
+          },
+          "referenceRange": {
+            "rawText": "F: 15 a 150 / M: 30 a 400",
+            "low": null,
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Ferritina 100,9 ng/mL F: 15 a 150 / M: 30 a 400"
+          },
+          "warnings": [
+            {
+              "code": "MULTIPLE_RANGES"
+            }
+          ]
+        },
+        {
+          "sequence": 17,
+          "rawName": "TGO (AST)",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "19",
+            "valueNumeric": "19"
+          },
+          "unit": {
+            "raw": "U/L"
+          },
+          "referenceRange": {
+            "rawText": "< 32",
+            "low": null,
+            "high": "32",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "TGO (AST) 19 U/L < 32"
+          }
+        },
+        {
+          "sequence": 18,
+          "rawName": "TGP (ALT)",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "20",
+            "valueNumeric": "20"
+          },
+          "unit": {
+            "raw": "U/L"
+          },
+          "referenceRange": {
+            "rawText": "< 33",
+            "low": null,
+            "high": "33",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "TGP (ALT) 20 U/L < 33"
+          }
+        },
+        {
+          "sequence": 19,
+          "rawName": "25-hidroxivitamina D",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "26,6",
+            "valueNumeric": "26.6"
+          },
+          "unit": {
+            "raw": "ng/mL"
+          },
+          "referenceRange": {
+            "rawText": "Suficiência: 20 a 60",
+            "low": "20",
+            "high": "60",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "25-hidroxivitamina D 26,6 ng/mL Suficiência: 20 a 60"
+          }
+        },
+        {
+          "sequence": 20,
+          "rawName": "Vitamina B12",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "331",
+            "valueNumeric": "331"
+          },
+          "unit": {
+            "raw": "pg/mL"
+          },
+          "referenceRange": {
+            "rawText": "197 a 771",
+            "low": "197",
+            "high": "771",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Vitamina B12 331 pg/mL 197 a 771"
+          }
+        },
+        {
+          "sequence": 21,
+          "rawName": "Proteína C reativa ultrassensível",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "1,5",
+            "valueNumeric": "1.5"
+          },
+          "unit": {
+            "raw": "mg/L"
+          },
+          "referenceRange": {
+            "rawText": "< 1",
+            "low": null,
+            "high": "1",
+            "appliesTo": null
+          },
+          "labFlag": "ABNORMAL",
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Proteína C reativa ultrassensível 1,5 mg/L A < 1"
+          }
+        },
+        {
+          "sequence": 22,
+          "rawName": "HBsAg",
+          "measurement": {
+            "kind": "TEXT",
+            "rawValue": "Não reagente",
+            "valueText": "Não reagente"
+          },
+          "unit": {
+            "raw": null
+          },
+          "referenceRange": {
+            "rawText": "Não reagente",
+            "low": null,
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "HBsAg Não reagente Não reagente"
+          },
+          "warnings": [
+            {
+              "code": "RANGE_UNPARSEABLE"
+            }
+          ]
+        },
+        {
+          "sequence": 23,
+          "rawName": "Anti-HIV 1 e 2",
+          "measurement": {
+            "kind": "TEXT",
+            "rawValue": "Não reagente",
+            "valueText": "Não reagente"
+          },
+          "unit": {
+            "raw": null
+          },
+          "referenceRange": {
+            "rawText": "Não reagente",
+            "low": null,
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Anti-HIV 1 e 2 Não reagente Não reagente"
+          },
+          "warnings": [
+            {
+              "code": "RANGE_UNPARSEABLE"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "analyteCodes": {
+    "1": "CHOL_TOTAL",
+    "2": "HDL",
+    "3": "LDL",
+    "4": "TRIG",
+    "5": "GLUCOSE",
+    "6": "HBA1C",
+    "7": "CREAT",
+    "8": "UREA",
+    "9": "K",
+    "10": "NA",
+    "11": "TSH",
+    "12": "T4L",
+    "13": "HB",
+    "14": "WBC",
+    "15": "PLT",
+    "16": "FERRITIN",
+    "17": "AST",
+    "18": "ALT",
+    "19": "VITD",
+    "20": "B12",
+    "21": "CRP_HS",
+    "22": "HBSAG",
+    "23": "HIV"
+  }
+}

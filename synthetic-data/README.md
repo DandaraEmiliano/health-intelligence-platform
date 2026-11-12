@@ -41,8 +41,8 @@ Censored values (`< 0,5`, `Inferior a 0,5`), qualitative results (`Não reagente
 ```bash
 cd synthetic-data
 uv sync
-uv run python -m generator.generate      # regenerate fixtures (byte-for-byte deterministic)
+uv run python -m generator.generate      # regenerate fixtures (deterministic content)
 uv run python -m generator.verify        # schema, page text, hashes and coverage checks
 ```
 
-CI regenerates the fixtures into a temporary directory, compares them with the committed files and runs the verifier.
+CI regenerates the fixtures into a temporary directory and compares them with the committed files: ground-truth JSON byte for byte, PDFs by page count and extracted text per page. PDF bytes are not compared across environments, because Flate-compressed streams depend on the zlib build. `manifest.json` hashes protect the committed PDFs themselves.

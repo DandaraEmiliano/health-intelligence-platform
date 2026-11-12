@@ -1,0 +1,149 @@
+:root {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --text: #1c2430;
+  --muted: #5b6676;
+  --border: #dde2e8;
+  --accent: #0f6e8c;
+  --accent-text: #ffffff;
+  --ok: #1b7f4b;
+  --down: #b3261e;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 0 0 0.75rem;
+}
+
+h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+
+button {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #f2b705;
+  outline-offset: 2px;
+}
+
+.env-banner {
+  margin: 0;
+  padding: 0.35rem 1rem;
+  background: #fff4ce;
+  border-bottom: 1px solid #f0d77a;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.landing {
+  max-width: 40rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+}
+
+.lead {
+  font-size: 1.15rem;
+}
+
+.principles {
+  color: var(--muted);
+  padding-left: 1.2rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar nav {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.topbar a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.topbar a.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.brand {
+  font-weight: 700;
+  color: var(--text) !important;
+}
+
+.content {
+  max-width: 64rem;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  max-width: 28rem;
+}
+
+.ok {
+  color: var(--ok);
+}
+
+.down,
+.error {
+  color: var(--down);
+}
+
+.muted,
+.loading {
+  color: var(--muted);
+}
+
+.loading {
+  margin: 4rem auto;
+  text-align: center;
+}

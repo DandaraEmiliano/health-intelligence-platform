@@ -1,0 +1,1279 @@
+openapi: 3.1.0
+info:
+  title: Health Intelligence Platform - Core API
+  version: 0.1.0-draft
+  summary: Public API of core-api (Phase 2 design draft).
+  description: |
+    Design-first draft. From Phase 3, the springdoc-generated specification is compared
+    against this file in CI.
+
+    Conventions (ADR 0009):
+    - The patient is always resolved from the access token. No endpoint accepts a patient ID.
+    - Resources that belong to another patient return 404.
+    - Errors use RFC 9457 Problem Details with a stable `code`.
+    - Lists use cursor pagination: `{ items, nextCursor }`.
+    - `Idempotency-Key` is accepted on uploads and assistant messages.
+    - All data in examples is synthetic.
+servers:
+  - url: http://localhost:8080
+    description: Local (Docker Compose)
+security:
+  - oidc: []
+tags:
+  - name: Patients
+  - name: Health records
+  - name: Consents
+  - name: Documents
+  - name: Laboratory
+  - name: Timeline
+  - name: Analytics
+  - name: AI assistant
+  - name: Notifications
+  - name: Account
+
+paths:
+  /api/v1/patients:
+    post:
+      tags: [Patients]
+      operationId: createPatient
+      summary: Create the patient profile for the authenticated user (onboarding)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PatientCreateRequest' }
+      responses:
+        '201':
+          description: Patient created
+          headers:
+            Location: { schema: { type: string }, description: /api/v1/patients/me }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Patient' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/patients/me:
+    get:
+      tags: [Patients]
+      operationId: getMyPatient
+      responses:
+        '200':
+          description: The authenticated user's patient profile
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Patient' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Patients]
+      operationId: updateMyPatient
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/PatientUpdateRequest' }
+      responses:
+        '200':
+          description: Updated
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Patient' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+
+  /api/v1/patients/me/allergies:
+    get:
+      tags: [Health records]
+      operationId: listAllergies
+      responses:
+        '200':
+          description: Allergies
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Allergy' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Health records]
+      operationId: createAllergy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AllergyRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Allergy' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/patients/me/allergies/{allergyId}:
+    parameters:
+      - name: allergyId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      tags: [Health records]
+      operationId: replaceAllergy
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AllergyRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Allergy' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+    delete:
+      tags: [Health records]
+      operationId: deleteAllergy
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  # /api/v1/patients/me/medications and /conditions follow the same pattern as allergies.
+  # They are specified in full in Phase 4 together with their schemas.
+
+  /api/v1/consents:
+    get:
+      tags: [Consents]
+      operationId: getConsents
+      summary: Current state of each consent type
+      responses:
+        '200':
+          description: Current consents
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/ConsentState' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Consents]
+      operationId: recordConsent
+      summary: Grant or revoke a consent (append-only record)
+      description: Revoking `AI_PROCESSING` disables extraction and the assistant and triggers purging of the patient's embeddings.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConsentRequest' }
+      responses:
+        '201':
+          description: Recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConsentState' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/documents:
+    post:
+      tags: [Documents]
+      operationId: uploadDocument
+      summary: Upload a laboratory report PDF
+      description: |
+        Returns 202: extraction runs asynchronously when AI consent is granted.
+        Without AI consent the document is stored and listed, but not extracted.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  contentMediaType: application/pdf
+                  description: PDF with a native text layer, at most 10 MB, not encrypted.
+      responses:
+        '202':
+          description: Accepted for processing
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Document' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '422': { $ref: '#/components/responses/IdempotencyKeyReused' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+    get:
+      tags: [Documents]
+      operationId: listDocuments
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/DocumentStatus' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Documents, newest first
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentPage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/documents/{documentId}:
+    parameters:
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags: [Documents]
+      operationId: getDocument
+      responses:
+        '200':
+          description: Document with processing status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Document' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Documents]
+      operationId: deleteDocument
+      summary: Delete a document, its derived results and its AI index entries
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/documents/{documentId}/content:
+    parameters:
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags: [Documents]
+      operationId: getDocumentContent
+      summary: Redirect to a short-lived pre-signed URL for the PDF (audited)
+      responses:
+        '302':
+          description: Redirect to a pre-signed URL valid for at most 60 seconds
+          headers:
+            Location: { schema: { type: string, format: uri } }
+            Cache-Control: { schema: { type: string, const: no-store } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/documents/{documentId}/reprocess:
+    parameters:
+      - $ref: '#/components/parameters/DocumentId'
+    post:
+      tags: [Documents]
+      operationId: reprocessDocument
+      summary: Request extraction again for a FAILED document (should-have)
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Document' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ConsentRequired' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/laboratory-reports:
+    get:
+      tags: [Laboratory]
+      operationId: listLaboratoryReports
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/ReportStatus' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Reports, most recent collection date first
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LaboratoryReportSummaryPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/laboratory-reports/{reportId}:
+    parameters:
+      - $ref: '#/components/parameters/ReportId'
+    get:
+      tags: [Laboratory]
+      operationId: getLaboratoryReport
+      summary: Report with all results, provenance and validator warnings
+      responses:
+        '200':
+          description: Report detail
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LaboratoryReport' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/laboratory-reports/{reportId}/review:
+    parameters:
+      - $ref: '#/components/parameters/ReportId'
+    post:
+      tags: [Laboratory]
+      operationId: reviewLaboratoryReport
+      summary: Confirm, correct or reject extracted results; optionally finalize
+      description: |
+        `finalize: true` fails with 409 `REVIEW_INCOMPLETE` while any result is still pending.
+        Corrections keep the original extracted snapshot (ADR 0006).
+      parameters:
+        - $ref: '#/components/parameters/IfMatchRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewRequest' }
+      responses:
+        '200':
+          description: Updated report
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LaboratoryReport' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+
+  /api/v1/laboratory-reports/comparison:
+    get:
+      tags: [Laboratory]
+      operationId: compareLaboratoryReports
+      parameters:
+        - { name: left, in: query, required: true, schema: { type: string, format: uuid } }
+        - { name: right, in: query, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Side-by-side comparison of verified results
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportComparison' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/laboratory-results:
+    get:
+      tags: [Laboratory]
+      operationId: listLaboratoryResults
+      summary: Verified results only
+      parameters:
+        - { name: analyteId, in: query, schema: { type: string, format: uuid } }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Results, most recent first
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LaboratoryResultPage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/laboratory-results/{resultId}:
+    parameters:
+      - { name: resultId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Laboratory]
+      operationId: getLaboratoryResult
+      responses:
+        '200':
+          description: Result with provenance
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LaboratoryResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/analytes:
+    get:
+      tags: [Laboratory]
+      operationId: searchAnalytes
+      summary: Search the analyte catalogue (used when correcting a result)
+      parameters:
+        - { name: query, in: query, required: true, schema: { type: string, minLength: 2, maxLength: 100 } }
+      responses:
+        '200':
+          description: Matching analytes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/Analyte' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/health-timeline:
+    get:
+      tags: [Timeline]
+      operationId: getHealthTimeline
+      parameters:
+        - name: types
+          in: query
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { enum: [LABORATORY_REPORT, DOCUMENT] }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Timeline items, newest first
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimelinePage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/health-analytics/analytes/{analyteId}/series:
+    parameters:
+      - { name: analyteId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Analytics]
+      operationId: getAnalyteSeries
+      summary: Time series of verified results, one series per unit (ADR 0007)
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Series grouped by unit
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnalyteSeries' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/health-analytics/out-of-range:
+    get:
+      tags: [Analytics]
+      operationId: listOutOfRangeResults
+      summary: Verified results outside the laboratory's reference range
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Results with flag source
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LaboratoryResultPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/health-analytics/summary:
+    get:
+      tags: [Analytics]
+      operationId: getHealthSummary
+      responses:
+        '200':
+          description: History summary
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/ai/conversations:
+    post:
+      tags: [AI assistant]
+      operationId: createConversation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, maxLength: 200 }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversation' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ConsentRequired' }
+    get:
+      tags: [AI assistant]
+      operationId: listConversations
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Conversations, most recently updated first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, nextCursor]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Conversation' } }
+                  nextCursor: { $ref: '#/components/schemas/NextCursor' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/ai/conversations/{conversationId}:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    get:
+      tags: [AI assistant]
+      operationId: getConversation
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Conversation with a page of messages (oldest first)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConversationDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [AI assistant]
+      operationId: deleteConversation
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/ai/conversations/{conversationId}/messages:
+    parameters:
+      - $ref: '#/components/parameters/ConversationId'
+    post:
+      tags: [AI assistant]
+      operationId: sendMessage
+      summary: Ask the assistant a question
+      description: |
+        The answer is built from the patient's verified data only (ADR 0004).
+        `Accept: text/event-stream` (streaming) is a should-have, specified in Phase 5.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              additionalProperties: false
+              properties:
+                content: { type: string, minLength: 1, maxLength: 2000 }
+      responses:
+        '201':
+          description: The assistant's answer
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AssistantMessage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ConsentRequired' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/IdempotencyKeyReused' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /api/v1/notifications:
+    get:
+      tags: [Notifications]
+      operationId: listNotifications
+      parameters:
+        - name: status
+          in: query
+          schema: { enum: [UNREAD, READ] }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Notifications, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, nextCursor]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Notification' } }
+                  nextCursor: { $ref: '#/components/schemas/NextCursor' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/notifications/{notificationId}/read:
+    parameters:
+      - { name: notificationId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [Notifications]
+      operationId: markNotificationRead
+      summary: Mark as read (idempotent)
+      responses:
+        '204': { description: Marked as read }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/accounts/me:
+    delete:
+      tags: [Account]
+      operationId: requestAccountDeletion
+      summary: Request deletion of the account and all associated data
+      description: Access is blocked immediately; data, files and embeddings are purged by a scheduled, audited job.
+      responses:
+        '202': { description: Deletion requested }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+components:
+  securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: http://localhost:8180/realms/hip/.well-known/openid-configuration
+      description: Keycloak realm `hip` (ADR 0002). Authorization Code + PKCE.
+
+  headers:
+    ETag:
+      description: Entity version for optimistic concurrency
+      schema: { type: string }
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque cursor from a previous page's `nextCursor`.
+      schema: { type: string, maxLength: 512 }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, format: uuid }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: false
+      schema: { type: string }
+    IfMatchRequired:
+      name: If-Match
+      in: header
+      required: true
+      schema: { type: string }
+    DocumentId:
+      name: documentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ReportId:
+      name: reportId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ConversationId:
+      name: conversationId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    ValidationError:
+      description: Invalid request (`VALIDATION_FAILED`)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: https://docs.health-intelligence-platform.dev/problems/validation-failed
+            title: Validation failed
+            status: 400
+            code: VALIDATION_FAILED
+            correlationId: 3f6b2c1e9a7d4e10
+            errors:
+              - field: birthDate
+                code: PAST_DATE_REQUIRED
+                message: birthDate must be in the past
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ConsentRequired:
+      description: AI consent not granted (`AI_CONSENT_REQUIRED`)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Not found, or belongs to another patient (indistinguishable by design)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: Conflict (`PATIENT_ALREADY_EXISTS`, `DUPLICATE_DOCUMENT`, `REVIEW_INCOMPLETE`, `INVALID_STATE`)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    PreconditionFailed:
+      description: ETag mismatch; reload and retry
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    PreconditionRequired:
+      description: If-Match header is required
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    PayloadTooLarge:
+      description: File larger than 10 MB (`DOCUMENT_TOO_LARGE`)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    UnsupportedMediaType:
+      description: Not a PDF, or encrypted PDF (`UNSUPPORTED_DOCUMENT`)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    IdempotencyKeyReused:
+      description: Same Idempotency-Key with a different request body
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After: { schema: { type: integer } }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ServiceUnavailable:
+      description: AI service unavailable (`AI_UNAVAILABLE`); the question was not answered
+      headers:
+        Retry-After: { schema: { type: integer } }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    Problem:
+      type: object
+      description: RFC 9457 Problem Details with extensions. Never contains health data.
+      required: [type, title, status, code, correlationId]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        code: { type: string, pattern: '^[A-Z][A-Z0-9_]+$' }
+        correlationId: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [field, code, message]
+            properties:
+              field: { type: string }
+              code: { type: string }
+              message: { type: string }
+
+    NextCursor:
+      type: [string, 'null']
+      description: Null when there are no more items.
+
+    Decimal:
+      type: string
+      pattern: '^-?(0|[1-9][0-9]*)(\.[0-9]+)?$'
+      description: Decimal as string (dot separator) to avoid floating point.
+
+    BiologicalSex:
+      enum: [FEMALE, MALE, INTERSEX, UNDISCLOSED]
+
+    PatientCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [fullName, birthDate]
+      properties:
+        fullName: { type: string, minLength: 1, maxLength: 200 }
+        birthDate: { type: string, format: date }
+        biologicalSex: { $ref: '#/components/schemas/BiologicalSex' }
+        heightCm: { type: number, minimum: 30, maximum: 272 }
+
+    PatientUpdateRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        fullName: { type: string, minLength: 1, maxLength: 200 }
+        birthDate: { type: string, format: date }
+        biologicalSex: { oneOf: [{ $ref: '#/components/schemas/BiologicalSex' }, { type: 'null' }] }
+        heightCm: { type: [number, 'null'], minimum: 30, maximum: 272 }
+
+    Patient:
+      type: object
+      required: [id, fullName, birthDate, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        fullName: { type: string }
+        birthDate: { type: string, format: date }
+        biologicalSex: { $ref: '#/components/schemas/BiologicalSex' }
+        heightCm: { type: number }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    AllergyRequest:
+      type: object
+      additionalProperties: false
+      required: [substance, allergyType]
+      properties:
+        substance: { type: string, minLength: 1, maxLength: 200 }
+        allergyType: { enum: [MEDICATION, FOOD, ENVIRONMENTAL, OTHER] }
+        severity: { enum: [MILD, MODERATE, SEVERE, UNKNOWN] }
+        notes: { type: string, maxLength: 1000 }
+
+    Allergy:
+      allOf:
+        - $ref: '#/components/schemas/AllergyRequest'
+        - type: object
+          required: [id, createdAt]
+          properties:
+            id: { type: string, format: uuid }
+            createdAt: { type: string, format: date-time }
+
+    ConsentType:
+      enum: [TERMS_OF_USE, PRIVACY_POLICY, AI_PROCESSING]
+
+    ConsentRequest:
+      type: object
+      additionalProperties: false
+      required: [type, granted, documentVersion]
+      properties:
+        type: { $ref: '#/components/schemas/ConsentType' }
+        granted: { type: boolean }
+        documentVersion: { type: string, maxLength: 50 }
+
+    ConsentState:
+      type: object
+      required: [type, granted, documentVersion, recordedAt]
+      properties:
+        type: { $ref: '#/components/schemas/ConsentType' }
+        granted: { type: boolean }
+        documentVersion: { type: string }
+        recordedAt: { type: string, format: date-time }
+
+    DocumentStatus:
+      enum: [UPLOADED, PROCESSING, PROCESSED, FAILED, UNSUPPORTED_SCANNED]
+
+    Document:
+      type: object
+      required: [id, originalFilename, sizeBytes, status, uploadedAt]
+      properties:
+        id: { type: string, format: uuid }
+        originalFilename: { type: string }
+        sizeBytes: { type: integer }
+        status: { $ref: '#/components/schemas/DocumentStatus' }
+        failureCode: { type: [string, 'null'] }
+        laboratoryReportId:
+          type: [string, 'null']
+          format: uuid
+          description: Present once extraction succeeded.
+        uploadedAt: { type: string, format: date-time }
+
+    DocumentPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Document' } }
+        nextCursor: { $ref: '#/components/schemas/NextCursor' }
+
+    ReportStatus:
+      enum: [PENDING_REVIEW, VERIFIED, REJECTED]
+
+    ReviewStatus:
+      enum: [PENDING_REVIEW, VERIFIED, CORRECTED, REJECTED]
+
+    Measurement:
+      type: object
+      required: [kind, rawValue]
+      properties:
+        kind: { enum: [NUMERIC, TEXT] }
+        rawValue: { type: string, description: As printed in the report }
+        valueNumeric: { $ref: '#/components/schemas/Decimal' }
+        comparator: { enum: ['<', '<=', '>', '>='] }
+        valueText: { type: string }
+
+    ReferenceRange:
+      type: object
+      required: [rawText]
+      properties:
+        rawText: { type: [string, 'null'] }
+        low: { oneOf: [{ $ref: '#/components/schemas/Decimal' }, { type: 'null' }] }
+        high: { oneOf: [{ $ref: '#/components/schemas/Decimal' }, { type: 'null' }] }
+        appliesTo: { type: [string, 'null'] }
+
+    Analyte:
+      type: object
+      required: [id, code, displayName]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        displayName: { type: string }
+        category: { type: string }
+
+    Warning:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string }
+        message: { type: string }
+
+    LaboratoryResult:
+      type: object
+      required: [id, reportId, rawName, measurement, unit, referenceRange, reviewStatus, source]
+      properties:
+        id: { type: string, format: uuid }
+        reportId: { type: string, format: uuid }
+        sequence: { type: integer }
+        analyte: { oneOf: [{ $ref: '#/components/schemas/Analyte' }, { type: 'null' }] }
+        rawName: { type: string }
+        measurement: { $ref: '#/components/schemas/Measurement' }
+        unit: { type: [string, 'null'], description: Original unit as printed }
+        referenceRange: { $ref: '#/components/schemas/ReferenceRange' }
+        flag:
+          type: object
+          description: Laboratory flag takes precedence; computed flag is labelled as such (ADR 0007).
+          properties:
+            value: { enum: [HIGH, LOW, ABNORMAL, CRITICAL, IN_RANGE, null] }
+            source: { enum: [LABORATORY, COMPUTED, null] }
+        collectedAt: { type: [string, 'null'], format: date }
+        reviewStatus: { $ref: '#/components/schemas/ReviewStatus' }
+        originalExtraction:
+          description: Present when the patient corrected the result.
+          oneOf: [{ $ref: '#/components/schemas/Measurement' }, { type: 'null' }]
+        warnings: { type: array, items: { $ref: '#/components/schemas/Warning' } }
+        source:
+          type: object
+          required: [documentId, page, excerpt]
+          properties:
+            documentId: { type: string, format: uuid }
+            page: { type: integer, minimum: 1 }
+            excerpt: { type: string }
+
+    LaboratoryResultPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/LaboratoryResult' } }
+        nextCursor: { $ref: '#/components/schemas/NextCursor' }
+
+    LaboratoryReportSummary:
+      type: object
+      required: [id, documentId, status, resultCount]
+      properties:
+        id: { type: string, format: uuid }
+        documentId: { type: string, format: uuid }
+        laboratoryName: { type: [string, 'null'] }
+        collectedAt: { type: [string, 'null'], format: date }
+        status: { $ref: '#/components/schemas/ReportStatus' }
+        resultCount: { type: integer }
+        pendingCount: { type: integer }
+
+    LaboratoryReportSummaryPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/LaboratoryReportSummary' } }
+        nextCursor: { $ref: '#/components/schemas/NextCursor' }
+
+    LaboratoryReport:
+      allOf:
+        - $ref: '#/components/schemas/LaboratoryReportSummary'
+        - type: object
+          required: [results]
+          properties:
+            collectedAtRaw: { type: [string, 'null'] }
+            reportWarnings: { type: array, items: { $ref: '#/components/schemas/Warning' } }
+            verifiedAt: { type: [string, 'null'], format: date-time }
+            results: { type: array, items: { $ref: '#/components/schemas/LaboratoryResult' } }
+
+    ReviewRequest:
+      type: object
+      additionalProperties: false
+      required: [decisions]
+      properties:
+        decisions:
+          type: array
+          maxItems: 500
+          items:
+            type: object
+            additionalProperties: false
+            required: [resultId, action]
+            properties:
+              resultId: { type: string, format: uuid }
+              action: { enum: [CONFIRM, CORRECT, REJECT] }
+              correction:
+                type: object
+                description: Required when action is CORRECT.
+                additionalProperties: false
+                properties:
+                  analyteId: { type: [string, 'null'], format: uuid }
+                  measurement: { $ref: '#/components/schemas/Measurement' }
+                  unit: { type: [string, 'null'], maxLength: 50 }
+                  referenceRange: { $ref: '#/components/schemas/ReferenceRange' }
+            allOf:
+              - if: { properties: { action: { const: CORRECT } } }
+                then: { required: [correction] }
+              - if: { properties: { action: { enum: [CONFIRM, REJECT] } } }
+                then: { not: { required: [correction] } }
+        confirmAllRemaining:
+          type: boolean
+          default: false
+          description: Confirms every result still pending, after applying `decisions`.
+        finalize:
+          type: boolean
+          default: false
+        collectedAt:
+          type: string
+          format: date
+          description: Correct the report's collection date.
+
+    ReportComparison:
+      type: object
+      required: [left, right, rows]
+      properties:
+        left: { $ref: '#/components/schemas/LaboratoryReportSummary' }
+        right: { $ref: '#/components/schemas/LaboratoryReportSummary' }
+        rows:
+          type: array
+          items:
+            type: object
+            required: [label]
+            properties:
+              analyte: { oneOf: [{ $ref: '#/components/schemas/Analyte' }, { type: 'null' }] }
+              label: { type: string }
+              left: { oneOf: [{ $ref: '#/components/schemas/LaboratoryResult' }, { type: 'null' }] }
+              right: { oneOf: [{ $ref: '#/components/schemas/LaboratoryResult' }, { type: 'null' }] }
+              delta:
+                description: Only when both sides are numeric and the units are identical.
+                oneOf: [{ $ref: '#/components/schemas/Decimal' }, { type: 'null' }]
+              deltaUnavailableReason: { enum: [UNIT_MISMATCH, NOT_NUMERIC, MISSING_SIDE, CENSORED_VALUE, null] }
+
+    TimelineItem:
+      type: object
+      required: [type, id, occurredOn]
+      properties:
+        type: { enum: [LABORATORY_REPORT, DOCUMENT] }
+        id: { type: string, format: uuid }
+        occurredOn: { type: string, format: date }
+        title: { type: string }
+        status: { type: string }
+        outOfRangeCount: { type: integer }
+
+    TimelinePage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/TimelineItem' } }
+        nextCursor: { $ref: '#/components/schemas/NextCursor' }
+
+    AnalyteSeries:
+      type: object
+      required: [analyte, series]
+      properties:
+        analyte: { $ref: '#/components/schemas/Analyte' }
+        series:
+          type: array
+          description: One series per unit; units are never converted.
+          items:
+            type: object
+            required: [unit, points]
+            properties:
+              unit: { type: [string, 'null'] }
+              points:
+                type: array
+                items:
+                  type: object
+                  required: [resultId, collectedAt, value]
+                  properties:
+                    resultId: { type: string, format: uuid }
+                    collectedAt: { type: string, format: date }
+                    value: { $ref: '#/components/schemas/Decimal' }
+                    comparator: { enum: ['<', '<=', '>', '>=', null] }
+                    referenceRange: { $ref: '#/components/schemas/ReferenceRange' }
+                    laboratoryName: { type: [string, 'null'] }
+
+    HealthSummary:
+      type: object
+      required: [reportCount, verifiedResultCount]
+      properties:
+        reportCount: { type: integer }
+        verifiedResultCount: { type: integer }
+        pendingReviewCount: { type: integer }
+        firstCollectedAt: { type: [string, 'null'], format: date }
+        lastCollectedAt: { type: [string, 'null'], format: date }
+        mostFrequentAnalytes: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/Analyte' } }
+        recentOutOfRange: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/LaboratoryResult' } }
+
+    Conversation:
+      type: object
+      required: [id, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ConversationDetail:
+      allOf:
+        - $ref: '#/components/schemas/Conversation'
+        - type: object
+          required: [messages, nextCursor]
+          properties:
+            messages:
+              type: array
+              items:
+                oneOf:
+                  - $ref: '#/components/schemas/UserMessage'
+                  - $ref: '#/components/schemas/AssistantMessage'
+                discriminator:
+                  propertyName: role
+                  mapping:
+                    USER: '#/components/schemas/UserMessage'
+                    ASSISTANT: '#/components/schemas/AssistantMessage'
+            nextCursor: { $ref: '#/components/schemas/NextCursor' }
+
+    UserMessage:
+      type: object
+      required: [messageId, role, content, createdAt]
+      properties:
+        messageId: { type: string, format: uuid }
+        role: { const: USER }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    AssistantMessage:
+      type: object
+      description: Structured answer (ADR 0004). Facts come from verified data; explanations are generated and kept separate.
+      required: [messageId, role, answer, facts, explanations, uncertainty, insufficientData, seekProfessionalCare, safety, createdAt]
+      properties:
+        messageId: { type: string, format: uuid }
+        role: { const: ASSISTANT }
+        answer: { type: string, description: Text for the patient, in pt-BR }
+        facts:
+          type: array
+          items:
+            type: object
+            required: [resultId, label, value, collectedAt]
+            properties:
+              resultId: { type: string, format: uuid }
+              label: { type: string }
+              value: { type: string, description: As displayed, including comparator }
+              unit: { type: [string, 'null'] }
+              referenceRange: { type: [string, 'null'] }
+              collectedAt: { type: [string, 'null'], format: date }
+        explanations:
+          type: array
+          items:
+            type: object
+            required: [text, sources]
+            properties:
+              text: { type: string }
+              sources:
+                type: array
+                items:
+                  type: object
+                  required: [type, id]
+                  properties:
+                    type: { enum: [GLOSSARY, DOCUMENT] }
+                    id: { type: string }
+                    url: { type: string, format: uri }
+        uncertainty: { enum: [LOW, MEDIUM, HIGH] }
+        insufficientData: { type: boolean }
+        seekProfessionalCare:
+          type: object
+          required: [recommended, urgency]
+          properties:
+            recommended: { type: boolean }
+            urgency: { enum: [NONE, ROUTINE, SOON, EMERGENCY] }
+        suggestedQuestionsForDoctor: { type: array, maxItems: 5, items: { type: string } }
+        safety:
+          type: object
+          required: [refused]
+          properties:
+            refused: { type: boolean }
+            reasonCode: { enum: [DIAGNOSIS_REQUEST, PRESCRIPTION_REQUEST, DOSAGE_CHANGE_REQUEST, OUT_OF_SCOPE, EMERGENCY_SIGNS, null] }
+        createdAt: { type: string, format: date-time }
+      example:
+        messageId: 0193a1f0-0000-7000-8000-000000000201
+        role: ASSISTANT
+        answer: Sua ferritina do exame de 10/03/2026 foi 12,4 ng/mL, abaixo da faixa informada pelo laboratório (15 a 150 ng/mL para mulheres). Vale conversar com seu médico sobre esse resultado.
+        facts:
+          - resultId: 00000000-0000-7000-8000-000000000101
+            label: Ferritina
+            value: '12.4'
+            unit: ng/mL
+            referenceRange: 'Mulheres: 15 a 150 ng/mL'
+            collectedAt: '2026-03-10'
+        explanations:
+          - text: A ferritina é uma proteína que reflete os estoques de ferro do corpo.
+            sources: [{ type: GLOSSARY, id: ferritin }]
+        uncertainty: LOW
+        insufficientData: false
+        seekProfessionalCare: { recommended: true, urgency: ROUTINE }
+        suggestedQuestionsForDoctor: [Esse valor precisa de investigação adicional?]
+        safety: { refused: false, reasonCode: null }
+        createdAt: '2026-11-12T22:45:00Z'
+
+    Notification:
+      type: object
+      required: [id, type, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        type: { enum: [DOCUMENT_PROCESSED, REVIEW_PENDING, EXTRACTION_FAILED, DOCUMENT_UNSUPPORTED] }
+        status: { enum: [UNREAD, READ] }
+        resource:
+          type: object
+          description: IDs only; never health data.
+          properties:
+            type: { enum: [DOCUMENT, LABORATORY_REPORT] }
+            id: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+        readAt: { type: [string, 'null'], format: date-time }

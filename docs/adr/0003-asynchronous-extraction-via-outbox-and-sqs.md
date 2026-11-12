@@ -33,7 +33,7 @@ Rules:
 - **Tracing**: the OpenTelemetry context is propagated through SQS message attributes.
 - **Chat**: `POST /internal/v1/assistant/answers`, with a timeout and a circuit breaker (Resilience4j) on the core side. Server-sent events for streaming are a later addition.
 
-Locally, SQS and S3 are provided by LocalStack.
+Locally, SQS and S3 are provided by open-source emulators (see [ADR 0012](0012-open-source-local-aws-emulators.md), which amends this line; LocalStack now requires an auth token).
 
 ## Alternatives considered
 

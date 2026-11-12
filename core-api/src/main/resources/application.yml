@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: core-api
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    # Runtime connects as the least-privileged role (ADR 0005).
+    url: ${CORE_DB_URL:jdbc:postgresql://localhost:5432/hip}
+    username: ${CORE_DB_APP_USER:core_app}
+    password: ${CORE_APP_PASSWORD:}
+    hikari:
+      maximum-pool-size: ${CORE_DB_POOL_SIZE:10}
+  flyway:
+    # Migrations run as the schema owner; the app role only gets DML through default privileges.
+    url: ${CORE_DB_URL:jdbc:postgresql://localhost:5432/hip}
+    user: ${CORE_DB_OWNER_USER:core_owner}
+    password: ${CORE_OWNER_PASSWORD:}
+    schemas: core
+    default-schema: core
+    create-schemas: false
+    locations: classpath:db/migration
+    placeholders:
+      appRole: ${CORE_DB_APP_USER:core_app}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.default_schema: core
+      hibernate.jdbc.time_zone: UTC
+  mvc:
+    problemdetails:
+      enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8180/realms/hip}
+          audiences: core-api
+
+server:
+  shutdown: graceful
+  error:
+    include-stacktrace: never
+    include-message: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  health:
+    readiness-state:
+      enabled: true
+  info:
+    env:
+      enabled: false
+
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:true}
+
+logging:
+  structured:
+    format:
+      console: ecs

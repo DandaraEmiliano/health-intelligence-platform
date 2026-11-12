@@ -1,0 +1,45 @@
+name: core-api
+
+on:
+  push:
+    branches: [main]
+    paths: ["core-api/**", "infra/docker/postgres/**", ".github/workflows/core-api.yml"]
+  pull_request:
+    paths: ["core-api/**", "infra/docker/postgres/**", ".github/workflows/core-api.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: core-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: core-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      # Unit tests, module boundary verification and Testcontainers integration tests
+      # (Docker is available on GitHub-hosted Ubuntu runners).
+      - name: mvn verify
+        run: mvn -B -ntp verify
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-api-test-reports
+          path: core-api/target/surefire-reports
+          retention-days: 7

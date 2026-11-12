@@ -2,7 +2,7 @@
 
 A healthcare platform that turns fragmented laboratory reports (PDF) into a structured, patient-verified health history, with an AI assistant that explains results using only the patient's own verified data.
 
-> **Status:** Phase 2 — Architecture (in review). No application code yet.
+> **Status:** Phase 3 — Project Foundation (in progress).
 >
 > **Data policy:** this repository uses **synthetic data only**. Never commit real patient data, real lab reports or credentials.
 
@@ -24,6 +24,27 @@ A healthcare platform that turns fragmented laboratory reports (PDF) into a stru
 
 See [`docs/adr/`](docs/adr/) for the reasoning behind each decision.
 
+## Getting started
+
+Prerequisites: Docker, JDK 25 + Maven 3.9 (core-api), Python 3.12 + [uv](https://docs.astral.sh/uv/) (ai-service).
+
+```bash
+cp .env.example .env                              # local-only values
+docker compose --profile infra up -d --wait       # PostgreSQL + pgvector, Redis, Keycloak, S3, SQS
+infra/docker/smoke-test.sh                        # optional: verifies every infrastructure service
+```
+
+Then run each service as described in [`core-api/README.md`](core-api/README.md) and [`ai-service/README.md`](ai-service/README.md).
+
+| Service | Local URL |
+| --- | --- |
+| core-api | http://localhost:8080 |
+| ai-service | http://localhost:8081 |
+| Keycloak (realm `hip`) | http://localhost:8180 |
+| PostgreSQL | localhost:5432 (db `hip`) |
+| S3 (S3Mock) | http://localhost:9090 |
+| SQS (ElasticMQ) | http://localhost:9324 |
+
 ## Repository layout
 
 ```text
@@ -34,10 +55,10 @@ docs/
 contracts/
   core-api.openapi.yaml  Public API design (OpenAPI 3.1)
   events/              JSON Schemas for queue messages between core-api and ai-service
-core-api/              Java service (Phase 3)
-ai-service/            Python service (Phase 3)
+core-api/              Java service: Spring Boot modular monolith
+ai-service/            Python service: FastAPI, Alembic
 synthetic-data/        Synthetic lab report generator and ground truth (Phase 3)
-infra/                 Docker Compose, observability, Terraform (Phases 3 and 7)
+infra/                 Compose support files (Postgres init, Keycloak realm, SQS queues), smoke test
 ```
 
 ## Roadmap
@@ -45,8 +66,8 @@ infra/                 Docker Compose, observability, Terraform (Phases 3 and 7)
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1. Product Discovery | MVP scope, requirements, user journeys, backlog | Approved |
-| 2. Architecture | ADRs, contracts, DDL v1, OpenAPI draft, threat model | In progress |
-| 3. Project Foundation | Compose, service skeletons, CI, synthetic dataset | Planned |
+| 2. Architecture | ADRs, contracts, DDL v1, OpenAPI draft, threat model | Done |
+| 3. Project Foundation | Compose, service skeletons, CI, synthetic dataset | In progress |
 | 4. Core Backend | Identity, patient, documents, laboratory results, timeline, audit | Planned |
 | 5. AI Engineering | Extraction, RAG, assistant, guardrails, evaluation | Planned |
 | 6. Analytics and Notifications | Trends, comparisons, in-app notifications | Planned |

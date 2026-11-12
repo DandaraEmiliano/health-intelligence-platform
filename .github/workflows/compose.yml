@@ -1,0 +1,36 @@
+name: compose
+
+on:
+  push:
+    branches: [main]
+    paths: ["docker-compose.yml", "infra/docker/**", ".env.example", ".github/workflows/compose.yml"]
+  pull_request:
+    paths: ["docker-compose.yml", "infra/docker/**", ".env.example", ".github/workflows/compose.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: local environment smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env from the example
+        run: cp .env.example .env
+
+      - name: Start infra profile
+        run: docker compose --profile infra up -d --wait --wait-timeout 300
+
+      - name: Smoke test
+        run: infra/docker/smoke-test.sh
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose --profile infra logs --no-color --tail 200
+
+      - name: Tear down
+        if: always()
+        run: docker compose --profile infra down -v

@@ -1,0 +1,143 @@
+{
+  "realm": "hip",
+  "displayName": "Health Intelligence Platform (local)",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "verifyEmail": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "permanentLockout": false,
+  "passwordPolicy": "length(12) and notUsername and notEmail",
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "roles": {
+    "realm": [
+      { "name": "PATIENT", "description": "Individual patient (B2C)" },
+      { "name": "ADMIN", "description": "Operational administrator; no clinical data access by default" }
+    ]
+  },
+  "defaultRoles": ["PATIENT"],
+  "clientScopes": [
+    {
+      "name": "core-api-audience",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "false" },
+      "protocolMappers": [
+        {
+          "name": "core-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "core-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ai-service-audience",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "false" },
+      "protocolMappers": [
+        {
+          "name": "ai-service-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "ai-service",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "name": "realm-roles",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "false" },
+      "protocolMappers": [
+        {
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "multivalued": "true",
+            "claim.name": "roles",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "hip-web",
+      "name": "HIP web client",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173"],
+      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:5173/*" },
+      "defaultClientScopes": ["openid", "profile", "email", "core-api-audience", "realm-roles"]
+    },
+    {
+      "clientId": "hip-dev-cli",
+      "name": "Local development token client (password grant, synthetic users only, never enabled outside local)",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "defaultClientScopes": ["openid", "profile", "email", "core-api-audience", "realm-roles"]
+    },
+    {
+      "clientId": "core-api-service",
+      "name": "core-api calling ai-service (client credentials)",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${KC_CORE_API_SERVICE_SECRET}",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": ["ai-service-audience"]
+    }
+  ],
+  "users": [
+    {
+      "username": "patient.a@example.test",
+      "email": "patient.a@example.test",
+      "firstName": "Paciente",
+      "lastName": "Sintetico A",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${KC_SYNTHETIC_USER_PASSWORD}", "temporary": false }],
+      "realmRoles": ["PATIENT"]
+    },
+    {
+      "username": "patient.b@example.test",
+      "email": "patient.b@example.test",
+      "firstName": "Paciente",
+      "lastName": "Sintetico B",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${KC_SYNTHETIC_USER_PASSWORD}", "temporary": false }],
+      "realmRoles": ["PATIENT"]
+    },
+    {
+      "username": "service-account-core-api-service",
+      "enabled": true,
+      "serviceAccountClientId": "core-api-service"
+    }
+  ]
+}

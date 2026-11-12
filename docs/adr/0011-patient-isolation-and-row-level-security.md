@@ -38,5 +38,6 @@ RLS in `core-api` (JPA with a shared connection pool) requires setting a session
 ## Consequences
 
 - The DDL proposal enables and forces RLS on `ai.document_chunk`, and its validation script proves three cases: no patient set fails, patient A sees only A's rows, and an insert for another patient is rejected.
+- Finding from Phase 3 tests: once a pooled session has run a scoped transaction, PostgreSQL keeps `app.patient_id` defined as an empty string for that session. The policy's `::uuid` cast then raises `invalid input syntax for type uuid` instead of "unrecognized configuration parameter". Both outcomes fail closed (an error, never a silently empty or wider result), and `ai-service/tests/test_patient_isolation.py` covers both.
 - The core relies on discipline plus automated tests. The ArchUnit rule and the two-patient test suite are part of the Phase 4 definition of done.
 - Revisit RLS for the core when professional and organization access (`access_grant`) is introduced.

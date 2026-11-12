@@ -1,0 +1,42 @@
+name: synthetic-data
+
+on:
+  push:
+    branches: [main]
+    paths: ["synthetic-data/**", "contracts/events/**", ".github/workflows/synthetic-data.yml"]
+  pull_request:
+    paths: ["synthetic-data/**", "contracts/events/**", ".github/workflows/synthetic-data.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: generate and verify fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: synthetic-data
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --locked
+
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Committed fixtures match a fresh, deterministic generation
+        run: |
+          uv run python -m generator.generate --out "$RUNNER_TEMP/regenerated"
+          diff -r fixtures/lab-reports "$RUNNER_TEMP/regenerated"
+
+      - name: Verify ground truth
+        run: uv run python -m generator.verify

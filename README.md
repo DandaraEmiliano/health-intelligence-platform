@@ -57,7 +57,7 @@ contracts/
   events/              JSON Schemas for queue messages between core-api and ai-service
 core-api/              Java service: Spring Boot modular monolith
 ai-service/            Python service: FastAPI, Alembic
-synthetic-data/        Synthetic lab report generator and ground truth (Phase 3)
+synthetic-data/        Deterministic synthetic lab report PDFs with ground truth (32 fixtures, 4 layouts)
 infra/                 Compose support files (Postgres init, Keycloak realm, SQS queues), smoke test
 ```
 

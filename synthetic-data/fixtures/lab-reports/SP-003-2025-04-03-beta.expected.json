@@ -1,0 +1,346 @@
+{
+  "fixtureId": "SP-003-2025-04-03-beta",
+  "synthetic": true,
+  "layout": "beta",
+  "patient": {
+    "syntheticId": "SP-003",
+    "sex": "F",
+    "birthDate": "1961-01-27"
+  },
+  "tags": [
+    "lab-flag",
+    "layout:beta",
+    "multiple-ranges",
+    "qualitative"
+  ],
+  "expected": {
+    "status": "SUCCEEDED",
+    "report": {
+      "laboratoryName": "Beta Diagnósticos Sintéticos",
+      "collectedAt": "2025-04-03",
+      "collectedAtRaw": "03 abr 2025",
+      "reportedAt": "2025-04-04",
+      "pageCount": 1,
+      "warnings": [],
+      "results": [
+        {
+          "sequence": 1,
+          "rawName": "COLESTEROL TOTAL",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "247",
+            "valueNumeric": "247"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: < 190 mg/dL",
+            "low": null,
+            "high": "190",
+            "appliesTo": null
+          },
+          "labFlag": "HIGH",
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: 247 mg/dL  [ALTO]"
+          }
+        },
+        {
+          "sequence": 2,
+          "rawName": "HDL-COLESTEROL",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "46",
+            "valueNumeric": "46"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: > 40 mg/dL",
+            "low": "40",
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: 46 mg/dL"
+          }
+        },
+        {
+          "sequence": 3,
+          "rawName": "LDL-COLESTEROL",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "124",
+            "valueNumeric": "124"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: < 130 mg/dL",
+            "low": null,
+            "high": "130",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: 124 mg/dL"
+          }
+        },
+        {
+          "sequence": 4,
+          "rawName": "TRIGLICERÍDEOS",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "132",
+            "valueNumeric": "132"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Desejável: < 150 mg/dL",
+            "low": null,
+            "high": "150",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: 132 mg/dL"
+          }
+        },
+        {
+          "sequence": 5,
+          "rawName": "GLICOSE EM JEJUM",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "88",
+            "valueNumeric": "88"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "70 - 99 mg/dL",
+            "low": "70",
+            "high": "99",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": "Enzimático (hexoquinase)",
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: 88 mg/dL"
+          }
+        },
+        {
+          "sequence": 6,
+          "rawName": "HEMOGLOBINA GLICADA - HbA1c",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "5,5",
+            "valueNumeric": "5.5"
+          },
+          "unit": {
+            "raw": "%"
+          },
+          "referenceRange": {
+            "rawText": "4 - 5,6 %",
+            "low": "4",
+            "high": "5.6",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": "HPLC",
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: 5,5 %"
+          }
+        },
+        {
+          "sequence": 7,
+          "rawName": "CREATININA",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "0,91",
+            "valueNumeric": "0.91"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "Mulheres: 0,50 - 0,90 mg/dL | Homens: 0,70 - 1,20 mg/dL",
+            "low": null,
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": "HIGH",
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: 0,91 mg/dL  [ALTO]"
+          },
+          "warnings": [
+            {
+              "code": "MULTIPLE_RANGES"
+            }
+          ]
+        },
+        {
+          "sequence": 8,
+          "rawName": "URÉIA",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "31",
+            "valueNumeric": "31"
+          },
+          "unit": {
+            "raw": "mg/dL"
+          },
+          "referenceRange": {
+            "rawText": "17 - 43 mg/dL",
+            "low": "17",
+            "high": "43",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: 31 mg/dL"
+          }
+        },
+        {
+          "sequence": 9,
+          "rawName": "POTÁSSIO",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "4,4",
+            "valueNumeric": "4.4"
+          },
+          "unit": {
+            "raw": "mmol/L"
+          },
+          "referenceRange": {
+            "rawText": "3,5 - 5,1 mmol/L",
+            "low": "3.5",
+            "high": "5.1",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: 4,4 mmol/L"
+          }
+        },
+        {
+          "sequence": 10,
+          "rawName": "SÓDIO",
+          "measurement": {
+            "kind": "NUMERIC",
+            "rawValue": "141",
+            "valueNumeric": "141"
+          },
+          "unit": {
+            "raw": "mmol/L"
+          },
+          "referenceRange": {
+            "rawText": "136 - 145 mmol/L",
+            "low": "136",
+            "high": "145",
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: 141 mmol/L"
+          }
+        },
+        {
+          "sequence": 11,
+          "rawName": "ANTÍGENO DE SUPERFÍCIE DO VÍRUS DA HEPATITE B - HBsAg",
+          "measurement": {
+            "kind": "TEXT",
+            "rawValue": "Não reagente",
+            "valueText": "Não reagente"
+          },
+          "unit": {
+            "raw": null
+          },
+          "referenceRange": {
+            "rawText": "Não reagente",
+            "low": null,
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: Não reagente"
+          },
+          "warnings": [
+            {
+              "code": "RANGE_UNPARSEABLE"
+            }
+          ]
+        },
+        {
+          "sequence": 12,
+          "rawName": "ANTI-HIV 1/2 (TRIAGEM)",
+          "measurement": {
+            "kind": "TEXT",
+            "rawValue": "Não reagente",
+            "valueText": "Não reagente"
+          },
+          "unit": {
+            "raw": null
+          },
+          "referenceRange": {
+            "rawText": "Não reagente",
+            "low": null,
+            "high": null,
+            "appliesTo": null
+          },
+          "labFlag": null,
+          "method": null,
+          "source": {
+            "page": 1,
+            "excerpt": "Resultado: Não reagente"
+          },
+          "warnings": [
+            {
+              "code": "RANGE_UNPARSEABLE"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "analyteCodes": {
+    "1": "CHOL_TOTAL",
+    "2": "HDL",
+    "3": "LDL",
+    "4": "TRIG",
+    "5": "GLUCOSE",
+    "6": "HBA1C",
+    "7": "CREAT",
+    "8": "UREA",
+    "9": "K",
+    "10": "NA",
+    "11": "HBSAG",
+    "12": "HIV"
+  }
+}

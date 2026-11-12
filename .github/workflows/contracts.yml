@@ -1,0 +1,46 @@
+name: contracts
+
+on:
+  push:
+    branches: [main]
+    paths: ["contracts/**", "docs/architecture/**", ".github/workflows/contracts.yml"]
+  pull_request:
+    paths: ["contracts/**", "docs/architecture/**", ".github/workflows/contracts.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.7-pg16
+        env:
+          POSTGRES_PASSWORD: ci-postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validators
+        run: pip install "jsonschema[format-nongpl]>=4.18" "openapi-spec-validator>=0.7"
+
+      - name: Event contracts (valid examples pass, invalid examples fail)
+        run: python contracts/scripts/validate_examples.py
+
+      - name: OpenAPI document
+        run: python -c "from openapi_spec_validator import validate; from openapi_spec_validator.readers import read_from_filename; validate(read_from_filename('contracts/core-api.openapi.yaml')[0]); print('OpenAPI valid')"
+
+      - name: DDL design assertions
+        env:
+          ADMIN_URL: postgresql://postgres:ci-postgres@localhost:5432/postgres
+        run: docs/architecture/validate_ddl.sh

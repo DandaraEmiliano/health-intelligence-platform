@@ -1,0 +1,68 @@
+name: ai-service
+
+on:
+  push:
+    branches: [main]
+    paths: ["ai-service/**", "infra/docker/postgres/**", ".github/workflows/ai-service.yml"]
+  pull_request:
+    paths: ["ai-service/**", "infra/docker/postgres/**", ".github/workflows/ai-service.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-service-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: lint and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.7-pg16
+        env:
+          POSTGRES_PASSWORD: ci-postgres
+          POSTGRES_DB: hip
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d hip"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      AI_RUN_DB_TESTS: "1"
+      AI_DB_HOST: localhost
+      AI_DB_PORT: "5432"
+      AI_DB_NAME: hip
+      AI_OWNER_PASSWORD: ci-ai-owner
+      AI_APP_PASSWORD: ci-ai-app
+    defaults:
+      run:
+        working-directory: ai-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --locked
+
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Bootstrap database roles (same script as Docker Compose)
+        working-directory: .
+        env:
+          PGHOST: localhost
+          PGPASSWORD: ci-postgres
+          POSTGRES_DB: hip
+          CORE_OWNER_PASSWORD: ci-core-owner
+          CORE_APP_PASSWORD: ci-core-app
+        run: infra/docker/postgres/init/01-roles-and-schemas.sh
+
+      - name: Test (unit + database)
+        run: uv run pytest

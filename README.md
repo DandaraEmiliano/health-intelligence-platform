@@ -28,10 +28,11 @@ See [`docs/adr/`](docs/adr/) for the reasoning behind each decision.
 
 ```text
 docs/
-  adr/                 Architecture Decision Records
-  architecture/        Diagrams and module map (Phase 2)
-  security/            Threat model and privacy requirements map (Phase 2)
+  adr/                 Architecture Decision Records (0001-0011)
+  architecture/        Container view, DDL v1 proposal and its validation
+  security/            Threat model (STRIDE) and LGPD requirements map
 contracts/
+  core-api.openapi.yaml  Public API design (OpenAPI 3.1)
   events/              JSON Schemas for queue messages between core-api and ai-service
 core-api/              Java service (Phase 3)
 ai-service/            Python service (Phase 3)

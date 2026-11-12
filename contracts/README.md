@@ -4,6 +4,7 @@ Versioned contracts between `core-api` and `ai-service`. A contract change is ma
 
 | Contract | Direction | Queue / endpoint |
 | --- | --- | --- |
+| [`core-api.openapi.yaml`](core-api.openapi.yaml) | clients → core-api | Public REST API `/api/v1` (OpenAPI 3.1, design draft) |
 | [`document-extraction-request.v1`](events/document-extraction-request.v1.schema.json) | core-api → ai-service | `document-extraction-requests` |
 | [`document-extraction-result.v1`](events/document-extraction-result.v1.schema.json) | ai-service → core-api | `document-extraction-results` |
 

@@ -33,10 +33,10 @@ jobs:
           uv run ruff check .
           uv run ruff format --check .
 
-      - name: Committed fixtures match a fresh, deterministic generation
+      - name: Committed fixtures match a fresh generation (ground truth and PDF text)
         run: |
           uv run python -m generator.generate --out "$RUNNER_TEMP/regenerated"
-          diff -r fixtures/lab-reports "$RUNNER_TEMP/regenerated"
+          uv run python -m generator.compare fixtures/lab-reports "$RUNNER_TEMP/regenerated"
 
       - name: Verify ground truth
         run: uv run python -m generator.verify

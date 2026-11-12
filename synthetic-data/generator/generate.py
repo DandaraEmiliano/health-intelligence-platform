@@ -3,7 +3,9 @@
 Usage (from synthetic-data/):  uv run python -m generator.generate [--out fixtures/lab-reports]
 
 Output per fixture: <id>.pdf and <id>.expected.json, plus manifest.json with SHA-256 hashes.
-Generation is deterministic: running it twice produces identical bytes.
+Generation is deterministic: the ground truth and the PDF text are identical on every run.
+PDF bytes are identical within one environment; across environments the Flate-compressed streams
+may differ with the zlib build, so CI compares content (generator.compare), not bytes.
 """
 
 import argparse

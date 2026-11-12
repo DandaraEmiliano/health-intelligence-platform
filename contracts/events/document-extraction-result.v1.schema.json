@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.health-intelligence-platform.dev/events/document-extraction-result.v1.schema.json",
+  "title": "DocumentExtractionResult",
+  "description": "Published by ai-service to the document-extraction-results queue. Consumed by core-api (laboratory module). Everything in it is UNVERIFIED: the core stores results as PENDING_REVIEW until the patient reviews them.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "messageId",
+    "jobId",
+    "documentId",
+    "patientId",
+    "extractorVersion",
+    "status",
+    "completedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "messageId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "jobId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "documentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "patientId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "extractorVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "status": {
+      "enum": ["SUCCEEDED", "FAILED", "UNSUPPORTED_SCANNED"]
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "failure": {
+      "$ref": "#/$defs/failure"
+    },
+    "report": {
+      "$ref": "#/$defs/report"
+    },
+    "usage": {
+      "$ref": "#/$defs/usage"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "SUCCEEDED" } } },
+      "then": { "required": ["report"], "not": { "required": ["failure"] } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "FAILED" } } },
+      "then": { "required": ["failure"], "not": { "required": ["report"] } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "UNSUPPORTED_SCANNED" } } },
+      "then": { "not": { "anyOf": [{ "required": ["report"] }, { "required": ["failure"] }] } }
+    }
+  ],
+  "$defs": {
+    "decimal": {
+      "description": "Decimal as a string with a dot separator, to avoid binary floating point. The extractor converts '1,25' to '1.25'.",
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+      "maxLength": 32
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "retryable"],
+      "properties": {
+        "code": {
+          "enum": [
+            "DOCUMENT_NOT_FOUND",
+            "CHECKSUM_MISMATCH",
+            "PDF_ENCRYPTED",
+            "PDF_CORRUPTED",
+            "NOT_A_LAB_REPORT",
+            "NO_RESULTS_FOUND",
+            "LLM_PROVIDER_ERROR",
+            "OUTPUT_SCHEMA_VIOLATION",
+            "INTERNAL_ERROR"
+          ]
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "detail": {
+          "description": "Technical detail for operators. Must not contain document content.",
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pageCount", "results"],
+      "properties": {
+        "laboratoryName": {
+          "type": ["string", "null"],
+          "maxLength": 200
+        },
+        "collectedAt": {
+          "description": "Specimen collection date, if it could be parsed.",
+          "type": ["string", "null"],
+          "format": "date"
+        },
+        "collectedAtRaw": {
+          "description": "Collection date exactly as printed, kept for review.",
+          "type": ["string", "null"],
+          "maxLength": 100
+        },
+        "reportedAt": {
+          "type": ["string", "null"],
+          "format": "date"
+        },
+        "pageCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "warnings": {
+          "description": "Report-level validator findings, e.g. COLLECTION_DATE_MISSING.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/warning" },
+          "maxItems": 50
+        },
+        "results": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "items": { "$ref": "#/$defs/result" }
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "rawName", "measurement", "unit", "referenceRange", "source"],
+      "properties": {
+        "sequence": {
+          "description": "Order of appearance in the report, unique within the report.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "rawName": {
+          "description": "Test name exactly as printed. Analyte normalization happens in the core.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "measurement": { "$ref": "#/$defs/measurement" },
+        "unit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["raw"],
+          "properties": {
+            "raw": {
+              "description": "Unit as printed (may be null for qualitative results).",
+              "type": ["string", "null"],
+              "maxLength": 50
+            }
+          }
+        },
+        "referenceRange": { "$ref": "#/$defs/referenceRange" },
+        "labFlag": {
+          "description": "Abnormality marker printed by the laboratory, if any. Never computed by the extractor.",
+          "enum": ["HIGH", "LOW", "ABNORMAL", "CRITICAL", null]
+        },
+        "method": {
+          "type": ["string", "null"],
+          "maxLength": 200
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["page", "excerpt"],
+          "properties": {
+            "page": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "excerpt": {
+              "description": "The text line(s) the result was extracted from, shown to the patient during review.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/warning" },
+          "maxItems": 20
+        }
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "rawValue"],
+      "properties": {
+        "kind": {
+          "enum": ["NUMERIC", "TEXT"]
+        },
+        "rawValue": {
+          "description": "Value exactly as printed, e.g. '< 0,5', '1.250', 'Não reagente'.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "valueNumeric": { "$ref": "#/$defs/decimal" },
+        "comparator": {
+          "description": "For censored values such as '< 0,5'.",
+          "enum": ["<", "<=", ">", ">=", null]
+        },
+        "valueText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "NUMERIC" } } },
+          "then": { "required": ["valueNumeric"], "not": { "required": ["valueText"] } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "TEXT" } } },
+          "then": {
+            "required": ["valueText"],
+            "not": { "anyOf": [{ "required": ["valueNumeric"] }, { "required": ["comparator"] }] }
+          }
+        }
+      ]
+    },
+    "referenceRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rawText"],
+      "properties": {
+        "rawText": {
+          "description": "Reference range exactly as printed; null when the report shows none. Always preserved.",
+          "type": ["string", "null"],
+          "maxLength": 1000
+        },
+        "low": {
+          "oneOf": [{ "$ref": "#/$defs/decimal" }, { "type": "null" }]
+        },
+        "high": {
+          "oneOf": [{ "$ref": "#/$defs/decimal" }, { "type": "null" }]
+        },
+        "appliesTo": {
+          "description": "Population qualifier as printed, e.g. 'Mulheres adultas'.",
+          "type": ["string", "null"],
+          "maxLength": 200
+        }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code"],
+      "properties": {
+        "code": {
+          "enum": [
+            "VALUE_NOT_NUMERIC",
+            "UNIT_UNKNOWN",
+            "UNIT_MISSING",
+            "RANGE_UNPARSEABLE",
+            "RANGE_LOW_ABOVE_HIGH",
+            "MULTIPLE_RANGES",
+            "COLLECTION_DATE_MISSING",
+            "COLLECTION_DATE_IN_FUTURE",
+            "DUPLICATE_TEST_NAME",
+            "LOW_CONFIDENCE"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 300
+        }
+      }
+    },
+    "usage": {
+      "description": "LLM usage for observability; no prompt or completion text.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string", "maxLength": 50 },
+        "model": { "type": "string", "maxLength": 100 },
+        "promptVersion": { "type": "string", "maxLength": 50 },
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 },
+        "latencyMs": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

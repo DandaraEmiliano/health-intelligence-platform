@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "0193a1f0-0000-7000-8000-000000000002",
+  "documentId": "0193a1f0-0000-7000-8000-000000000003",
+  "patientId": "0193a1f0-0000-7000-8000-000000000004",
+  "extractorVersion": "1.0.0",
+  "messageId": "0193a1f0-0000-7000-8000-000000000010",
+  "status": "FAILED",
+  "completedAt": "2026-11-12T22:41:00Z",
+  "failure": {
+    "code": "PDF_ENCRYPTED",
+    "retryable": false
+  }
+}

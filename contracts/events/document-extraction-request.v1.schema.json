@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.health-intelligence-platform.dev/events/document-extraction-request.v1.schema.json",
+  "title": "DocumentExtractionRequest",
+  "description": "Published by core-api (documents module, via outbox) to the document-extraction-requests queue. Consumed by ai-service. At-least-once delivery: consumers must be idempotent on jobId.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "messageId",
+    "jobId",
+    "documentId",
+    "patientId",
+    "extractorVersion",
+    "document",
+    "requestedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "messageId": {
+      "description": "Unique per published message; differs between redeliveries of the same job only if the outbox republishes.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "jobId": {
+      "description": "Idempotency key for the extraction job.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "documentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "patientId": {
+      "description": "Opaque patient identifier. Used by ai-service only to scope data; never to look up the patient.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "extractorVersion": {
+      "description": "Extractor version requested by the core. Lets the core reprocess a document with a newer extractor.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bucket", "objectKey", "sha256", "contentType", "sizeBytes"],
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 63
+        },
+        "objectKey": {
+          "description": "Opaque key with no personal data, e.g. documents/<uuid>.",
+          "type": "string",
+          "pattern": "^documents/[0-9a-f-]{36}$"
+        },
+        "sha256": {
+          "description": "Hex digest of the stored object; ai-service must verify it after download.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contentType": {
+          "const": "application/pdf"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10485760
+        }
+      }
+    },
+    "requestedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "correlationId": {
+      "description": "Propagated for logs. Trace context travels in SQS message attributes, not in the body.",
+      "type": "string",
+      "maxLength": 128
+    }
+  }
+}

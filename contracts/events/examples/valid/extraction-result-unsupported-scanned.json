@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "0193a1f0-0000-7000-8000-000000000002",
+  "documentId": "0193a1f0-0000-7000-8000-000000000003",
+  "patientId": "0193a1f0-0000-7000-8000-000000000004",
+  "extractorVersion": "1.0.0",
+  "messageId": "0193a1f0-0000-7000-8000-000000000010",
+  "status": "UNSUPPORTED_SCANNED",
+  "completedAt": "2026-11-12T22:40:05Z"
+}

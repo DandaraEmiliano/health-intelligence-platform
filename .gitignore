@@ -1,0 +1,25 @@
+# Secrets and local env
+.env
+*.env.local
+*.pem
+*.key
+
+# Real data must never be committed
+**/real-data/
+*.real.pdf
+
+# Java
+target/
+*.class
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# OS
+.DS_Store

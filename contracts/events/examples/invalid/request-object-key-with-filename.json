@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "messageId": "0193a1f0-0000-7000-8000-000000000001",
+  "jobId": "0193a1f0-0000-7000-8000-000000000002",
+  "documentId": "0193a1f0-0000-7000-8000-000000000003",
+  "patientId": "0193a1f0-0000-7000-8000-000000000004",
+  "extractorVersion": "1.0.0",
+  "document": {
+    "bucket": "hip-documents-local",
+    "objectKey": "documents/joao-silva-hemograma.pdf",
+    "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "contentType": "application/pdf",
+    "sizeBytes": 184320
+  },
+  "requestedAt": "2026-11-12T22:40:00Z",
+  "correlationId": "c-7f3a"
+}

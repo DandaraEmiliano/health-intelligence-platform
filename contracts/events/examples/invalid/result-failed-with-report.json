@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "0193a1f0-0000-7000-8000-000000000002",
+  "documentId": "0193a1f0-0000-7000-8000-000000000003",
+  "patientId": "0193a1f0-0000-7000-8000-000000000004",
+  "extractorVersion": "1.0.0",
+  "messageId": "0193a1f0-0000-7000-8000-000000000010",
+  "status": "FAILED",
+  "completedAt": "2026-11-12T22:41:00Z",
+  "failure": {
+    "code": "PDF_ENCRYPTED",
+    "retryable": false
+  },
+  "report": {
+    "laboratoryName": "Laboratório Sintético Alfa",
+    "collectedAt": "2026-03-10",
+    "collectedAtRaw": "10/03/2026 07:42",
+    "reportedAt": "2026-03-11",
+    "pageCount": 2,
+    "warnings": [],
+    "results": [
+      {
+        "sequence": 1,
+        "rawName": "Colesterol HDL",
+        "measurement": {
+          "kind": "NUMERIC",
+          "rawValue": "52",
+          "valueNumeric": "52"
+        },
+        "unit": {
+          "raw": "mg/dL"
+        },
+        "referenceRange": {
+          "rawText": "Desejável: > 40 mg/dL",
+          "low": "40",
+          "high": null,
+          "appliesTo": null
+        },
+        "labFlag": null,
+        "method": "Enzimático colorimétrico",
+        "source": {
+          "page": 1,
+          "excerpt": "COLESTEROL HDL ...... 52 mg/dL   Desejável: > 40 mg/dL"
+        }
+      },
+      {
+        "sequence": 2,
+        "rawName": "Proteína C reativa ultrassensível",
+        "measurement": {
+          "kind": "NUMERIC",
+          "rawValue": "< 0,5",
+          "valueNumeric": "0.5",
+          "comparator": "<"
+        },
+        "unit": {
+          "raw": "mg/L"
+        },
+        "referenceRange": {
+          "rawText": "Inferior a 1,0 mg/L",
+          "low": null,
+          "high": "1.0"
+        },
+        "source": {
+          "page": 1,
+          "excerpt": "PCR ULTRASSENSÍVEL: < 0,5 mg/L (Inferior a 1,0 mg/L)"
+        }
+      },
+      {
+        "sequence": 3,
+        "rawName": "Ferritina",
+        "measurement": {
+          "kind": "NUMERIC",
+          "rawValue": "12,4",
+          "valueNumeric": "12.4"
+        },
+        "unit": {
+          "raw": "ng/mL"
+        },
+        "referenceRange": {
+          "rawText": "Mulheres: 15 a 150 ng/mL",
+          "low": "15",
+          "high": "150",
+          "appliesTo": "Mulheres"
+        },
+        "labFlag": "LOW",
+        "source": {
+          "page": 2,
+          "excerpt": "FERRITINA 12,4 ng/mL L  Mulheres: 15 a 150 ng/mL"
+        }
+      },
+      {
+        "sequence": 4,
+        "rawName": "HBsAg",
+        "measurement": {
+          "kind": "TEXT",
+          "rawValue": "Não reagente",
+          "valueText": "Não reagente"
+        },
+        "unit": {
+          "raw": null
+        },
+        "referenceRange": {
+          "rawText": "Não reagente"
+        },
+        "source": {
+          "page": 2,
+          "excerpt": "HBsAg: Não reagente (VR: Não reagente)"
+        },
+        "warnings": [
+          {
+            "code": "RANGE_UNPARSEABLE",
+            "message": "Qualitative reference value"
+          }
+        ]
+      }
+    ]
+  }
+}

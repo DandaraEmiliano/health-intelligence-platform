@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "0193a1f0-0000-7000-8000-000000000002",
+  "documentId": "0193a1f0-0000-7000-8000-000000000003",
+  "patientId": "0193a1f0-0000-7000-8000-000000000004",
+  "extractorVersion": "1.0.0",
+  "messageId": "0193a1f0-0000-7000-8000-000000000010",
+  "status": "SUCCEEDED",
+  "completedAt": "2026-11-12T22:40:42Z",
+  "usage": {
+    "provider": "fake",
+    "model": "fake-extractor",
+    "promptVersion": "extraction-v1",
+    "inputTokens": 3120,
+    "outputTokens": 640,
+    "latencyMs": 8400
+  }
+}

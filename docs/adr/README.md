@@ -16,5 +16,6 @@ Each ADR records one decision: its context, the options considered, the choice a
 | [0010](0010-monorepo-with-versioned-contracts.md) | Monorepo with versioned contracts | Proposed |
 | [0011](0011-patient-isolation-and-row-level-security.md) | Patient isolation in application code, RLS in the AI schema | Proposed |
 | [0012](0012-open-source-local-aws-emulators.md) | Open-source local emulators for S3 and SQS (amends 0003) | Proposed |
+| [0013](0013-web-client-spa-with-in-memory-tokens.md) | Web client as an SPA with in-memory tokens; BFF deferred | Proposed |
 
 Template: [`0000-template.md`](0000-template.md).

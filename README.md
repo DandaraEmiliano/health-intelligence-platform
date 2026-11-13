@@ -26,6 +26,19 @@ See [`docs/adr/`](docs/adr/) for the reasoning behind each decision.
 
 ## Getting started
 
+**One command** (macOS or Linux):
+
+```bash
+./scripts/dev.sh          # checks prerequisites, starts infrastructure and all services, prints the URLs
+./scripts/dev.sh status   # what is running
+./scripts/dev.sh logs core-api
+./scripts/dev.sh stop
+```
+
+It uses Java 25 only for core-api, so other projects keep their own Java version.
+
+**Manually**, step by step:
+
 Prerequisites: Docker, JDK 25 + Maven 3.9 (core-api), Python 3.12 + [uv](https://docs.astral.sh/uv/) (ai-service), Node.js 22+ (web).
 
 ```bash

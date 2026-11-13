@@ -26,5 +26,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
+# Local dev launcher (scripts/dev.sh)
+.run/
+logs/
+
 # OS
 .DS_Store

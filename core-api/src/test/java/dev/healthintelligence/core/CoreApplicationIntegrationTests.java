@@ -14,6 +14,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.junit.jupiter.api.Test;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -88,10 +91,26 @@ class CoreApplicationIntegrationTests {
 
     @Test
     void prometheusMetricsAreExposed() throws Exception {
+        get("/actuator/health/readiness"); // ensure at least one recorded HTTP request
+
         HttpResponse<String> response = get("/actuator/prometheus");
 
         assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body()).contains("jvm_memory_used_bytes");
+        assertThat(response.body())
+                .contains("jvm_memory_used_bytes")
+                .contains("service=\"core-api\"")
+                .contains("http_server_requests_seconds_bucket");
+    }
+
+    @Test
+    void tracingIsActive(@Autowired Tracer tracer) {
+        Span span = tracer.nextSpan().name("synthetic-test-span").start();
+        try (Tracer.SpanInScope ignored = tracer.withSpan(span)) {
+            assertThat(tracer.currentSpan()).isNotNull();
+            assertThat(span.context().traceId()).matches("[0-9a-f]{32}");
+        } finally {
+            span.end();
+        }
     }
 
     @Test

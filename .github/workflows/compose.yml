@@ -3,9 +3,9 @@ name: compose
 on:
   push:
     branches: [main]
-    paths: ["docker-compose.yml", "infra/docker/**", ".env.example", ".github/workflows/compose.yml"]
+    paths: ["docker-compose.yml", "infra/**", ".env.example", ".github/workflows/compose.yml"]
   pull_request:
-    paths: ["docker-compose.yml", "infra/docker/**", ".env.example", ".github/workflows/compose.yml"]
+    paths: ["docker-compose.yml", "infra/**", ".env.example", ".github/workflows/compose.yml"]
 
 permissions:
   contents: read
@@ -21,16 +21,21 @@ jobs:
       - name: Create .env from the example
         run: cp .env.example .env
 
-      - name: Start infra profile
-        run: docker compose --profile infra up -d --wait --wait-timeout 300
+      - name: Start infra and observability profiles
+        run: docker compose --profile infra --profile observability up -d --wait --wait-timeout 300
 
-      - name: Smoke test
+      - name: Smoke test (infra)
         run: infra/docker/smoke-test.sh
+
+      - name: Smoke test (observability)
+        run: |
+          set -a && . ./.env && set +a
+          infra/observability/smoke-test.sh
 
       - name: Logs on failure
         if: failure()
-        run: docker compose --profile infra logs --no-color --tail 200
+        run: docker compose --profile infra --profile observability logs --no-color --tail 200
 
       - name: Tear down
         if: always()
-        run: docker compose --profile infra down -v
+        run: docker compose --profile infra --profile observability down -v

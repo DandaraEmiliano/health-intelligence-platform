@@ -2,9 +2,11 @@
 #
 #   cp .env.example .env            # then edit the values
 #   docker compose --profile infra up -d --wait
+#   docker compose --profile infra --profile observability up -d --wait   # with telemetry
 #
 # Profiles:
-#   infra  PostgreSQL + pgvector, Redis, Keycloak, S3 (S3Mock), SQS (ElasticMQ)
+#   infra          PostgreSQL + pgvector, Redis, Keycloak, S3 (S3Mock), SQS (ElasticMQ)
+#   observability  OpenTelemetry Collector, Tempo (traces), Prometheus (metrics), Grafana
 #   apps   core-api and ai-service (added when their images are built; Phase 3 runs them from the IDE)
 #
 # Images are pinned to explicit versions; upgrades go through pull requests.
@@ -91,5 +93,72 @@ services:
     volumes:
       - ./infra/docker/elasticmq/elasticmq.conf:/opt/elasticmq.conf:ro
 
+  # --- observability profile (E2-T6) ------------------------------------------------------------
+  otel-collector:
+    profiles: [observability]
+    image: otel/opentelemetry-collector-contrib:0.165.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    ports:
+      - "127.0.0.1:4317:4317"   # OTLP gRPC
+      - "127.0.0.1:4318:4318"   # OTLP HTTP
+      - "127.0.0.1:13133:13133" # health check
+    volumes:
+      - ./infra/observability/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    depends_on:
+      tempo:
+        condition: service_started
+
+  tempo:
+    profiles: [observability]
+    image: grafana/tempo:2.10.8
+    command: ["-config.file=/etc/tempo.yaml"]
+    ports:
+      - "127.0.0.1:3200:3200"
+    volumes:
+      - ./infra/observability/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/var/tempo
+
+  prometheus:
+    profiles: [observability]
+    image: prom/prometheus:v3.16.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=2d
+      - --enable-feature=exemplar-storage
+    ports:
+      - "127.0.0.1:9091:9090" # 9090 is taken by S3Mock
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./infra/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  grafana:
+    profiles: [observability]
+    image: grafana/grafana:12.4.13
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:?set GF_SECURITY_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
 volumes:
   postgres-data:
+  tempo-data:

@@ -32,6 +32,8 @@ Prerequisites: Docker, JDK 25 + Maven 3.9 (core-api), Python 3.12 + [uv](https:/
 cp .env.example .env                              # local-only values
 docker compose --profile infra up -d --wait       # PostgreSQL + pgvector, Redis, Keycloak, S3, SQS
 infra/docker/smoke-test.sh                        # optional: verifies every infrastructure service
+# optional telemetry stack (Grafana, Prometheus, Tempo): see docs/architecture/observability.md
+docker compose --profile infra --profile observability up -d --wait
 ```
 
 Then run each service as described in [`core-api/README.md`](core-api/README.md) and [`ai-service/README.md`](ai-service/README.md).
@@ -44,6 +46,7 @@ Then run each service as described in [`core-api/README.md`](core-api/README.md)
 | PostgreSQL | localhost:5432 (db `hip`) |
 | S3 (S3Mock) | http://localhost:9090 |
 | SQS (ElasticMQ) | http://localhost:9324 |
+| Grafana (profile `observability`) | http://localhost:3000 |
 
 ## Repository layout
 
@@ -58,7 +61,7 @@ contracts/
 core-api/              Java service: Spring Boot modular monolith
 ai-service/            Python service: FastAPI, Alembic
 synthetic-data/        Deterministic synthetic lab report PDFs with ground truth (32 fixtures, 4 layouts)
-infra/                 Compose support files (Postgres init, Keycloak realm, SQS queues), smoke test
+infra/                 Compose support files (Postgres init, Keycloak realm, SQS queues, observability stack), smoke tests
 ```
 
 ## Roadmap

@@ -8,6 +8,7 @@
 | [`validate_ddl.sql`](validate_ddl.sql), [`validate_ddl.sh`](validate_ddl.sh) | Assertions: invariants, dedupe, privilege separation, RLS, index usage |
 | [`../../contracts/core-api.openapi.yaml`](../../contracts/core-api.openapi.yaml) | Public API design (OpenAPI 3.1) |
 | [`../../contracts/events/`](../../contracts/events/) | Queue message contracts (JSON Schema) |
+| [`observability.md`](observability.md) | Metrics, traces, local telemetry stack and privacy rules for telemetry |
 | [`../adr/`](../adr/) | Architecture decisions |
 | [`../security/`](../security/) | Threat model and privacy requirements map |
 

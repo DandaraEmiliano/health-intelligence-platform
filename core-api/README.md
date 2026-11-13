@@ -18,6 +18,7 @@ mvn spring-boot:run
 
 - Readiness: http://localhost:8080/actuator/health/readiness
 - Swagger UI (local only): http://localhost:8080/swagger-ui.html
+- Metrics: http://localhost:8080/actuator/prometheus. Traces: set `MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT=http://localhost:4318/v1/traces` (see `docs/architecture/observability.md`).
 - Every `/api/**` request needs a Keycloak access token (realm `hip`, audience `core-api`).
 
 Get a token for a synthetic user (local realm only):

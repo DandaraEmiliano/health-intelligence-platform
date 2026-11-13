@@ -25,6 +25,11 @@ uv run uvicorn app.main:app --port 8081
 
 Environment variables with the `AI_` prefix (`AI_DB_HOST`, `AI_DB_PORT`, `AI_DB_NAME`), plus `AI_APP_PASSWORD` and `AI_OWNER_PASSWORD`. No secrets in code (ADR 0008).
 
+## Observability
+
+- Prometheus metrics at `/metrics` (request count and latency per route template).
+- Traces over OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (for example `http://localhost:4318`). See `docs/architecture/observability.md`.
+
 ## Patient isolation
 
 Every query on patient data runs inside `app.db.patient_scope(engine, patient_id)`, which sets `app.patient_id` with transaction scope. Row-level security on `ai.document_chunk` fails closed without it (ADR 0011).

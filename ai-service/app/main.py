@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 
 from app import health
+from app.observability import setup_metrics, setup_tracing
 
 
 def create_app() -> FastAPI:
@@ -13,6 +14,8 @@ def create_app() -> FastAPI:
         redoc_url=None,
     )
     app.include_router(health.router)
+    setup_metrics(app)
+    setup_tracing(app)
     return app
 
 

@@ -90,6 +90,23 @@ class CoreApplicationIntegrationTests {
     }
 
     @Test
+    void corsPreflightAllowsTheWebClientOrigin() throws Exception {
+        HttpResponse<String> response = preflight("http://localhost:5173");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.headers().firstValue("Access-Control-Allow-Origin")).hasValue("http://localhost:5173");
+        assertThat(response.headers().firstValue("Access-Control-Allow-Credentials")).isEmpty();
+    }
+
+    @Test
+    void corsPreflightRejectsUnknownOrigins() throws Exception {
+        HttpResponse<String> response = preflight("https://evil.example");
+
+        assertThat(response.statusCode()).isEqualTo(403);
+        assertThat(response.headers().firstValue("Access-Control-Allow-Origin")).isEmpty();
+    }
+
+    @Test
     void prometheusMetricsAreExposed() throws Exception {
         get("/actuator/health/readiness"); // ensure at least one recorded HTTP request
 
@@ -163,6 +180,16 @@ class CoreApplicationIntegrationTests {
 
     private HttpResponse<String> get(String path) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path)).GET().build();
+        return http.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> preflight(String origin) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/v1/patients/me"))
+                .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
+                .header("Origin", origin)
+                .header("Access-Control-Request-Method", "GET")
+                .header("Access-Control-Request-Headers", "authorization")
+                .build();
         return http.send(request, HttpResponse.BodyHandlers.ofString());
     }
 

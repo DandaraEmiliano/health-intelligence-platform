@@ -26,7 +26,7 @@ See [`docs/adr/`](docs/adr/) for the reasoning behind each decision.
 
 ## Getting started
 
-Prerequisites: Docker, JDK 25 + Maven 3.9 (core-api), Python 3.12 + [uv](https://docs.astral.sh/uv/) (ai-service).
+Prerequisites: Docker, JDK 25 + Maven 3.9 (core-api), Python 3.12 + [uv](https://docs.astral.sh/uv/) (ai-service), Node.js 22+ (web).
 
 ```bash
 cp .env.example .env                              # local-only values
@@ -36,10 +36,11 @@ infra/docker/smoke-test.sh                        # optional: verifies every inf
 docker compose --profile infra --profile observability up -d --wait
 ```
 
-Then run each service as described in [`core-api/README.md`](core-api/README.md) and [`ai-service/README.md`](ai-service/README.md).
+Then run each service as described in [`core-api/README.md`](core-api/README.md), [`ai-service/README.md`](ai-service/README.md) and [`web/README.md`](web/README.md).
 
 | Service | Local URL |
 | --- | --- |
+| web | http://localhost:5173 |
 | core-api | http://localhost:8080 |
 | ai-service | http://localhost:8081 |
 | Keycloak (realm `hip`) | http://localhost:8180 |
@@ -60,6 +61,7 @@ contracts/
   events/              JSON Schemas for queue messages between core-api and ai-service
 core-api/              Java service: Spring Boot modular monolith
 ai-service/            Python service: FastAPI, Alembic
+web/                   Patient web app: React, TypeScript, Vite
 synthetic-data/        Deterministic synthetic lab report PDFs with ground truth (32 fixtures, 4 layouts)
 infra/                 Compose support files (Postgres init, Keycloak realm, SQS queues, observability stack), smoke tests
 ```

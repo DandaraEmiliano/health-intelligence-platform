@@ -3,10 +3,12 @@ package dev.healthintelligence.core;
 import java.util.Collection;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,6 +17,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * HTTP security for the public API (ADR 0002, ADR 0009).
@@ -32,6 +37,7 @@ class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // stateless bearer-token API, no cookies
+                .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
@@ -43,6 +49,26 @@ class SecurityConfiguration {
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
+    }
+
+    /**
+     * CORS for the browser client (ADR 0013). Only the configured origins may call the API; there are
+     * no cookies, so credentials are not allowed.
+     */
+    @Bean
+    CorsConfigurationSource corsConfigurationSource(
+            @Value("${hip.cors.allowed-origins:http://localhost:5173}") List<String> allowedOrigins) {
+        CorsConfiguration cors = new CorsConfiguration();
+        cors.setAllowedOrigins(allowedOrigins);
+        cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        cors.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key", "If-Match"));
+        cors.setExposedHeaders(List.of("ETag", "Location", "Retry-After"));
+        cors.setAllowCredentials(false);
+        cors.setMaxAge(3600L);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", cors);
+        source.registerCorsConfiguration("/actuator/health/**", cors);
+        return source;
     }
 
     /** Maps the realm roles claim ({@code roles: ["PATIENT"]}) to {@code ROLE_PATIENT} authorities. */

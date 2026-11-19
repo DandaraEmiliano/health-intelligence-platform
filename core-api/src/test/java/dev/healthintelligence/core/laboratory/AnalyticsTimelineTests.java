@@ -71,7 +71,7 @@ class AnalyticsTimelineTests extends ReportTestSupport {
         assertThat(point.get("flag").get("source").stringValue()).isEqualTo("LABORATORY");
 
         JsonNode overview = items("/api/v1/health-analytics/analytes");
-        assertThat(overview.valueStream().map(i -> i.get("analyte").get("code").stringValue())).contains("CHOL_TOTAL", "GLUCOSE", "TSH");
+        assertThat(overview.valueStream().map(i -> i.get("analyte").get("code").stringValue())).contains("CHOL_TOTAL", "GLUCOSE", "WBC");
 
         JsonNode report = json.readTree(api().get("/api/v1/laboratory-reports/" + reportId, token).body());
         assertThat(report.get("results").get(0).get("analyte").get("code").stringValue()).isEqualTo("CHOL_TOTAL");

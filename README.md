@@ -2,7 +2,7 @@
 
 A healthcare platform that turns fragmented laboratory reports (PDF) into a structured, patient-verified health history, with an AI assistant that explains results using only the patient's own verified data.
 
-> **Status:** Phase 3 — Project Foundation (in progress).
+> **Status:** Phase 4 — Core Backend (in progress). Phase 3 — Project Foundation is done.
 >
 > **Data policy:** this repository uses **synthetic data only**. Never commit real patient data, real lab reports or credentials.
 
@@ -85,8 +85,8 @@ infra/                 Compose support files (Postgres init, Keycloak realm, SQS
 | --- | --- | --- |
 | 1. Product Discovery | MVP scope, requirements, user journeys, backlog | Approved |
 | 2. Architecture | ADRs, contracts, DDL v1, OpenAPI draft, threat model | Done |
-| 3. Project Foundation | Compose, service skeletons, CI, synthetic dataset | In progress |
-| 4. Core Backend | Identity, patient, documents, laboratory results, timeline, audit | Planned |
+| 3. Project Foundation | Compose, service skeletons, CI, synthetic dataset, web skeleton, observability | Done |
+| 4. Core Backend | Identity, patient, documents, laboratory results, timeline, audit | In progress |
 | 5. AI Engineering | Extraction, RAG, assistant, guardrails, evaluation | Planned |
 | 6. Analytics and Notifications | Trends, comparisons, in-app notifications | Planned |
 | 7. Production Readiness | AWS (Terraform), CD, performance, security review | Planned |

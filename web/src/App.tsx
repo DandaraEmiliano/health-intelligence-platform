@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useAuth } from "react-oidc-context";
 import { NavLink, Route, Routes } from "react-router";
 
+import { problemCode } from "./api/http";
 import { problemMessage } from "./api/messages";
 import { useConsents, usePatient } from "./api/queries";
 import { DocumentsPage } from "./documents/DocumentsPage";
@@ -24,6 +25,19 @@ function NotFound() {
   );
 }
 
+function AccountBeingDeleted() {
+  const auth = useAuth();
+  return (
+    <main className="onboarding">
+      <div className="card stack center">
+        <h1>Sua conta está sendo excluída</h1>
+        <p className="muted">Recebemos seu pedido. Seus dados são apagados em alguns minutos e este login deixa de funcionar.</p>
+        <button onClick={() => void auth.signoutRedirect()}>Sair</button>
+      </div>
+    </main>
+  );
+}
+
 export function RequireAuth({ children }: { children: ReactNode }) {
   const auth = useAuth();
   if (auth.isLoading) return <p className="loading">Carregando…</p>;
@@ -36,6 +50,7 @@ function RequireOnboarding({ children }: { children: ReactNode }) {
   const consents = useConsents();
   const patient = usePatient();
   if (consents.isPending || patient.isPending) return <p className="loading">Carregando…</p>;
+  if (problemCode(consents.error ?? patient.error) === "ACCOUNT_NOT_ACTIVE") return <AccountBeingDeleted />;
   if (consents.isError || patient.isError) {
     return (
       <div className="onboarding">

@@ -11,6 +11,10 @@ interface OutboxEventRepository extends Repository<OutboxEvent, UUID> {
 
     OutboxEvent save(OutboxEvent event);
 
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("delete from OutboxEvent e where e.aggregateId in :aggregateIds and e.publishedAt is null")
+    int deleteUnpublished(@Param("aggregateIds") java.util.Collection<UUID> aggregateIds);
+
     /**
      * Oldest unpublished events, locked so that several core-api instances never publish the same
      * row at once (SKIP LOCKED lets each instance take a different batch).

@@ -43,6 +43,11 @@ class DocumentStorage {
                 .contentLength((long) content.length), RequestBody.fromBytes(content));
     }
 
+    /** Deleting a key that does not exist succeeds, so this is safe to repeat. */
+    void delete(String key) {
+        s3.deleteObject(request -> request.bucket(bucket).key(key));
+    }
+
     /** Best effort: a leftover object has an opaque key and no row pointing at it. */
     void deleteQuietly(String key) {
         try {

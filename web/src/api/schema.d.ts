@@ -550,7 +550,10 @@ export interface paths {
         post?: never;
         /**
          * Request deletion of the account and all associated data
-         * @description Access is blocked immediately; data, files and embeddings are purged by a scheduled, audited job.
+         * @description Access is blocked immediately: every other call then returns 403 `ACCOUNT_NOT_ACTIVE`.
+         *     A scheduled, audited job purges files, database rows and the identity provider user
+         *     after a delay longer than the access token lifetime (embeddings too, once they exist).
+         *     Repeating the request returns 202 and changes nothing. Audit events are kept.
          */
         delete: operations["requestAccountDeletion"];
         options?: never;
@@ -2378,7 +2381,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Deletion requested */
+            /** @description Deletion requested (or already requested) */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -2386,6 +2389,7 @@ export interface operations {
                 content?: never;
             };
             401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
 }

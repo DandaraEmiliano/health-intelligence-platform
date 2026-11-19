@@ -4,6 +4,7 @@ import { useState } from "react";
 import { problemMessage } from "../api/messages";
 import { useConsents, usePatient, useRecordConsents, useUpdatePatient } from "../api/queries";
 import { navItem } from "../navigation";
+import { DeleteAccount } from "../profile/DeleteAccount";
 import { ProfileForm } from "../profile/ProfileForm";
 import { sexLabel } from "../profile/options";
 import { toMergePatch, valuesOf } from "../profile/values";
@@ -116,6 +117,8 @@ export function Profile() {
           )}
         </div>
       </div>
+
+      <DeleteAccount />
     </section>
   );
 }

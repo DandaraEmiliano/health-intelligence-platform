@@ -54,6 +54,20 @@ spring:
           audiences: core-api
 
 hip:
+  accounts:
+    purge:
+      # Longer than the access token lifetime (5 minutes), see AccountPurgeJob. The retention
+      # period itself is a legal decision (docs/security/privacy-requirements-map.md).
+      after: ${ACCOUNT_PURGE_AFTER:10m}
+      interval: 1m
+      batch-size: 10
+  identity:
+    admin:
+      enabled: ${KEYCLOAK_ADMIN_ENABLED:true}
+      base-url: ${KEYCLOAK_BASE_URL:http://localhost:8180}
+      realm: hip
+      client-id: core-api-admin
+      client-secret: ${KC_CORE_API_ADMIN_SECRET:}
   aws:
     region: ${AWS_REGION:sa-east-1}
     # Local emulators (ADR 0012). Leave empty in AWS to use the real endpoints.

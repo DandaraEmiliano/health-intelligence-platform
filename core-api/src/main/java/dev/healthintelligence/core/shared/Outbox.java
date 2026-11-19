@@ -37,4 +37,10 @@ public class Outbox {
         events.save(new OutboxEvent(messageId, aggregateType, aggregateId, eventType, destination,
                 json.writeValueAsString(payload), Instant.now(clock).truncatedTo(ChronoUnit.MICROS)));
     }
+
+    /** Drops messages not sent yet about these aggregates (their data is being purged). */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public int discardUnpublished(java.util.Collection<UUID> aggregateIds) {
+        return aggregateIds.isEmpty() ? 0 : events.deleteUnpublished(aggregateIds);
+    }
 }

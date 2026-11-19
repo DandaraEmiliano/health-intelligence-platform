@@ -217,3 +217,10 @@ a.stat:hover { outline: 2px solid var(--tone-400); }
 .record.doc { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
 .record.doc .sub { color: var(--muted); }
 .record.doc .pill { background: var(--tone-50); }
+
+/* Danger zone */
+.danger-zone { border-color: #f0c4c0; }
+.danger-zone h2 { color: var(--danger); display: flex; gap: 0.4rem; align-items: center; }
+.consequences { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.35rem; color: var(--text); font-size: 0.92rem; }
+button.danger.solid { background: var(--danger); border-color: var(--danger); color: #fff; }
+button.danger.solid:hover { background: #8f1e18; }

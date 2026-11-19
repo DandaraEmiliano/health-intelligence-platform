@@ -221,6 +221,31 @@ describe("signed in", () => {
     expect(await screen.findByRole("button", { name: "Ligar" })).toBeInTheDocument();
   });
 
+  it("deletes the account only after the typed confirmation, then signs out", async () => {
+    renderApp("/perfil");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Quero excluir minha conta" }));
+    const form = screen.getByRole("form", { name: "Excluir minha conta" });
+    await userEvent.click(within(form).getByRole("button", { name: "Excluir minha conta" }));
+    expect(within(form).getByText("Digite EXCLUIR para confirmar.")).toBeInTheDocument();
+    expect(writes().some((call) => call.path === "/api/v1/accounts/me")).toBe(false);
+
+    await userEvent.type(within(form).getByLabelText(/Para confirmar/), "excluir");
+    await userEvent.click(within(form).getByRole("button", { name: "Excluir minha conta" }));
+
+    await waitFor(() => expect(authState.signoutRedirect).toHaveBeenCalled());
+    expect(writes().some((call) => call.method === "DELETE" && call.path === "/api/v1/accounts/me")).toBe(true);
+  });
+
+  it("explains when the account is being deleted", async () => {
+    vi.stubGlobal("fetch", async () =>
+      new Response(JSON.stringify({ type: "about:blank", title: "Forbidden", status: 403, code: "ACCOUNT_NOT_ACTIVE", correlationId: "c" }), { status: 403 }));
+    renderApp();
+
+    expect(await screen.findByRole("heading", { name: "Sua conta está sendo excluída" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Principal" })).not.toBeInTheDocument();
+  });
+
   it("shows what a planned feature will do, without fake data", async () => {
     renderApp("/exames");
 

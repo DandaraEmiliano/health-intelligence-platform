@@ -85,3 +85,8 @@ export const documentApi = {
   contentLink: (id: string) =>
     apiRequest<{ url: string; expiresAt: string }>(`/api/v1/documents/${id}/content`).then((r) => r.data),
 };
+
+export const accountApi = {
+  /** 202: access is blocked now; everything is purged by a scheduled job. */
+  requestDeletion: () => apiRequest<void>("/api/v1/accounts/me", { method: "DELETE" }),
+};

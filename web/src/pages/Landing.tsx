@@ -1,3 +1,4 @@
+import { IconClipboardCheck, IconHeart, IconLock, IconMessageCircle } from "@tabler/icons-react";
 import { useAuth } from "react-oidc-context";
 
 export function Landing() {
@@ -5,27 +6,20 @@ export function Landing() {
 
   return (
     <main className="landing">
+      <span className="bubble solid large tone-pink" aria-hidden="true"><IconHeart size={32} stroke={1.8} /></span>
       <h1>Health Intelligence Platform</h1>
-      <p className="lead">
-        Seus exames laboratoriais organizados, verificados por você e explicados em linguagem simples.
-      </p>
+      <p className="lead">Seus exames laboratoriais organizados, verificados por você e explicados em linguagem simples.</p>
       <ul className="principles">
-        <li>Você revisa cada resultado extraído antes que ele seja usado.</li>
-        <li>As explicações citam a fonte e não substituem a avaliação de um profissional de saúde.</li>
-        <li>Seus dados nunca são compartilhados com outros pacientes.</li>
+        <li className="tone-amber"><IconClipboardCheck size={20} aria-hidden="true" /> Você revisa cada resultado extraído antes que ele seja usado.</li>
+        <li className="tone-lilac"><IconMessageCircle size={20} aria-hidden="true" /> As explicações citam a fonte e não substituem a avaliação de um profissional de saúde.</li>
+        <li className="tone-teal"><IconLock size={20} aria-hidden="true" /> Seus dados nunca são compartilhados com outros pacientes.</li>
       </ul>
       {auth.error && (
-        <p role="alert" className="error">
-          Não foi possível conectar ao serviço de login. Tente novamente em instantes.
-        </p>
+        <p role="alert" className="error-box">Não foi possível conectar ao serviço de login. Tente novamente em instantes.</p>
       )}
       <div className="actions">
-        <button type="button" className="primary" onClick={() => void auth.signinRedirect()}>
-          Entrar
-        </button>
-        <button type="button" onClick={() => void auth.signinRedirect({ prompt: "create" })}>
-          Criar conta
-        </button>
+        <button type="button" className="primary" onClick={() => void auth.signinRedirect()}>Entrar</button>
+        <button type="button" onClick={() => void auth.signinRedirect({ prompt: "create" })}>Criar conta</button>
       </div>
     </main>
   );

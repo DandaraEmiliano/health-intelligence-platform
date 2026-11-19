@@ -20,6 +20,20 @@ Sign in with a synthetic user (`patient.a@example.test`, password `KC_SYNTHETIC_
 | `VITE_OIDC_CLIENT_ID` | `hip-web` |
 | `VITE_API_BASE_URL` | `http://localhost:8080` |
 
+## What is built
+
+| Screen | Route | Backend |
+| --- | --- | --- |
+| Onboarding: terms and privacy, AI question, profile | shown until done | `/consents`, `/patients` |
+| Home: greeting, real counts, AI status, server status | `/` | profile, consents, health records |
+| Minha saúde: allergies, medications, conditions (add, edit with `If-Match`, delete with confirmation) | `/minha-saude?aba=…` | `/patients/me/{allergies,medications,conditions}` |
+| Meu perfil: data (JSON Merge Patch) and consents (AI on/off) | `/perfil` | `/patients/me`, `/consents` |
+| Documentos, Exames, Linha do tempo, Assistente | planned | show what they will do, never fake data |
+
+Visual language (`src/styles.css`): light and colourful. Each area owns one hue (`tone-*` classes), repeated in its menu icon, page header and cards. Coral and amber are kept for what needs attention (severe allergy, moderate allergy), lilac is the action colour. Icons come from `@tabler/icons-react`.
+
+Code layout: `api/` (HTTP helper with ETags and Problem Details, React Query hooks, Portuguese error messages), `health/` (record kinds as data, one generic form and page), `profile/`, `pages/`, `ui/`. Tests run against an in-memory fake of core-api (`src/test/fakeApi.ts`) that follows the contract: ETags, 412 on stale `If-Match`, 404 before onboarding.
+
 ## Scripts
 
 | Script | Purpose |

@@ -35,9 +35,11 @@ class ReviewService {
     private final LaboratoryReports read;
     private final AuditLog auditLog;
     private final Clock clock;
+    private final AnalyteCatalog catalog;
 
     ReviewService(LaboratoryReportRepository reports, LaboratoryResultRepository results, LaboratoryReports read,
-                  AuditLog auditLog, Clock clock) {
+                  AuditLog auditLog, Clock clock, AnalyteCatalog catalog) {
+        this.catalog = catalog;
         this.reports = reports;
         this.results = results;
         this.read = read;
@@ -68,6 +70,9 @@ class ReviewService {
                 case REJECT -> { result.reject(now); rejected++; }
                 case CORRECT -> {
                     result.correct(corrected(result.values(), decision.correction()), now);
+                    if (decision.correction().analyteId() != null) {
+                        result.assignAnalyte(decision.correction().analyteId());
+                    }
                     corrected++;
                     auditLog.record(AuditRecord.userSuccess(scope.user().value(), "LABORATORY_RESULT_CORRECTED",
                             "LABORATORY_RESULT", result.id(), scope.patient().value(), Map.of("reportId", report.id().toString())));
@@ -119,6 +124,9 @@ class ReviewService {
             }
             if (correcting && decision.correction() != null) {
                 validateCorrection(at + ".correction", decision.correction(), errors);
+                if (decision.correction().analyteId() != null && catalog.find(decision.correction().analyteId()).isEmpty()) {
+                    errors.add(new FieldViolation(at + ".correction.analyteId", "UNKNOWN_ANALYTE", "analyte is not in the catalogue"));
+                }
             }
         }
         if (request.collectedAt() != null && request.collectedAt().isAfter(LocalDate.now(clock))) {
@@ -140,9 +148,6 @@ class ReviewService {
         ReviewRequest.Range r = correction.referenceRange();
         if (r.low() != null && r.high() != null && new BigDecimal(r.low()).compareTo(new BigDecimal(r.high())) > 0) {
             errors.add(new FieldViolation(at + ".referenceRange", "INVALID_PERIOD", "low must not be above high"));
-        }
-        if (correction.analyteId() != null) {
-            errors.add(new FieldViolation(at + ".analyteId", "NOT_SUPPORTED", "analyte catalogue not available yet"));
         }
     }
 

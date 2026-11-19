@@ -15,6 +15,22 @@ interface LaboratoryReportRepository extends Repository<LaboratoryReport, UUID> 
 
     LaboratoryReport save(LaboratoryReport report);
 
+    @Query("select r from LaboratoryReport r where r.id in :ids and r.patientId = :patientId")
+    List<LaboratoryReport> findByIds(@Param("ids") java.util.Collection<UUID> ids, @Param("patientId") PatientId patientId);
+
+    /** Finished reviews for the timeline, newest collection first, keyset on (collected_at, id). */
+    @Query("""
+            select r from LaboratoryReport r
+            where r.patientId = :patientId and r.status = 'VERIFIED' and r.collectedAt is not null
+              and (cast(:afterDate as LocalDate) is null or r.collectedAt < :afterDate
+                   or (r.collectedAt = :afterDate and r.id < :afterId))
+              and (cast(:fromDate as LocalDate) is null or r.collectedAt >= :fromDate)
+              and (cast(:toDate as LocalDate) is null or r.collectedAt <= :toDate)
+            order by r.collectedAt desc, r.id desc""")
+    List<LaboratoryReport> verifiedPage(@Param("patientId") PatientId patientId, @Param("afterDate") LocalDate afterDate,
+                                        @Param("afterId") UUID afterId, @Param("fromDate") LocalDate fromDate,
+                                        @Param("toDate") LocalDate toDate, Limit limit);
+
     @Query("select r from LaboratoryReport r where r.id = :id and r.patientId = :patientId and r.status <> 'SUPERSEDED'")
     Optional<LaboratoryReport> findVisible(@Param("id") UUID id, @Param("patientId") PatientId patientId);
 

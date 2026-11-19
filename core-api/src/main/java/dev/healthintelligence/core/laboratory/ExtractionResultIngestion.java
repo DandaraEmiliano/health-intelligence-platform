@@ -35,9 +35,12 @@ class ExtractionResultIngestion {
     private final LaboratoryResultRepository results;
     private final AuditLog auditLog;
     private final JsonMapper json;
+    private final AnalyteCatalog catalog;
 
     ExtractionResultIngestion(ExtractionJobs jobs, LaboratoryReportRepository reports,
-                              LaboratoryResultRepository results, AuditLog auditLog, JsonMapper json) {
+                              LaboratoryResultRepository results, AuditLog auditLog, JsonMapper json,
+                              AnalyteCatalog catalog) {
+        this.catalog = catalog;
         this.jobs = jobs;
         this.reports = reports;
         this.results = results;
@@ -99,7 +102,8 @@ class ExtractionResultIngestion {
         }
         String unit = text(result.get("unit").get("raw"));
         String kind = measurement.get("kind").stringValue();
-        return new LaboratoryResult(Ids.newId(), reportId, patient, collectedAt, new ExtractedValues(
+        UUID analyteId = catalog.recognise(result.get("rawName").stringValue()).map(Analyte::id).orElse(null);
+        return new LaboratoryResult(Ids.newId(), reportId, patient, collectedAt, analyteId, new ExtractedValues(
                 result.get("sequence").intValue(),
                 result.get("rawName").stringValue(),
                 kind,

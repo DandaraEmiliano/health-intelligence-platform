@@ -710,6 +710,41 @@ paths:
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
+  /api/v1/health-analytics/analytes:
+    get:
+      tags: [Analytics]
+      operationId: listTrackedAnalytes
+      summary: Analytes with verified results, each with its latest value and recent points (same unit)
+      responses:
+        '200':
+          description: Tracked analytes, by category then name
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [analyte, latest, count, recent]
+                      properties:
+                        analyte: { $ref: '#/components/schemas/Analyte' }
+                        latest: { type: object, description: Latest verified point (same shape as a series point) }
+                        count: { type: integer }
+                        recent:
+                          type: array
+                          maxItems: 12
+                          description: Up to 12 most recent numeric points in the latest point's unit, oldest first.
+                          items:
+                            type: object
+                            required: [collectedAt, value]
+                            properties:
+                              collectedAt: { type: string, format: date }
+                              value: { $ref: '#/components/schemas/Decimal' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
   /api/v1/health-analytics/analytes/{analyteId}/series:
     parameters:
       - { name: analyteId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -1401,7 +1436,8 @@ components:
         occurredOn: { type: string, format: date }
         title: { type: string }
         status: { type: string }
-        outOfRangeCount: { type: integer }
+        resultCount: { type: integer, description: Kept (verified or corrected) results, for reports. }
+        outOfRangeCount: { type: integer, description: Kept results flagged by the laboratory or by the computed flag. }
 
     TimelinePage:
       type: object

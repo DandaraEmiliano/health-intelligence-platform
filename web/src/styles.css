@@ -246,3 +246,32 @@ a.report-link:hover { outline: 2px solid var(--tone-400); }
 .correction { border-top: 1px dashed var(--border-strong); padding-top: 0.7rem; }
 .review-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; position: sticky; bottom: 1rem; }
 @media (max-width: 760px) { .review-footer { bottom: 5.5rem; } }
+
+/* Timeline */
+.analyte-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.analyte-card { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; padding: 0.8rem 0.9rem; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); color: var(--text); text-decoration: none; }
+.analyte-card:hover { border-color: var(--tone-400); }
+.analyte-card .title { font-weight: 600; }
+.analyte-card .value { font-size: 1.3rem; font-weight: 600; color: var(--tone-800); }
+.analyte-card .unit { font-size: 0.85rem; font-weight: 400; color: var(--muted); }
+.analyte-card .sub { font-size: 0.8rem; color: var(--muted); }
+.sparkline path { fill: none; stroke: var(--tone-400); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.history { list-style: none; margin: 0; padding: 0 0 0 0.6rem; border-left: 2px solid var(--teal-50); display: grid; gap: 0.5rem; }
+.history li { display: grid; gap: 0.2rem; padding-left: 0.8rem; position: relative; }
+.history li::before { content: ""; position: absolute; left: -0.45rem; top: 0.4rem; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--teal-400); }
+.history .when { font-size: 0.8rem; color: var(--muted); }
+.history-item { display: flex; gap: 0.5rem; align-items: center; padding: 0.55rem 0.8rem; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); color: var(--text); text-decoration: none; font-size: 0.92rem; }
+.history-item:hover { border-color: var(--teal-400); }
+.chart { margin: 0; display: grid; gap: 0.3rem; }
+.chart svg { width: 100%; height: auto; }
+.chart .grid { stroke: var(--border); }
+.chart .axis { font-size: 11px; fill: var(--muted); }
+.chart .band { fill: var(--teal-50); }
+.chart .line { fill: none; stroke: var(--teal-400); stroke-width: 2.5; }
+.chart .dot { fill: var(--teal-600); stroke: var(--surface); stroke-width: 2; }
+.chart .dot.flagged { fill: var(--coral-400); }
+.chart .dot.censored { fill: var(--surface); stroke: var(--teal-600); }
+table.points { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+table.points th { text-align: left; color: var(--muted); font-weight: 500; padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--border); }
+table.points td { padding: 0.4rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+@media (max-width: 760px) { table.points th:nth-child(5), table.points td:nth-child(5) { display: none; } }

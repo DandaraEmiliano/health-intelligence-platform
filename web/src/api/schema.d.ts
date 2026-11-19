@@ -415,6 +415,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/health-analytics/analytes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Analytes with verified results, each with its latest value and recent points (same unit) */
+        get: operations["listTrackedAnalytes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health-analytics/analytes/{analyteId}/series": {
         parameters: {
             query?: never;
@@ -867,6 +884,9 @@ export interface components {
             occurredOn: string;
             title?: string;
             status?: string;
+            /** @description Kept (verified or corrected) results */
+            resultCount?: number;
+            /** @description Kept results flagged by the laboratory or by the computed flag. */
             outOfRangeCount?: number;
         };
         TimelinePage: {
@@ -2144,6 +2164,40 @@ export interface operations {
                 };
             };
             400: components["responses"]["ValidationError"];
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    listTrackedAnalytes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tracked analytes, by category then name */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            analyte: components["schemas"]["Analyte"];
+                            /** @description Latest verified point (same shape as a series point) */
+                            latest: Record<string, never>;
+                            count: number;
+                            /** @description Up to 12 most recent numeric points in the latest point's unit, oldest first. */
+                            recent: {
+                                /** Format: date */
+                                collectedAt: string;
+                                value: components["schemas"]["Decimal"];
+                            }[];
+                        }[];
+                    };
+                };
+            };
             401: components["responses"]["Unauthorized"];
         };
     };

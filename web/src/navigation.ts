@@ -43,8 +43,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     label: "Linha do tempo",
     tone: "teal",
     icon: IconTimeline,
-    plannedPhase: 4,
-    description: "Veja seus exames em ordem cronológica e compare datas.",
+    description: "Como seus exames verificados mudaram ao longo do tempo.",
   },
   {
     path: "/minha-saude",

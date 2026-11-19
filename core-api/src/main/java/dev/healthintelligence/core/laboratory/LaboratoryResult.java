@@ -111,9 +111,10 @@ class LaboratoryResult {
     protected LaboratoryResult() {
     }
 
-    LaboratoryResult(UUID id, UUID reportId, PatientId patientId, LocalDate collectedAt, ExtractedValues values,
-                     String extractedSnapshot, String validationWarnings) {
+    LaboratoryResult(UUID id, UUID reportId, PatientId patientId, LocalDate collectedAt, UUID analyteId,
+                     ExtractedValues values, String extractedSnapshot, String validationWarnings) {
         this.id = id;
+        this.analyteId = analyteId;
         this.reportId = reportId;
         this.patientId = patientId;
         this.collectedAt = collectedAt;
@@ -166,6 +167,14 @@ class LaboratoryResult {
         computedFlag = corrected.computedFlag();
         reviewStatus = "CORRECTED";
         reviewedAt = at;
+    }
+
+    void assignAnalyte(UUID analyte) {
+        analyteId = analyte;
+    }
+
+    UUID analyteId() {
+        return analyteId;
     }
 
     void moveCollectedAt(LocalDate date) {

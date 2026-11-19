@@ -17,6 +17,8 @@ import { Onboarding } from "./pages/Onboarding";
 import { pendingSteps } from "./pages/onboardingSteps";
 import { Profile } from "./pages/Profile";
 import { Shell } from "./Shell";
+import { AnalyteDetail } from "./timeline/AnalyteDetail";
+import { TimelinePage } from "./timeline/TimelinePage";
 
 function NotFound() {
   return (
@@ -80,6 +82,8 @@ export function App() {
               <Route path="/documentos" element={<DocumentsPage />} />
               <Route path="/exames" element={<ExamsPage />} />
               <Route path="/exames/:reportId" element={<ReportReview />} />
+              <Route path="/linha-do-tempo" element={<TimelinePage />} />
+              <Route path="/linha-do-tempo/:analyteId" element={<AnalyteDetail />} />
               <Route path="/minha-saude" element={<HealthRecordsPage />} />
               <Route path="/perfil" element={<Profile />} />
               {NAV_ITEMS.filter((item) => item.plannedPhase).map((item) => (

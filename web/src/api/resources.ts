@@ -113,3 +113,55 @@ export const laboratoryApi = {
   pendingCount: () =>
     apiRequest<{ reports: number }>("/api/v1/laboratory-reports/pending-review/count").then((r) => r.data.reports),
 };
+
+export interface AnalyteInfo {
+  id: string;
+  code: string;
+  displayName: string;
+  category: string;
+}
+
+export interface SeriesPoint {
+  resultId: string;
+  reportId: string;
+  collectedAt: string;
+  value?: string;
+  comparator?: "<" | "<=" | ">" | ">=";
+  valueText?: string;
+  unit?: string | null;
+  referenceRange: { rawText: string | null; low: string | null; high: string | null; appliesTo: string | null };
+  flag?: { value: string; source: "LABORATORY" | "COMPUTED" };
+  laboratoryName?: string | null;
+}
+
+export interface TrackedAnalyte {
+  analyte: AnalyteInfo;
+  latest: SeriesPoint;
+  count: number;
+  recent: { collectedAt: string; value: string }[];
+}
+
+export interface AnalyteSeries {
+  analyte: AnalyteInfo;
+  series: { unit: string | null; points: SeriesPoint[] }[];
+}
+
+export interface TimelineItem {
+  type: "LABORATORY_REPORT" | "DOCUMENT";
+  id: string;
+  occurredOn: string;
+  title?: string;
+  status?: string;
+  resultCount?: number;
+  outOfRangeCount?: number;
+}
+
+export const analyticsApi = {
+  tracked: () => apiRequest<{ items: TrackedAnalyte[] }>("/api/v1/health-analytics/analytes").then((r) => r.data.items),
+  series: (analyteId: string) =>
+    apiRequest<AnalyteSeries>(`/api/v1/health-analytics/analytes/${analyteId}/series`).then((r) => r.data),
+  timeline: (cursor?: string) =>
+    apiRequest<{ items: TimelineItem[]; nextCursor: string | null }>(
+      `/api/v1/health-timeline?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    ).then((r) => r.data),
+};

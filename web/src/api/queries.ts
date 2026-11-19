@@ -5,6 +5,7 @@ import {
   consentApi,
   documentApi,
   laboratoryApi,
+  analyticsApi,
   healthRecordApi,
   patientApi,
   type ConsentType,
@@ -23,6 +24,9 @@ export const keys = {
   reports: ["laboratory-reports"] as const,
   report: (id: string) => ["laboratory-reports", id] as const,
   pendingReviews: ["laboratory-reports", "pending-count"] as const,
+  tracked: ["analytics", "tracked"] as const,
+  series: (id: string) => ["analytics", "series", id] as const,
+  timeline: ["timeline"] as const,
 };
 
 /** The profile with its ETag, or null when onboarding has not created it yet (404). */
@@ -146,10 +150,29 @@ export function useReview(id: string) {
       client.setQueryData(keys.report(id), result);
       void client.invalidateQueries({ queryKey: keys.reports, exact: true });
       void client.invalidateQueries({ queryKey: keys.pendingReviews });
+      void client.invalidateQueries({ queryKey: ["analytics"] });
+      void client.invalidateQueries({ queryKey: keys.timeline });
     },
     onError: (error) => {
       // Someone (another tab) changed the report: reload it so the patient sees the current state.
       if (problemStatus(error) === 412) void client.invalidateQueries({ queryKey: keys.report(id) });
     },
+  });
+}
+
+export function useTrackedAnalytes() {
+  return useQuery({ queryKey: keys.tracked, queryFn: analyticsApi.tracked });
+}
+
+export function useAnalyteSeries(analyteId: string) {
+  return useQuery({ queryKey: keys.series(analyteId), queryFn: () => analyticsApi.series(analyteId) });
+}
+
+export function useTimeline() {
+  return useInfiniteQuery({
+    queryKey: keys.timeline,
+    queryFn: ({ pageParam }) => analyticsApi.timeline(pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
 }

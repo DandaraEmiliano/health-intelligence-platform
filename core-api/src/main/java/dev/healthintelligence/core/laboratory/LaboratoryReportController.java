@@ -34,9 +34,11 @@ class LaboratoryReportController {
     private final LaboratoryReports reports;
     private final ReviewService review;
     private final JsonMapper json;
+    private final AnalyteCatalog catalog;
 
     LaboratoryReportController(CurrentPatient currentPatient, LaboratoryReports reports, ReviewService review,
-                               JsonMapper json) {
+                               JsonMapper json, AnalyteCatalog catalog) {
+        this.catalog = catalog;
         this.currentPatient = currentPatient;
         this.reports = reports;
         this.review = review;
@@ -90,7 +92,8 @@ class LaboratoryReportController {
                 : v.computedFlag() != null ? new Flag(v.computedFlag(), "COMPUTED") : null;
         JsonNode original = "CORRECTED".equals(result.reviewStatus())
                 ? json.readTree(result.extractedSnapshot()).get("measurement") : null;
-        return new Result(result.id(), report.id(), v.sequence(), null, v.rawName(),
+        AnalyteController.AnalyteView analyte = catalog.find(result.analyteId()).map(AnalyteController.AnalyteView::of).orElse(null);
+        return new Result(result.id(), report.id(), v.sequence(), analyte, v.rawName(),
                 new Measurement(v.valueKind(), v.valueRaw(), plain(v.valueNumeric()), v.valueComparator(), v.valueText()),
                 v.unitRaw(), new Range(v.refRangeText(), plain(v.refLow()), plain(v.refHigh()), v.refAppliesTo()),
                 flag, result.collectedAt(), result.reviewStatus(), original, json.readTree(result.validationWarnings()),
@@ -126,7 +129,7 @@ class LaboratoryReportController {
                   List<Result> results) {
     }
 
-    record Result(UUID id, UUID reportId, int sequence, Object analyte, String rawName, Measurement measurement,
+    record Result(UUID id, UUID reportId, int sequence, AnalyteController.AnalyteView analyte, String rawName, Measurement measurement,
                   String unit, Range referenceRange, Flag flag, LocalDate collectedAt, String reviewStatus,
                   JsonNode originalExtraction, JsonNode warnings, Source source) {
     }

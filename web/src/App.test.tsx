@@ -247,10 +247,10 @@ describe("signed in", () => {
   });
 
   it("shows what a planned feature will do, without fake data", async () => {
-    renderApp("/linha-do-tempo");
+    renderApp("/assistente");
 
-    expect(await screen.findByRole("heading", { name: "Linha do tempo" })).toBeInTheDocument();
-    expect(screen.getByText("Planejado para a Fase 4.")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Assistente" })).toBeInTheDocument();
+    expect(screen.getByText("Planejado para a Fase 5.")).toBeInTheDocument();
   });
 });
 

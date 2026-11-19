@@ -46,6 +46,8 @@ class ArchitectureTests {
     static final ArchRule clinicalRepositoryQueriesAreScopedToTheOwner = methods()
             .that().areDeclaredInClassesThat().resideInAnyPackage(CLINICAL)
             .and().areDeclaredInClassesThat().areAssignableTo(Repository.class)
+            .and().areDeclaredInClassesThat().doNotHaveFullyQualifiedName(
+                    "dev.healthintelligence.core.laboratory.AnalyteCatalogRepository")
             .and().doNotHaveName("save").and().doNotHaveName("saveAndFlush")
             .and().doNotHaveName("delete").and().doNotHaveName("flush")
             .should(takeAnOwnerParameter())

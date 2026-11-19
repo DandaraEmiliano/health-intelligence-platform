@@ -1,7 +1,7 @@
 /**
  * Append-only audit trail of sensitive operations.
  *
- * <p>Implementation starts in Phase 4. See docs/adr/0001-modular-monolith-and-separate-ai-service.md.
+ * <p>Phase 4: {@link dev.healthintelligence.core.audit.AuditLog} writes the append-only trail in the caller's transaction.
  */
 @ApplicationModule(displayName = "Audit")
 package dev.healthintelligence.core.audit;

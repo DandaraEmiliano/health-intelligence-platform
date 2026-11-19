@@ -1,0 +1,86 @@
+package dev.healthintelligence.core;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.net.http.HttpResponse;
+
+import dev.healthintelligence.core.support.IntegrationTest;
+import dev.healthintelligence.core.support.TestTokens;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.databind.json.JsonMapper;
+
+/**
+ * ADR 0011 authorization suite: patient B can never read, list, modify or infer patient A's data.
+ * Every new patient-facing endpoint adds its case here. It blocks merges (core-api workflow).
+ */
+class PatientIsolationTests extends IntegrationTest {
+
+    @Autowired
+    TestTokens.Issuer tokens;
+
+    @Autowired
+    JsonMapper json;
+
+    String patientA;
+    String patientB;
+    String patientAId;
+
+    @BeforeEach
+    void twoPatients() {
+        patientA = tokens.newPatient();
+        patientB = tokens.newPatient();
+        HttpResponse<String> created = api().postJson("/api/v1/patients", patientA, """
+                {"fullName":"Paciente A","birthDate":"1980-05-05","heightCm":180}""");
+        assertThat(created.statusCode()).isEqualTo(201);
+        patientAId = json.readTree(created.body()).get("id").stringValue();
+        api().postJson("/api/v1/consents", patientA, """
+                {"type":"AI_PROCESSING","granted":true,"documentVersion":"ai-2026.1"}""");
+    }
+
+    @Test
+    void profileOfAnotherPatientIsNotVisible() {
+        HttpResponse<String> response = api().get("/api/v1/patients/me", patientB);
+
+        assertThat(response.statusCode()).isEqualTo(404);
+        assertThat(response.body()).doesNotContain(patientAId).doesNotContain("Paciente A");
+    }
+
+    @Test
+    void anotherPatientCannotModifyTheProfileEvenWithItsETag() {
+        HttpResponse<String> response = api().mergePatch("/api/v1/patients/me", patientB, "\"0\"",
+                "{\"fullName\":\"Invasor\"}");
+
+        assertThat(response.statusCode()).isEqualTo(404);
+        assertThat(json.readTree(api().get("/api/v1/patients/me", patientA).body()).get("fullName").stringValue())
+                .isEqualTo("Paciente A");
+    }
+
+    @Test
+    void eachPatientSeesOnlyTheirOwnProfile() {
+        api().postJson("/api/v1/patients", patientB, """
+                {"fullName":"Paciente B","birthDate":"1995-09-09"}""");
+
+        assertThat(json.readTree(api().get("/api/v1/patients/me", patientA).body()).get("fullName").stringValue())
+                .isEqualTo("Paciente A");
+        assertThat(json.readTree(api().get("/api/v1/patients/me", patientB).body()).get("fullName").stringValue())
+                .isEqualTo("Paciente B");
+    }
+
+    @Test
+    void consentsOfAnotherPatientAreNotVisible() {
+        HttpResponse<String> response = api().get("/api/v1/consents", patientB);
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(json.readTree(response.body()).get("items").isEmpty()).isTrue();
+    }
+
+    @Test
+    void patientIdInTheRequestBodyIsRejected() {
+        HttpResponse<String> response = api().postJson("/api/v1/patients", patientB, """
+                {"fullName":"B","birthDate":"1995-09-09","id":"%s"}""".formatted(patientAId));
+
+        assertThat(response.statusCode()).isEqualTo(400);
+    }
+}

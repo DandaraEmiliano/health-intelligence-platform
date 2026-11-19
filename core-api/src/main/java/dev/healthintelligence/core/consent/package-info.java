@@ -1,7 +1,7 @@
 /**
  * Versioned, append-only consent records and consent checks.
  *
- * <p>Implementation starts in Phase 4. See docs/adr/0001-modular-monolith-and-separate-ai-service.md.
+ * <p>Phase 4: {@code GET/POST /api/v1/consents}. Revoking {@code AI_PROCESSING} will trigger the purge of embeddings in Phase 5.
  */
 @ApplicationModule(displayName = "Consent")
 package dev.healthintelligence.core.consent;

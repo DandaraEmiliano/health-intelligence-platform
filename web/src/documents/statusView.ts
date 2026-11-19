@@ -5,8 +5,8 @@ import type { Tone } from "../navigation";
 export const STATUS_VIEW: Record<DocumentStatus, { label: string; tone: Tone; hint: string }> = {
   UPLOADED: { label: "Guardado", tone: "gray", hint: "A leitura por IA está desligada; o PDF fica guardado." },
   PROCESSING: { label: "Na fila para leitura", tone: "blue", hint: "Os resultados aparecem em Exames quando a leitura terminar." },
-  PROCESSED: { label: "Lido", tone: "teal", hint: "Confira os resultados em Exames." },
-  FAILED: { label: "Não conseguimos ler", tone: "coral", hint: "Tente enviar de novo ou outro arquivo." },
+  PROCESSED: { label: "Lido", tone: "teal", hint: "Resultados extraídos e guardados para sua revisão, que chega na próxima etapa." },
+  FAILED: { label: "Não conseguimos ler", tone: "coral", hint: "Exclua e envie de novo, ou envie outro arquivo." },
   UNSUPPORTED_SCANNED: { label: "Foto ou digitalização", tone: "amber", hint: "Este PDF não tem texto; envie o laudo original do laboratório." },
 };
 

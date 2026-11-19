@@ -37,6 +37,10 @@ interface DocumentRepository extends Repository<HealthDocument, UUID> {
 
     HealthDocument saveAndFlush(HealthDocument document);
 
+    /** Including deleted ones, so a late result for a deleted document is recognised and ignored. */
+    @Query("select d from HealthDocument d where d.id = :id and d.patientId = :patientId")
+    Optional<HealthDocument> findAnyState(@Param("id") UUID id, @Param("patientId") PatientId patientId);
+
     /** Every document of the patient, deleted ones included: the purge removes all their files. */
     @Query("select d from HealthDocument d where d.patientId = :patientId")
     List<HealthDocument> findAllIncludingDeleted(@Param("patientId") PatientId patientId);

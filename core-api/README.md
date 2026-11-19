@@ -42,6 +42,13 @@ curl -s -X POST http://localhost:8180/realms/hip/protocol/openid-connect/token \
 - `GET /api/v1/documents/{id}/content` returns a pre-signed link valid for 60 seconds (302, or JSON with `Accept: application/json`), and every call is audited.
 - Delete hides the document at once and removes the S3 object after commit.
 
+## Extraction results
+
+- `ExtractionResultListener` polls `document-extraction-results` every second. Each message is validated against `contracts/events/document-extraction-result.v1.schema.json` (shipped in the jar from `../contracts/events`); one that does not match is dropped, since it can never succeed.
+- `ExtractionResultIngestion` completes the job (locked, idempotent by `jobId`: a redelivery stores nothing), sets the document to `PROCESSED`, `FAILED` (with the failure code) or `UNSUPPORTED_SCANNED`, and on success writes the report and its results as `PENDING_REVIEW` (ADR 0006). A result naming another patient or document, or arriving after the document was deleted, is ignored.
+- Each result keeps the extractor's output unchanged in `extracted_snapshot`. `unit_normalized` is only for comparing units, never for converting them; `computed_flag` comes from the numeric bounds and is always shown as computed, and the laboratory's flag wins (ADR 0007). A range whose low is above its high keeps its text and gets `RANGE_LOW_ABOVE_HIGH` instead of bounds.
+- `GET /api/v1/laboratory-reports` (most recent collection first, cursor) and `GET /api/v1/laboratory-reports/{id}` serve them to the patient. Analyte normalization (`analyte_id`) and the review endpoint come next.
+
 ## Account deletion
 
 - `DELETE /api/v1/accounts/me` sets the account to `DELETION_REQUESTED` and blocks every other call (403 `ACCOUNT_NOT_ACTIVE`) at once.

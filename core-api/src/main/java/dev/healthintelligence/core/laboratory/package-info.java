@@ -1,7 +1,7 @@
 /**
  * Laboratory reports, results, review workflow and analyte catalogue (ADR 0006, 0007).
  *
- * <p>Implementation starts in Phase 4. See docs/adr/0001-modular-monolith-and-separate-ai-service.md.
+ * <p>Phase 5: stores extraction results as PENDING_REVIEW reports (ADR 0006) and serves them to the patient.
  */
 @ApplicationModule(displayName = "Laboratory")
 package dev.healthintelligence.core.laboratory;

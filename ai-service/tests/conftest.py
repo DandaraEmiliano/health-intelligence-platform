@@ -1,4 +1,7 @@
 import os
+
+# Unit tests never start the SQS worker or call an LLM.
+os.environ.setdefault("AI_EXTRACTION_WORKER_ENABLED", "false")
 from collections.abc import Iterator
 from pathlib import Path
 

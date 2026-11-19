@@ -17,6 +17,9 @@ dependencies = [
     "opentelemetry-sdk>=1.29",
     "opentelemetry-exporter-otlp-proto-http>=1.29",
     "opentelemetry-instrumentation-fastapi>=0.50b0",
+    "anthropic==2.5.0",
+    "boto3==1.43.124",
+    "pypdf==6.21.4",
 ]
 
 [dependency-groups]
@@ -24,6 +27,7 @@ dev = [
     "pytest>=8.3",
     "httpx>=0.28",
     "ruff>=0.8",
+    "jsonschema[format-nongpl]==4.26.0",
 ]
 
 [tool.uv]

@@ -1,13 +1,71 @@
 """FastAPI application factory. Internal service: reachable only from core-api (ADR 0001, ADR 0002)."""
 
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from app import health
+from app.config import get_settings
 from app.observability import setup_metrics, setup_tracing
+
+log = logging.getLogger(__name__)
+
+
+def _has_anthropic_credentials() -> bool:
+    """The SDK reads ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN or an `ant auth login` profile."""
+    import os
+    from pathlib import Path
+
+    return bool(
+        os.environ.get("ANTHROPIC_API_KEY")
+        or os.environ.get("ANTHROPIC_AUTH_TOKEN")
+        or os.environ.get("ANTHROPIC_PROFILE")
+        or (Path.home() / ".config" / "anthropic").is_dir()
+    )
+
+
+def _provider(settings):
+    from app.extraction.providers import AnthropicProvider
+
+    if settings.llm_provider != "anthropic":
+        raise ValueError(f"unsupported AI_LLM_PROVIDER {settings.llm_provider!r}")
+    return AnthropicProvider(model=settings.llm_model, effort=settings.llm_effort)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Starts the extraction worker next to the API (one process locally; separate in AWS later)."""
+    settings = get_settings()
+    worker = None
+    if settings.extraction_worker_enabled and settings.llm_provider == "anthropic" and not _has_anthropic_credentials():
+        # Without credentials every job would fail for good; leave the documents queued instead.
+        log.warning("extraction worker not started: no Anthropic credentials (documents stay queued)")
+    elif settings.extraction_worker_enabled:
+        from app.extraction.storage import s3_client, s3_fetcher, sqs_client
+        from app.extraction.worker import ExtractionWorker
+
+        try:
+            worker = ExtractionWorker(
+                sqs_client(settings),
+                settings.extraction_requests_queue,
+                settings.extraction_results_queue,
+                s3_fetcher(s3_client(settings)),
+                _provider(settings),
+                settings.extraction_max_receives,
+            )
+            worker.start()
+        except Exception as e:
+            log.warning("extraction worker not started: %s", type(e).__name__)
+            worker = None
+    yield
+    if worker:
+        worker.stop()
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
+        lifespan=lifespan,
         title="Health Intelligence Platform - ai-service",
         version="0.1.0",
         docs_url=None,  # internal service; contract lives in contracts/

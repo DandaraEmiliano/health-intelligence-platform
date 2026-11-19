@@ -1,0 +1,39 @@
+import { IconHeart, IconLogout } from "@tabler/icons-react";
+import type { ReactNode } from "react";
+import { useAuth } from "react-oidc-context";
+import { NavLink } from "react-router";
+
+import { NAV_ITEMS } from "./navigation";
+
+export function Shell({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+  return (
+    <div className="shell">
+      <aside className="sidebar">
+        <NavLink to="/" className="brand tone-pink">
+          <span className="bubble" aria-hidden="true"><IconHeart size={18} /></span>
+          Health Intelligence
+        </NavLink>
+        <nav className="nav" aria-label="Principal">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink key={item.path} to={item.path} end={item.path === "/"} className={`tone-${item.tone}`}>
+                <span className="bubble" aria-hidden="true"><Icon size={18} /></span>
+                {item.label}
+                {item.plannedPhase && <span className="soon">em breve</span>}
+              </NavLink>
+            );
+          })}
+        </nav>
+        <div className="sidebar-footer">
+          <span className="who">{auth.user?.profile.email}</span>
+          <button type="button" className="ghost small" onClick={() => void auth.signoutRedirect()}>
+            <IconLogout size={16} aria-hidden="true" /> Sair
+          </button>
+        </div>
+      </aside>
+      <main className="content">{children}</main>
+    </div>
+  );
+}

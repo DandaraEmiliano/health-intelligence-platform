@@ -204,3 +204,16 @@ a.stat:hover { outline: 2px solid var(--tone-400); }
 .status-dot.up { background: var(--teal-400); }
 .status-dot.down { background: var(--coral-400); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+
+/* Documents */
+.dropzone { border: 2px dashed var(--blue-400); background: var(--blue-50); color: var(--blue-800); border-radius: var(--radius-lg); padding: 2rem 1rem; display: grid; gap: 0.6rem; justify-items: center; text-align: center; transition: background 120ms; }
+.dropzone.over { background: #d6e7f8; border-style: solid; }
+.dropzone .muted { color: var(--blue-600); }
+.uploads { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
+.upload { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.8rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9rem; }
+.upload .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.progress { width: 8rem; height: 0.4rem; border-radius: 999px; background: var(--blue-50); overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--blue-400); transition: width 120ms; }
+.record.doc { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+.record.doc .sub { color: var(--muted); }
+.record.doc .pill { background: var(--tone-50); }

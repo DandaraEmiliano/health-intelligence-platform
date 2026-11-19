@@ -67,3 +67,21 @@ export const healthRecordApi = {
     apiRequest<RecordOf<K>>(`${base(kind)}/${id}`, { method: "PUT", body, ifMatch: etag }),
   remove: (kind: HealthRecordKind, id: string) => apiRequest<void>(`${base(kind)}/${id}`, { method: "DELETE" }),
 };
+
+export type DocumentStatus = Schemas["DocumentStatus"];
+export type HealthDocument = Schemas["Document"];
+export interface DocumentPage {
+  items: HealthDocument[];
+  nextCursor: string | null;
+}
+
+export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+
+export const documentApi = {
+  list: (cursor?: string) =>
+    apiRequest<DocumentPage>(`/api/v1/documents?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`).then((r) => r.data),
+  remove: (id: string) => apiRequest<void>(`/api/v1/documents/${id}`, { method: "DELETE" }),
+  /** Short-lived link to open the PDF; the API returns it as JSON for browser apps. */
+  contentLink: (id: string) =>
+    apiRequest<{ url: string; expiresAt: string }>(`/api/v1/documents/${id}/content`).then((r) => r.data),
+};

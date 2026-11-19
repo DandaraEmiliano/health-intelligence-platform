@@ -29,8 +29,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     label: "Documentos",
     tone: "blue",
     icon: IconFileUpload,
-    plannedPhase: 4,
-    description: "Envie laudos em PDF e acompanhe o processamento de cada um.",
+    description: "Envie laudos em PDF e acompanhe cada um.",
   },
   {
     path: "/exames",

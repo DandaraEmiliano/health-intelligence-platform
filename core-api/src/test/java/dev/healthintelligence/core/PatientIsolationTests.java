@@ -102,6 +102,19 @@ class PatientIsolationTests extends IntegrationTest {
     }
 
     @Test
+    void documentsOfAnotherPatientCannotBeSeenOpenedOrDeleted() {
+        String documentOfA = json.readTree(api().upload("/api/v1/documents", patientA, "a.pdf",
+                dev.healthintelligence.core.support.Pdfs.synthetic()).body()).get("id").stringValue();
+        api().postJson("/api/v1/patients", patientB, "{\"fullName\":\"Paciente B\",\"birthDate\":\"1995-09-09\"}");
+
+        assertThat(api().get("/api/v1/documents/" + documentOfA, patientB).statusCode()).isEqualTo(404);
+        assertThat(api().get("/api/v1/documents/" + documentOfA + "/content", patientB, "application/json").statusCode()).isEqualTo(404);
+        assertThat(api().delete("/api/v1/documents/" + documentOfA, patientB).statusCode()).isEqualTo(404);
+        assertThat(json.readTree(api().get("/api/v1/documents", patientB).body()).get("items").isEmpty()).isTrue();
+        assertThat(api().get("/api/v1/documents/" + documentOfA, patientA).statusCode()).isEqualTo(200);
+    }
+
+    @Test
     void patientIdInTheRequestBodyIsRejected() {
         HttpResponse<String> response = api().postJson("/api/v1/patients", patientB, """
                 {"fullName":"B","birthDate":"1995-09-09","id":"%s"}""".formatted(patientAId));

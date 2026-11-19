@@ -402,8 +402,14 @@ paths:
       operationId: uploadDocument
       summary: Upload a laboratory report PDF
       description: |
-        Returns 202: extraction runs asynchronously when AI consent is granted.
-        Without AI consent the document is stored and listed, but not extracted.
+        Returns 202. With AI consent the document is `PROCESSING` and an extraction request is
+        published through the outbox; without it the document is `UPLOADED` (stored and listed,
+        not extracted). The bytes are checked, not the client's content type: `%PDF-` header
+        (415 `UNSUPPORTED_DOCUMENT`), not password protected (415 `DOCUMENT_ENCRYPTED`), at most
+        10 MB (413 `DOCUMENT_TOO_LARGE`). The same file twice is 409 `DUPLICATE_DOCUMENT` while
+        the first is not deleted. With `Idempotency-Key`, a retry of the same request returns the
+        first response with `Idempotent-Replayed: true`; a retry while the first is still running
+        is 409 `REQUEST_IN_PROGRESS`.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -428,6 +434,7 @@ paths:
               schema: { $ref: '#/components/schemas/Document' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '415': { $ref: '#/components/responses/UnsupportedMediaType' }
@@ -481,7 +488,17 @@ paths:
       tags: [Documents]
       operationId: getDocumentContent
       summary: Redirect to a short-lived pre-signed URL for the PDF (audited)
+      description: |
+        Browser apps that send the token in a header cannot follow the redirect into a new tab;
+        with `Accept: application/json` the same link is returned in the body (200).
       responses:
+        '200':
+          description: The pre-signed link, for clients that ask for JSON
+          headers:
+            Cache-Control: { schema: { type: string, const: no-store } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DownloadLink' }
         '302':
           description: Redirect to a pre-signed URL valid for at most 60 seconds
           headers:
@@ -957,7 +974,7 @@ components:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
     Conflict:
-      description: Conflict (`PATIENT_ALREADY_EXISTS`, `RECORD_LIMIT_REACHED`, `DUPLICATE_DOCUMENT`, `REVIEW_INCOMPLETE`, `INVALID_STATE`)
+      description: Conflict (`PATIENT_ALREADY_EXISTS`, `RECORD_LIMIT_REACHED`, `DUPLICATE_DOCUMENT`, `REQUEST_IN_PROGRESS`, `REVIEW_INCOMPLETE`, `INVALID_STATE`)
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
@@ -977,7 +994,7 @@ components:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
     UnsupportedMediaType:
-      description: Not a PDF, or encrypted PDF (`UNSUPPORTED_DOCUMENT`)
+      description: Not a PDF (`UNSUPPORTED_DOCUMENT`) or a password-protected PDF (`DOCUMENT_ENCRYPTED`)
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
@@ -1162,6 +1179,13 @@ components:
           format: uuid
           description: Present once extraction succeeded.
         uploadedAt: { type: string, format: date-time }
+
+    DownloadLink:
+      type: object
+      required: [url, expiresAt]
+      properties:
+        url: { type: string, format: uri }
+        expiresAt: { type: string, format: date-time, description: At most 60 seconds after issue. }
 
     DocumentPage:
       type: object

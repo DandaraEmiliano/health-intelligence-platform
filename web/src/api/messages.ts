@@ -21,6 +21,12 @@ const PROBLEM_MESSAGES: Record<string, string> = {
   MALFORMED_REQUEST: "Algo no formulário não foi aceito. Confira os campos.",
   UNAUTHORIZED: "Sua sessão expirou. Entre de novo.",
   FORBIDDEN: "Sua conta não tem acesso a esta área.",
+  DUPLICATE_DOCUMENT: "Você já enviou este mesmo arquivo.",
+  UNSUPPORTED_DOCUMENT: "Este arquivo não é um PDF.",
+  DOCUMENT_ENCRYPTED: "Este PDF tem senha. Envie uma versão sem senha.",
+  DOCUMENT_TOO_LARGE: "O arquivo passa de 10 MB.",
+  DOCUMENT_NOT_FOUND: "Este documento não existe mais.",
+  REQUEST_IN_PROGRESS: "Este envio ainda está em andamento.",
 };
 
 export type FieldErrors = Record<string, string>;

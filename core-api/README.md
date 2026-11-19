@@ -34,6 +34,16 @@ curl -s -X POST http://localhost:8180/realms/hip/protocol/openid-connect/token \
 - Flyway migrations in `src/main/resources/db/migration` run as `core_owner`. The application connects as `core_app` (DML only).
 - Roles, schemas and default privileges come from `infra/docker/postgres/init/01-roles-and-schemas.sh`.
 
+## Documents
+
+- `POST /api/v1/documents` (multipart `file`) checks the bytes, not the declared type: `%PDF-` header, not password protected, at most 10 MB. The PDF goes to S3 under `documents/<uuid>`; then one transaction writes the document, and when AI consent is granted, the extraction job and an outbox message (ADR 0003). Without consent the document is `UPLOADED` and nothing is sent.
+- `OutboxRelay` publishes pending outbox rows to SQS every second (`FOR UPDATE SKIP LOCKED`, so several instances can run). The message body follows `contracts/events/document-extraction-request.v1.schema.json`; a test validates it against the schema.
+- `Idempotency-Key` (UUID) is stored in Redis for 24 hours per user: a retry gets the first response back, a different request with the same key gets 422.
+- `GET /api/v1/documents/{id}/content` returns a pre-signed link valid for 60 seconds (302, or JSON with `Accept: application/json`), and every call is audited.
+- Delete hides the document at once and removes the S3 object after commit.
+
+Local endpoints default to the Compose emulators (`AWS_ENDPOINT_URL_S3`, `AWS_ENDPOINT_URL_SQS`, `REDIS_HOST`); in AWS leave the endpoints empty.
+
 ## Tests
 
 ```bash
@@ -48,9 +58,9 @@ mvn verify
 | `CoreApplicationIntegrationTests` | Boots against PostgreSQL + pgvector (Testcontainers): probes up, API requires auth, Flyway ran as owner, app role is DML-only, audit and consent are append-only, no access to schema `ai` |
 | `PatientIsolationTests` | Two patients: B can never read, modify or infer A's data. Every new patient endpoint adds its case here |
 | `ContractConformanceTests` | Every implemented operation exists in `contracts/core-api.openapi.yaml` with the same path, method and operationId |
-| `IdentityApiTests`, `PatientApiTests`, `ConsentApiTests`, `HealthRecordsApiTests` | Behaviour of each endpoint, errors as Problem Details, audit rows |
+| `IdentityApiTests`, `PatientApiTests`, `ConsentApiTests`, `HealthRecordsApiTests`, `DocumentsApiTests` | Behaviour of each endpoint, errors as Problem Details, audit rows |
 
-Integration tests share one PostgreSQL container and one Spring context (`support/IntegrationTest`). Tokens are signed by a test key with the same claims as the local realm (`support/TestTokens`), so no Keycloak is needed.
+Integration tests share one set of containers (PostgreSQL, Redis, S3Mock, ElasticMQ, same images as Compose) and one Spring context (`support/IntegrationTest`). Tokens are signed by a test key with the same claims as the local realm (`support/TestTokens`), so no Keycloak is needed.
 
 ## Identity and patient scope
 

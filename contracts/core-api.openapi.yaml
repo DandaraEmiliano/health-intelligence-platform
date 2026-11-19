@@ -877,10 +877,15 @@ paths:
       tags: [Account]
       operationId: requestAccountDeletion
       summary: Request deletion of the account and all associated data
-      description: Access is blocked immediately; data, files and embeddings are purged by a scheduled, audited job.
+      description: |
+        Access is blocked immediately: every other call then returns 403 `ACCOUNT_NOT_ACTIVE`.
+        A scheduled, audited job purges files, database rows and the identity provider user
+        after a delay longer than the access token lifetime (embeddings too, once they exist).
+        Repeating the request returns 202 and changes nothing. Audit events are kept.
       responses:
-        '202': { description: Deletion requested }
+        '202': { description: Deletion requested (or already requested) }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
 components:
   securitySchemes:

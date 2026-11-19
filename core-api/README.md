@@ -42,6 +42,12 @@ curl -s -X POST http://localhost:8180/realms/hip/protocol/openid-connect/token \
 - `GET /api/v1/documents/{id}/content` returns a pre-signed link valid for 60 seconds (302, or JSON with `Accept: application/json`), and every call is audited.
 - Delete hides the document at once and removes the S3 object after commit.
 
+## Account deletion
+
+- `DELETE /api/v1/accounts/me` sets the account to `DELETION_REQUESTED` and blocks every other call (403 `ACCOUNT_NOT_ACTIVE`) at once.
+- `AccountPurgeJob` (every minute) purges accounts requested more than `ACCOUNT_PURGE_AFTER` ago (default 10 minutes, longer than the 5-minute access token, so a still-valid token cannot re-provision an empty account). Order: modules remove data kept outside the database (`AccountPurgeRequested` listeners: S3 objects, unsent outbox messages), then the Keycloak user (client `core-api-admin`, `manage-users` only), then the account row, which cascades to everything the user owns. A failed step leaves the account for the next run; every step is idempotent.
+- Audit events are kept (no foreign keys, no clinical content). How long, and whether consent records must be kept as proof, are legal decisions (privacy requirements map).
+
 Local endpoints default to the Compose emulators (`AWS_ENDPOINT_URL_S3`, `AWS_ENDPOINT_URL_SQS`, `REDIS_HOST`); in AWS leave the endpoints empty.
 
 ## Tests

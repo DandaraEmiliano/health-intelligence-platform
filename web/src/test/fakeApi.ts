@@ -82,6 +82,7 @@ export function fakeFetch(state: FakeApiState): typeof fetch {
       }
       return json(200, state.patient.data, state.patient.version);
     }
+    if (path === "/api/v1/accounts/me" && method === "DELETE") return json(202);
     if (path === "/api/v1/documents") return json(200, { items: state.documents, nextCursor: null });
     const doc = path.match(/^\/api\/v1\/documents\/([^/]+)(\/content)?$/);
     if (doc) {

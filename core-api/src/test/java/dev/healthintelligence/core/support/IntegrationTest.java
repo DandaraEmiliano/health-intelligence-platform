@@ -82,6 +82,10 @@ public abstract class IntegrationTest {
         registry.add("hip.aws.s3-endpoint", IntegrationTest::s3Endpoint);
         registry.add("hip.aws.sqs-endpoint", IntegrationTest::sqsEndpoint);
         registry.add("hip.outbox.relay.fixed-delay", () -> "200ms");
+        // Tests run the purge themselves, with no delay, against a recording identity provider.
+        registry.add("hip.identity.admin.enabled", () -> "false");
+        registry.add("hip.accounts.purge.after", () -> "0s");
+        registry.add("hip.accounts.purge.interval", () -> "1h");
         // Tokens are verified by TestTokens' key; no identity provider is needed.
         registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", () -> TestTokens.ISSUER);
     }

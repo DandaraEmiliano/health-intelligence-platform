@@ -52,6 +52,12 @@ public class TestTokens {
     }
 
     @Bean
+    @org.springframework.context.annotation.Primary
+    RecordingIdentityProviderUsers recordingIdentityProviderUsers() {
+        return new RecordingIdentityProviderUsers();
+    }
+
+    @Bean
     TestTokens.Issuer testTokenIssuer() {
         return new Issuer(this);
     }

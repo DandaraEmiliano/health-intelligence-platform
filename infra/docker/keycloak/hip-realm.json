@@ -224,6 +224,17 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
       "defaultClientScopes": ["basic", "ai-service-audience"]
+    },
+    {
+      "clientId": "core-api-admin",
+      "name": "core-api account purge (client credentials; may only view and delete users)",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${KC_CORE_API_ADMIN_SECRET}",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": ["basic"]
     }
   ],
   "users": [
@@ -251,6 +262,12 @@
       "username": "service-account-core-api-service",
       "enabled": true,
       "serviceAccountClientId": "core-api-service"
+    },
+    {
+      "username": "service-account-core-api-admin",
+      "enabled": true,
+      "serviceAccountClientId": "core-api-admin",
+      "clientRoles": { "realm-management": ["view-users", "manage-users"] }
     }
   ]
 }

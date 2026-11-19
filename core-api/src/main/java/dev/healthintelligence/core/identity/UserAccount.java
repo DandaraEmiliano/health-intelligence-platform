@@ -1,5 +1,6 @@
 package dev.healthintelligence.core.identity;
 
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
@@ -40,6 +41,9 @@ class UserAccount {
     @Column(name = "role", nullable = false)
     private Set<Role> roles = EnumSet.noneOf(Role.class);
 
+    @Column(name = "deletion_requested_at")
+    private Instant deletionRequestedAt;
+
     @Version
     private Long version;
 
@@ -69,8 +73,22 @@ class UserAccount {
         return changed;
     }
 
+    /** Blocks the account at once; the purge job removes it later. Idempotent. */
+    boolean requestDeletion(Instant at) {
+        if (status != AccountStatus.ACTIVE) {
+            return false;
+        }
+        status = AccountStatus.DELETION_REQUESTED;
+        deletionRequestedAt = at;
+        return true;
+    }
+
     UUID id() {
         return id;
+    }
+
+    String idpSubject() {
+        return idpSubject;
     }
 
     AccountStatus status() {

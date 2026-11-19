@@ -28,6 +28,15 @@ public class CurrentUser {
     }
 
     public UserId id() {
+        UserAccount account = resolve();
+        if (account.status() != AccountStatus.ACTIVE) {
+            throw ProblemException.forbidden("ACCOUNT_NOT_ACTIVE");
+        }
+        return new UserId(account.id());
+    }
+
+    /** The account whatever its status, for the deletion request itself (repeating it is harmless). */
+    UserAccount resolve() {
         Jwt jwt = currentJwt();
         String subject = jwt.getSubject();
         String email = jwt.getClaimAsString("email");
@@ -43,10 +52,7 @@ public class CurrentUser {
                 return accounts.findAndSync(subject, email, roles).orElseThrow(() -> concurrentlyCreated);
             }
         });
-        if (account.status() != AccountStatus.ACTIVE) {
-            throw ProblemException.forbidden("ACCOUNT_NOT_ACTIVE");
-        }
-        return new UserId(account.id());
+        return account;
     }
 
     private static Jwt currentJwt() {

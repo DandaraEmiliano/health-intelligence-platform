@@ -12,6 +12,8 @@ export interface FakeApiState {
   records: Record<string, StoredRecord[]>;
   calls: { method: string; path: string; body?: unknown; headers: Record<string, string> }[];
   documents: Record<string, unknown>[];
+  /** Laboratory reports by id, with a version for the ETag. */
+  reports: Record<string, { version: number; data: Record<string, unknown> & { results: Record<string, unknown>[] } }>;
   /** Makes the next PUT/PATCH fail with 412, as if someone else changed the resource. */
   conflictOnNextWrite: boolean;
 }
@@ -20,7 +22,7 @@ let sequence = 0;
 const now = "2026-11-18T12:00:00Z";
 
 export function fakeState(partial: Partial<FakeApiState> = {}): FakeApiState {
-  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], calls: [], conflictOnNextWrite: false, ...partial };
+  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], reports: {}, calls: [], conflictOnNextWrite: false, ...partial };
 }
 
 export function acceptedConsents(ai = true): FakeApiState["consents"] {
@@ -42,6 +44,36 @@ const json = (status: number, body?: unknown, etag?: number) =>
   });
 const problem = (status: number, code: string, errors?: unknown[]) =>
   json(status, { type: "about:blank", title: code, status, code, correlationId: "test", ...(errors ? { errors } : {}) });
+
+function summary(data: Record<string, unknown> & { results: Record<string, unknown>[] }) {
+  return {
+    id: data.id, documentId: data.documentId, laboratoryName: data.laboratoryName, collectedAt: data.collectedAt,
+    status: data.status, resultCount: data.results.length,
+    pendingCount: data.results.filter((r) => r.reviewStatus === "PENDING_REVIEW").length,
+  };
+}
+
+/** A report pending review with two results, like the core returns after an extraction. */
+export function pendingReport(id = "rep-1"): FakeApiState["reports"][string] {
+  const result = (n: number, name: string, value: string, extra: Record<string, unknown> = {}) => ({
+    id: `res-${n}`, reportId: id, sequence: n, rawName: name,
+    measurement: { kind: "NUMERIC", rawValue: value, valueNumeric: value.replace(",", ".") },
+    unit: "mg/dL", referenceRange: { rawText: "70 a 99", low: "70", high: "99", appliesTo: null },
+    flag: null, reviewStatus: "PENDING_REVIEW", warnings: [],
+    source: { documentId: "doc-1", page: 1, excerpt: `${name} ${value} mg/dL 70 a 99` }, ...extra,
+  });
+  return {
+    version: 0,
+    data: {
+      id, documentId: "doc-1", laboratoryName: "Laboratório Sintético Alfa", collectedAt: "2026-11-10", collectedAtRaw: "10/11/2026",
+      status: "PENDING_REVIEW", reportWarnings: [], verifiedAt: null,
+      results: [
+        result(1, "Glicose", "112", { flag: { value: "HIGH", source: "LABORATORY" } }),
+        result(2, "Colesterol HDL", "48", { warnings: [{ code: "MULTIPLE_RANGES" }] }),
+      ],
+    },
+  };
+}
 
 export function fakeFetch(state: FakeApiState): typeof fetch {
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -83,6 +115,39 @@ export function fakeFetch(state: FakeApiState): typeof fetch {
       return json(200, state.patient.data, state.patient.version);
     }
     if (path === "/api/v1/accounts/me" && method === "DELETE") return json(202);
+    if (path === "/api/v1/laboratory-reports/pending-review/count") {
+      return json(200, { reports: Object.values(state.reports).filter((r) => r.data.status === "PENDING_REVIEW").length });
+    }
+    if (path === "/api/v1/laboratory-reports") {
+      return json(200, { items: Object.values(state.reports).map((r) => summary(r.data)), nextCursor: null });
+    }
+    const lab = path.match(/^\/api\/v1\/laboratory-reports\/([^/]+)(\/review)?$/);
+    if (lab) {
+      const stored = state.reports[lab[1]];
+      if (!stored) return problem(404, "LABORATORY_REPORT_NOT_FOUND");
+      if (lab[2] && method === "POST") {
+        if (headers["if-match"] !== `"${stored.version}"`) return problem(412, "PRECONDITION_FAILED");
+        if (stored.data.status !== "PENDING_REVIEW") return problem(409, "INVALID_STATE");
+        for (const decision of body.decisions as { resultId: string; action: string; correction?: Record<string, unknown> }[]) {
+          const result = stored.data.results.find((r) => r.id === decision.resultId)!;
+          if (decision.action === "CONFIRM") result.reviewStatus = "VERIFIED";
+          if (decision.action === "REJECT") result.reviewStatus = "REJECTED";
+          if (decision.action === "CORRECT") {
+            result.originalExtraction = result.measurement;
+            Object.assign(result, { reviewStatus: "CORRECTED", measurement: decision.correction!.measurement,
+              unit: decision.correction!.unit, referenceRange: decision.correction!.referenceRange });
+          }
+        }
+        if (body.confirmAllRemaining) stored.data.results.forEach((r) => { if (r.reviewStatus === "PENDING_REVIEW") r.reviewStatus = "VERIFIED"; });
+        if (body.finalize) {
+          if (stored.data.results.some((r) => r.reviewStatus === "PENDING_REVIEW")) return problem(409, "REVIEW_INCOMPLETE");
+          stored.data.status = "VERIFIED";
+          stored.data.verifiedAt = now;
+        }
+        stored.version += 1;
+      }
+      return json(200, { ...stored.data, ...summary(stored.data) }, stored.version);
+    }
     if (path === "/api/v1/documents") return json(200, { items: state.documents, nextCursor: null });
     const doc = path.match(/^\/api\/v1\/documents\/([^/]+)(\/content)?$/);
     if (doc) {

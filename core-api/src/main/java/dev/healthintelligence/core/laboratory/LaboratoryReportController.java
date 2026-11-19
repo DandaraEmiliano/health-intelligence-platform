@@ -11,9 +11,13 @@ import dev.healthintelligence.core.patient.CurrentPatient;
 import dev.healthintelligence.core.shared.ETags;
 import dev.healthintelligence.core.shared.FieldViolation;
 import dev.healthintelligence.core.shared.ProblemException;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,11 +32,14 @@ class LaboratoryReportController {
 
     private final CurrentPatient currentPatient;
     private final LaboratoryReports reports;
+    private final ReviewService review;
     private final JsonMapper json;
 
-    LaboratoryReportController(CurrentPatient currentPatient, LaboratoryReports reports, JsonMapper json) {
+    LaboratoryReportController(CurrentPatient currentPatient, LaboratoryReports reports, ReviewService review,
+                               JsonMapper json) {
         this.currentPatient = currentPatient;
         this.reports = reports;
+        this.review = review;
         this.json = json;
     }
 
@@ -60,6 +67,14 @@ class LaboratoryReportController {
         return ResponseEntity.ok().eTag(ETags.of(found.report().version())).body(detail(found));
     }
 
+    @PostMapping("/{reportId}/review")
+    ResponseEntity<Detail> reviewLaboratoryReport(@PathVariable("reportId") UUID id,
+            @RequestHeader(name = "If-Match", required = false) String ifMatch,
+            @Valid @RequestBody ReviewRequest request) {
+        var updated = review.review(currentPatient.scope(), id, ifMatch, request);
+        return ResponseEntity.ok().eTag(ETags.of(updated.report().version())).body(detail(updated));
+    }
+
     private Detail detail(LaboratoryReports.ReportWithResults found) {
         LaboratoryReport report = found.report();
         Summary summary = Summary.of(found);
@@ -73,10 +88,12 @@ class LaboratoryReportController {
         ExtractedValues v = result.values();
         Flag flag = v.labFlag() != null ? new Flag(v.labFlag(), "LABORATORY")
                 : v.computedFlag() != null ? new Flag(v.computedFlag(), "COMPUTED") : null;
+        JsonNode original = "CORRECTED".equals(result.reviewStatus())
+                ? json.readTree(result.extractedSnapshot()).get("measurement") : null;
         return new Result(result.id(), report.id(), v.sequence(), null, v.rawName(),
                 new Measurement(v.valueKind(), v.valueRaw(), plain(v.valueNumeric()), v.valueComparator(), v.valueText()),
                 v.unitRaw(), new Range(v.refRangeText(), plain(v.refLow()), plain(v.refHigh()), v.refAppliesTo()),
-                flag, result.collectedAt(), result.reviewStatus(), json.readTree(result.validationWarnings()),
+                flag, result.collectedAt(), result.reviewStatus(), original, json.readTree(result.validationWarnings()),
                 new Source(report.documentId(), v.sourcePage(), v.sourceExcerpt()));
     }
 
@@ -111,7 +128,7 @@ class LaboratoryReportController {
 
     record Result(UUID id, UUID reportId, int sequence, Object analyte, String rawName, Measurement measurement,
                   String unit, Range referenceRange, Flag flag, LocalDate collectedAt, String reviewStatus,
-                  JsonNode warnings, Source source) {
+                  JsonNode originalExtraction, JsonNode warnings, Source source) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

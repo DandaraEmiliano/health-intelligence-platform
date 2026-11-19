@@ -36,8 +36,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     label: "Exames",
     tone: "amber",
     icon: IconTestPipe,
-    plannedPhase: 4,
-    description: "Revise os resultados extraídos de cada laudo antes que sejam usados.",
+    description: "Confira os resultados lidos de cada laudo antes que sejam usados.",
   },
   {
     path: "/linha-do-tempo",

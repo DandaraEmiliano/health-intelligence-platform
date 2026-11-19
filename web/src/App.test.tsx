@@ -247,9 +247,9 @@ describe("signed in", () => {
   });
 
   it("shows what a planned feature will do, without fake data", async () => {
-    renderApp("/exames");
+    renderApp("/linha-do-tempo");
 
-    expect(await screen.findByRole("heading", { name: "Exames" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Linha do tempo" })).toBeInTheDocument();
     expect(screen.getByText("Planejado para a Fase 4.")).toBeInTheDocument();
   });
 });

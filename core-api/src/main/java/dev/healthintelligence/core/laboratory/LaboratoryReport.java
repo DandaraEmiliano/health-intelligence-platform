@@ -78,6 +78,20 @@ class LaboratoryReport {
         this.validationWarnings = validationWarnings;
     }
 
+    void correctCollectedAt(LocalDate date) {
+        collectedAt = date;
+    }
+
+    /** Ends the review: VERIFIED when anything was kept, REJECTED when every result was rejected. */
+    void finish(boolean anythingKept, Instant at) {
+        status = anythingKept ? "VERIFIED" : "REJECTED";
+        verifiedAt = anythingKept ? at : null;
+    }
+
+    boolean isUnderReview() {
+        return "PENDING_REVIEW".equals(status);
+    }
+
     UUID id() { return id; }
     UUID documentId() { return documentId; }
     String laboratoryName() { return laboratoryName; }

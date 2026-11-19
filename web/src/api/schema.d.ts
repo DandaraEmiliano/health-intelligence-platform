@@ -268,6 +268,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/laboratory-reports/pending-review/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** How many reports still wait for the patient's review (home page badge) */
+        get: operations["countPendingLaboratoryReviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/laboratory-reports/{reportId}": {
         parameters: {
             query?: never;
@@ -300,8 +317,12 @@ export interface paths {
         put?: never;
         /**
          * Confirm, correct or reject extracted results; optionally finalize
-         * @description `finalize: true` fails with 409 `REVIEW_INCOMPLETE` while any result is still pending.
-         *     Corrections keep the original extracted snapshot (ADR 0006).
+         * @description Decisions can be changed until the review is finalized. `finalize: true` fails with 409
+         *     `REVIEW_INCOMPLETE` while any result is still pending; it makes the report `VERIFIED`, or
+         *     `REJECTED` when every result was rejected, and the report is then immutable (409
+         *     `INVALID_STATE` for any further review). Corrections keep the original extracted snapshot,
+         *     returned as `originalExtraction` (ADR 0006). `correction.analyteId` is not supported until
+         *     the analyte catalogue exists.
          */
         post: operations["reviewLaboratoryReport"];
         delete?: never;
@@ -1905,6 +1926,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LaboratoryReportSummaryPage"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    countPendingLaboratoryReviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Count */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        reports: number;
+                    };
                 };
             };
             401: components["responses"]["Unauthorized"];

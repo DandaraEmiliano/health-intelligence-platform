@@ -35,6 +35,15 @@ public final class Api {
         return send(builder);
     }
 
+    public HttpResponse<String> postJsonWithHeaders(String path, String token, String json, String... headers) {
+        HttpRequest.Builder builder = builder(path, token).header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json));
+        for (int i = 0; i < headers.length; i += 2) {
+            builder.header(headers[i], headers[i + 1]);
+        }
+        return send(builder);
+    }
+
     public HttpResponse<String> putJson(String path, String token, String ifMatch, String json) {
         HttpRequest.Builder builder = builder(path, token).header("Content-Type", "application/json")
                 .PUT(HttpRequest.BodyPublishers.ofString(json));

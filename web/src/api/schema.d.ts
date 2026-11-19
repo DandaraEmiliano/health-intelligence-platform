@@ -175,8 +175,14 @@ export interface paths {
         put?: never;
         /**
          * Upload a laboratory report PDF
-         * @description Returns 202: extraction runs asynchronously when AI consent is granted.
-         *     Without AI consent the document is stored and listed, but not extracted.
+         * @description Returns 202. With AI consent the document is `PROCESSING` and an extraction request is
+         *     published through the outbox; without it the document is `UPLOADED` (stored and listed,
+         *     not extracted). The bytes are checked, not the client's content type: `%PDF-` header
+         *     (415 `UNSUPPORTED_DOCUMENT`), not password protected (415 `DOCUMENT_ENCRYPTED`), at most
+         *     10 MB (413 `DOCUMENT_TOO_LARGE`). The same file twice is 409 `DUPLICATE_DOCUMENT` while
+         *     the first is not deleted. With `Idempotency-Key`, a retry of the same request returns the
+         *     first response with `Idempotent-Replayed: true`; a retry while the first is still running
+         *     is 409 `REQUEST_IN_PROGRESS`.
          */
         post: operations["uploadDocument"];
         delete?: never;
@@ -213,7 +219,11 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Redirect to a short-lived pre-signed URL for the PDF (audited) */
+        /**
+         * Redirect to a short-lived pre-signed URL for the PDF (audited)
+         * @description Browser apps that send the token in a header cannot follow the redirect into a new tab;
+         *     with `Accept: application/json` the same link is returned in the body (200).
+         */
         get: operations["getDocumentContent"];
         put?: never;
         post?: never;
@@ -679,6 +689,15 @@ export interface components {
             /** Format: date-time */
             uploadedAt: string;
         };
+        DownloadLink: {
+            /** Format: uri */
+            url: string;
+            /**
+             * Format: date-time
+             * @description At most 60 seconds after issue.
+             */
+            expiresAt: string;
+        };
         DocumentPage: {
             items: components["schemas"]["Document"][];
             nextCursor: components["schemas"]["NextCursor"];
@@ -1057,7 +1076,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description Conflict (`PATIENT_ALREADY_EXISTS`, `RECORD_LIMIT_REACHED`, `DUPLICATE_DOCUMENT`, `REVIEW_INCOMPLETE`, `INVALID_STATE`) */
+        /** @description Conflict (`PATIENT_ALREADY_EXISTS`, `RECORD_LIMIT_REACHED`, `DUPLICATE_DOCUMENT`, `REQUEST_IN_PROGRESS`, `REVIEW_INCOMPLETE`, `INVALID_STATE`) */
         Conflict: {
             headers: {
                 [name: string]: unknown;
@@ -1093,7 +1112,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description Not a PDF, or encrypted PDF (`UNSUPPORTED_DOCUMENT`) */
+        /** @description Not a PDF (`UNSUPPORTED_DOCUMENT`) or a password-protected PDF (`DOCUMENT_ENCRYPTED`) */
         UnsupportedMediaType: {
             headers: {
                 [name: string]: unknown;
@@ -1748,6 +1767,7 @@ export interface operations {
             };
             400: components["responses"]["ValidationError"];
             401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
             415: components["responses"]["UnsupportedMediaType"];
@@ -1812,6 +1832,16 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description The pre-signed link, for clients that ask for JSON */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadLink"];
+                };
+            };
             /** @description Redirect to a pre-signed URL valid for at most 60 seconds */
             302: {
                 headers: {

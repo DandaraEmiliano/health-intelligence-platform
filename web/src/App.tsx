@@ -4,6 +4,7 @@ import { NavLink, Route, Routes } from "react-router";
 
 import { problemMessage } from "./api/messages";
 import { useConsents, usePatient } from "./api/queries";
+import { DocumentsPage } from "./documents/DocumentsPage";
 import { HealthRecordsPage } from "./health/HealthRecordsPage";
 import { NAV_ITEMS } from "./navigation";
 import { ComingSoon } from "./pages/ComingSoon";
@@ -59,6 +60,7 @@ export function App() {
           <Shell>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/documentos" element={<DocumentsPage />} />
               <Route path="/minha-saude" element={<HealthRecordsPage />} />
               <Route path="/perfil" element={<Profile />} />
               {NAV_ITEMS.filter((item) => item.plannedPhase).map((item) => (

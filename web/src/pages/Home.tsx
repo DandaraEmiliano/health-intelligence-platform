@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 import { fetchReadiness } from "../api/health";
-import { useConsents, useHealthRecords, usePatient } from "../api/queries";
+import { useConsents, useDocuments, useHealthRecords, usePatient } from "../api/queries";
 import { firstName, greeting } from "../ui/format";
 
 export function Home() {
@@ -12,6 +12,8 @@ export function Home() {
   const allergies = useHealthRecords("allergies");
   const medications = useHealthRecords("medications");
   const conditions = useHealthRecords("conditions");
+  const documents = useDocuments();
+  const documentCount = documents.data?.pages.reduce((total, page) => total + page.items.length, 0);
   const readiness = useQuery({ queryKey: ["core-api-readiness"], queryFn: () => fetchReadiness() });
 
   const name = firstName(patient.data?.data.fullName);
@@ -59,9 +61,15 @@ export function Home() {
         <span className="bubble" aria-hidden="true"><IconFileUpload size={20} /></span>
         <div style={{ flex: 1 }}>
           <h3>Seus laudos</h3>
-          <p className="muted" style={{ fontSize: "0.9rem" }}>O envio de PDFs chega na próxima etapa do projeto.</p>
+          <p className="muted" style={{ fontSize: "0.9rem" }}>
+            {documentCount === undefined
+              ? "Carregando…"
+              : documentCount === 0
+                ? "Envie o PDF do seu último exame para começar."
+                : `${documentCount}${documents.data?.pages.at(-1)?.nextCursor ? "+" : ""} ${documentCount === 1 ? "laudo enviado" : "laudos enviados"}.`}
+          </p>
         </div>
-        <span className="pill">Em breve</span>
+        <Link className="button small primary" to="/documentos">Enviar laudo</Link>
       </div>
 
       <Link to="/minha-saude" className="button" style={{ justifySelf: "start" }}>

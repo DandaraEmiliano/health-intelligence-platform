@@ -44,6 +44,29 @@ public final class Api {
         return send(builder);
     }
 
+    /** multipart/form-data with one part named {@code file}. Extra headers come in name/value pairs. */
+    public HttpResponse<String> upload(String path, String token, String filename, byte[] content, String... headers) {
+        String boundary = "----hip" + java.util.UUID.randomUUID();
+        java.io.ByteArrayOutputStream body = new java.io.ByteArrayOutputStream();
+        byte[] head = ("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"" + filename
+                + "\"\r\nContent-Type: application/pdf\r\n\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] tail = ("\r\n--" + boundary + "--\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        body.writeBytes(head);
+        body.writeBytes(content);
+        body.writeBytes(tail);
+        HttpRequest.Builder builder = builder(path, token)
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray()));
+        for (int i = 0; i < headers.length; i += 2) {
+            builder.header(headers[i], headers[i + 1]);
+        }
+        return send(builder);
+    }
+
+    public HttpResponse<String> get(String path, String token, String accept) {
+        return send(builder(path, token).header("Accept", accept).GET());
+    }
+
     public HttpResponse<String> delete(String path, String token) {
         return send(builder(path, token).DELETE());
     }

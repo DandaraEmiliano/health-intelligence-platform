@@ -38,6 +38,12 @@ class ConsentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    boolean isGranted(UserId user, ConsentType type) {
+        return records.findCurrent(user.value()).stream()
+                .anyMatch(record -> record.consentType() == type && record.granted());
+    }
+
     @Transactional
     ConsentRecord record(UserId user, ConsentType type, boolean granted, String documentVersion) {
         HttpServletRequest request = requestOrigin.currentRequest();

@@ -1,8 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { problemStatus } from "./http";
 import {
   consentApi,
+  documentApi,
   healthRecordApi,
   patientApi,
   type ConsentType,
@@ -16,6 +17,7 @@ export const keys = {
   patient: ["patient"] as const,
   consents: ["consents"] as const,
   records: (kind: HealthRecordKind) => ["health-records", kind] as const,
+  documents: ["documents"] as const,
 };
 
 /** The profile with its ETag, or null when onboarding has not created it yet (404). */
@@ -90,5 +92,25 @@ export function useDeleteHealthRecord(kind: HealthRecordKind) {
   return useMutation({
     mutationFn: (id: string) => healthRecordApi.remove(kind, id),
     onSettled: () => client.invalidateQueries({ queryKey: keys.records(kind) }),
+  });
+}
+
+/** Pages of documents, newest first. Refreshes every 5 s while any is waiting to be read. */
+export function useDocuments() {
+  return useInfiniteQuery({
+    queryKey: keys.documents,
+    queryFn: ({ pageParam }) => documentApi.list(pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    refetchInterval: (query) =>
+      query.state.data?.pages.some((page) => page.items.some((item) => item.status === "PROCESSING")) ? 5000 : false,
+  });
+}
+
+export function useDeleteDocument() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => documentApi.remove(id),
+    onSettled: () => client.invalidateQueries({ queryKey: keys.documents }),
   });
 }

@@ -11,6 +11,7 @@ export interface FakeApiState {
   patient: { version: number; data: Record<string, unknown> } | null;
   records: Record<string, StoredRecord[]>;
   calls: { method: string; path: string; body?: unknown; headers: Record<string, string> }[];
+  documents: Record<string, unknown>[];
   /** Makes the next PUT/PATCH fail with 412, as if someone else changed the resource. */
   conflictOnNextWrite: boolean;
 }
@@ -19,7 +20,7 @@ let sequence = 0;
 const now = "2026-11-18T12:00:00Z";
 
 export function fakeState(partial: Partial<FakeApiState> = {}): FakeApiState {
-  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, calls: [], conflictOnNextWrite: false, ...partial };
+  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], calls: [], conflictOnNextWrite: false, ...partial };
 }
 
 export function acceptedConsents(ai = true): FakeApiState["consents"] {
@@ -81,6 +82,18 @@ export function fakeFetch(state: FakeApiState): typeof fetch {
       }
       return json(200, state.patient.data, state.patient.version);
     }
+    if (path === "/api/v1/documents") return json(200, { items: state.documents, nextCursor: null });
+    const doc = path.match(/^\/api\/v1\/documents\/([^/]+)(\/content)?$/);
+    if (doc) {
+      const found = state.documents.find((d) => d.id === doc[1]);
+      if (!found) return problem(404, "DOCUMENT_NOT_FOUND");
+      if (doc[2]) return json(200, { url: `http://s3.test/documents/${doc[1]}`, expiresAt: now });
+      if (method === "DELETE") {
+        state.documents = state.documents.filter((d) => d.id !== doc[1]);
+        return json(204);
+      }
+      return json(200, found);
+    }
     const match = path.match(/^\/api\/v1\/patients\/me\/(allergies|medications|conditions)(?:\/([^/]+))?$/);
     if (match) {
       if (!state.patient) return problem(404, "PATIENT_NOT_FOUND");
@@ -113,4 +126,41 @@ export function fakeFetch(state: FakeApiState): typeof fetch {
     }
     return problem(404, "NOT_FOUND");
   }) as typeof fetch;
+}
+
+/** Stand-in for XMLHttpRequest uploads: records the request and answers with `respond`. */
+export class FakeXhr {
+  static sent: FakeXhr[] = [];
+  static respond: (xhr: FakeXhr) => { status: number; body: unknown } = () => ({ status: 202, body: {} });
+
+  method = "";
+  url = "";
+  headers: Record<string, string> = {};
+  body: FormData | undefined;
+  status = 0;
+  responseText = "";
+  upload: { onprogress: ((event: { lengthComputable: boolean; loaded: number; total: number }) => void) | null } = { onprogress: null };
+  onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  open(method: string, url: string) {
+    this.method = method;
+    this.url = url;
+  }
+
+  setRequestHeader(name: string, value: string) {
+    this.headers[name.toLowerCase()] = value;
+  }
+
+  send(body: FormData) {
+    this.body = body;
+    FakeXhr.sent.push(this);
+    queueMicrotask(() => {
+      this.upload.onprogress?.({ lengthComputable: true, loaded: 1, total: 2 });
+      const answer = FakeXhr.respond(this);
+      this.status = answer.status;
+      this.responseText = JSON.stringify(answer.body);
+      this.onload?.();
+    });
+  }
 }

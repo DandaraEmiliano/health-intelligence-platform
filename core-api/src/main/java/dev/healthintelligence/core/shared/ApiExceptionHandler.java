@@ -82,6 +82,13 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return problem(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST", "Malformed request body", List.of());
     }
 
+    @Override
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(
+            org.springframework.web.multipart.MaxUploadSizeExceededException exception,
+            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        return problem(HttpStatus.CONTENT_TOO_LARGE, "DOCUMENT_TOO_LARGE", "Document larger than 10 MB", List.of());
+    }
+
     /** Spring MVC's own exceptions (405, 415, ...) keep their status and get our extensions. */
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception exception, @Nullable Object body,

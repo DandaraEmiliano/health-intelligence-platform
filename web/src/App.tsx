@@ -6,6 +6,8 @@ import { problemCode } from "./api/http";
 import { problemMessage } from "./api/messages";
 import { useConsents, usePatient } from "./api/queries";
 import { DocumentsPage } from "./documents/DocumentsPage";
+import { ExamsPage } from "./exams/ExamsPage";
+import { ReportReview } from "./exams/ReportReview";
 import { HealthRecordsPage } from "./health/HealthRecordsPage";
 import { NAV_ITEMS } from "./navigation";
 import { ComingSoon } from "./pages/ComingSoon";
@@ -76,6 +78,8 @@ export function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/documentos" element={<DocumentsPage />} />
+              <Route path="/exames" element={<ExamsPage />} />
+              <Route path="/exames/:reportId" element={<ReportReview />} />
               <Route path="/minha-saude" element={<HealthRecordsPage />} />
               <Route path="/perfil" element={<Profile />} />
               {NAV_ITEMS.filter((item) => item.plannedPhase).map((item) => (

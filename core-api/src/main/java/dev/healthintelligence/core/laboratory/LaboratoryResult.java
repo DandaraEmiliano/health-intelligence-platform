@@ -140,6 +140,42 @@ class LaboratoryResult {
         this.validationWarnings = validationWarnings;
     }
 
+    void confirm(Instant at) {
+        reviewStatus = "VERIFIED";
+        reviewedAt = at;
+    }
+
+    void reject(Instant at) {
+        reviewStatus = "REJECTED";
+        reviewedAt = at;
+    }
+
+    /** The extracted snapshot stays as it was; only the reviewable columns change (ADR 0006). */
+    void correct(ExtractedValues corrected, Instant at) {
+        valueKind = corrected.valueKind();
+        valueRaw = corrected.valueRaw();
+        valueNumeric = corrected.valueNumeric();
+        valueComparator = corrected.valueComparator();
+        valueText = corrected.valueText();
+        unitRaw = corrected.unitRaw();
+        unitNormalized = corrected.unitNormalized();
+        refRangeText = corrected.refRangeText();
+        refLow = corrected.refLow();
+        refHigh = corrected.refHigh();
+        refAppliesTo = corrected.refAppliesTo();
+        computedFlag = corrected.computedFlag();
+        reviewStatus = "CORRECTED";
+        reviewedAt = at;
+    }
+
+    void moveCollectedAt(LocalDate date) {
+        collectedAt = date;
+    }
+
+    String extractedSnapshot() {
+        return extractedSnapshot;
+    }
+
     ExtractedValues values() {
         return new ExtractedValues(sequence, rawName, valueKind, valueRaw, valueNumeric, valueComparator, valueText,
                 unitRaw, unitNormalized, refRangeText, refLow, refHigh, refAppliesTo, labFlag, computedFlag, method,

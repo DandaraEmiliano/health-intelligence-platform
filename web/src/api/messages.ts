@@ -15,7 +15,7 @@ const FIELD_MESSAGES: Record<string, string> = {
 };
 
 const PROBLEM_MESSAGES: Record<string, string> = {
-  PRECONDITION_FAILED: "Este registro mudou enquanto você editava. Recarregamos os dados; confira e salve de novo.",
+  PRECONDITION_FAILED: "Isto mudou enquanto você editava (talvez em outra aba). Recarregamos os dados; confira e tente de novo.",
   RECORD_LIMIT_REACHED: "Você chegou ao limite de registros deste tipo.",
   PATIENT_ALREADY_EXISTS: "Seu perfil já foi criado.",
   MALFORMED_REQUEST: "Algo no formulário não foi aceito. Confira os campos.",
@@ -27,6 +27,9 @@ const PROBLEM_MESSAGES: Record<string, string> = {
   DOCUMENT_TOO_LARGE: "O arquivo passa de 10 MB.",
   DOCUMENT_NOT_FOUND: "Este documento não existe mais.",
   REQUEST_IN_PROGRESS: "Este envio ainda está em andamento.",
+  REVIEW_INCOMPLETE: "Ainda há resultados sem decisão. Confirme, corrija ou rejeite todos antes de concluir.",
+  INVALID_STATE: "Este laudo já foi revisado e não pode mais ser alterado.",
+  LABORATORY_REPORT_NOT_FOUND: "Este laudo não existe mais.",
 };
 
 export type FieldErrors = Record<string, string>;

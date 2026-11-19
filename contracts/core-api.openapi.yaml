@@ -543,6 +543,23 @@ paths:
               schema: { $ref: '#/components/schemas/LaboratoryReportSummaryPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
+  /api/v1/laboratory-reports/pending-review/count:
+    get:
+      tags: [Laboratory]
+      operationId: countPendingLaboratoryReviews
+      summary: How many reports still wait for the patient's review (home page badge)
+      responses:
+        '200':
+          description: Count
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reports]
+                properties:
+                  reports: { type: integer, minimum: 0 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
   /api/v1/laboratory-reports/{reportId}:
     parameters:
       - $ref: '#/components/parameters/ReportId'
@@ -569,8 +586,12 @@ paths:
       operationId: reviewLaboratoryReport
       summary: Confirm, correct or reject extracted results; optionally finalize
       description: |
-        `finalize: true` fails with 409 `REVIEW_INCOMPLETE` while any result is still pending.
-        Corrections keep the original extracted snapshot (ADR 0006).
+        Decisions can be changed until the review is finalized. `finalize: true` fails with 409
+        `REVIEW_INCOMPLETE` while any result is still pending; it makes the report `VERIFIED`, or
+        `REJECTED` when every result was rejected, and the report is then immutable (409
+        `INVALID_STATE` for any further review). Corrections keep the original extracted snapshot,
+        returned as `originalExtraction` (ADR 0006). `correction.analyteId` is not supported until
+        the analyte catalogue exists.
       parameters:
         - $ref: '#/components/parameters/IfMatchRequired'
       requestBody:

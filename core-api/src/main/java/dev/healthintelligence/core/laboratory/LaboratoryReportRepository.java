@@ -18,6 +18,15 @@ interface LaboratoryReportRepository extends Repository<LaboratoryReport, UUID> 
     @Query("select r from LaboratoryReport r where r.id = :id and r.patientId = :patientId and r.status <> 'SUPERSEDED'")
     Optional<LaboratoryReport> findVisible(@Param("id") UUID id, @Param("patientId") PatientId patientId);
 
+    /** For review: every review changes the report's version, so its ETag guards all of its results. */
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.OPTIMISTIC_FORCE_INCREMENT)
+    @Query("select r from LaboratoryReport r where r.id = :id and r.patientId = :patientId and r.status <> 'SUPERSEDED'")
+    Optional<LaboratoryReport> findForReview(@Param("id") UUID id, @Param("patientId") PatientId patientId);
+
+    /** Reports the patient still has to review, for the home page. */
+    @Query("select count(r) from LaboratoryReport r where r.patientId = :patientId and r.status = 'PENDING_REVIEW'")
+    long countPendingReview(@Param("patientId") PatientId patientId);
+
     /**
      * Most recent collection first; reports without a collection date last. Keyset on
      * (coalesce(collected_at, 0001-01-01), id) descending (ADR 0009).

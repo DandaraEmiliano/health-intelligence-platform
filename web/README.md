@@ -29,7 +29,8 @@ Sign in with a synthetic user (`patient.a@example.test`, password `KC_SYNTHETIC_
 | Minha saúde: allergies, medications, conditions (add, edit with `If-Match`, delete with confirmation) | `/minha-saude?aba=…` | `/patients/me/{allergies,medications,conditions}` |
 | Meu perfil: data (JSON Merge Patch) and consents (AI on/off) | `/perfil` | `/patients/me`, `/consents` |
 | Documentos: drag-and-drop or choose PDFs, upload progress, status per document, open (short-lived link), delete | `/documentos` | `/documents` |
-| Exames, Linha do tempo, Assistente | planned | show what they will do, never fake data |
+| Exames: reports with what is left to review; review each result against its excerpt (confirm, correct as printed, reject), confirm the rest, finish | `/exames`, `/exames/:id` | `/laboratory-reports`, `/review` |
+| Linha do tempo, Assistente | planned | show what they will do, never fake data |
 
 Visual language (`src/styles.css`): light and colourful. Each area owns one hue (`tone-*` classes), repeated in its menu icon, page header and cards. Coral and amber are kept for what needs attention (severe allergy, moderate allergy), lilac is the action colour. Icons come from `@tabler/icons-react`.
 

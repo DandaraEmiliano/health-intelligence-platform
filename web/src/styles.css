@@ -224,3 +224,25 @@ a.stat:hover { outline: 2px solid var(--tone-400); }
 .consequences { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.35rem; color: var(--text); font-size: 0.92rem; }
 button.danger.solid { background: var(--danger); border-color: var(--danger); color: #fff; }
 button.danger.solid:hover { background: #8f1e18; }
+
+/* Exams and review */
+a.report-link { text-decoration: none; }
+a.report-link:hover { outline: 2px solid var(--tone-400); }
+.back { display: inline-flex; gap: 0.3rem; align-items: center; color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+.review-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
+.review-item { background: var(--surface); border: 1px solid var(--border); border-left: 0; border-radius: var(--radius); padding: 0.9rem 1rem; display: grid; gap: 0.45rem; box-shadow: inset 4px 0 0 var(--tone-400); }
+.review-main { display: flex; gap: 0.8rem; align-items: flex-start; }
+.review-item .title { font-weight: 600; }
+.review-item .value { font-size: 1.25rem; font-weight: 600; }
+.review-item .unit { font-size: 0.9rem; font-weight: 400; color: var(--muted); }
+.review-item .sub { font-size: 0.86rem; color: var(--muted); }
+.review-item .pills { display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-end; }
+.review-item .pill.status { background: var(--tone-50); color: var(--tone-800); }
+.excerpt { font-size: 0.84rem; color: var(--muted); background: var(--surface-soft); border-radius: var(--radius-sm); padding: 0.35rem 0.6rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
+.excerpt q { quotes: "“" "”"; }
+.warning-line { display: flex; gap: 0.4rem; align-items: flex-start; font-size: 0.86rem; color: var(--amber-800); }
+.review-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.review-actions button[aria-pressed="true"] { background: var(--tone-50); border-color: var(--tone-400); color: var(--tone-800); }
+.correction { border-top: 1px dashed var(--border-strong); padding-top: 0.7rem; }
+.review-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; position: sticky; bottom: 1rem; }
+@media (max-width: 760px) { .review-footer { bottom: 5.5rem; } }

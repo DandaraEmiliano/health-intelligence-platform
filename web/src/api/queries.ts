@@ -4,6 +4,7 @@ import { problemStatus } from "./http";
 import {
   consentApi,
   documentApi,
+  laboratoryApi,
   healthRecordApi,
   patientApi,
   type ConsentType,
@@ -11,6 +12,7 @@ import {
   type PatientCreate,
   type PatientUpdate,
   type RequestOf,
+  type ReviewRequest,
 } from "./resources";
 
 export const keys = {
@@ -18,6 +20,9 @@ export const keys = {
   consents: ["consents"] as const,
   records: (kind: HealthRecordKind) => ["health-records", kind] as const,
   documents: ["documents"] as const,
+  reports: ["laboratory-reports"] as const,
+  report: (id: string) => ["laboratory-reports", id] as const,
+  pendingReviews: ["laboratory-reports", "pending-count"] as const,
 };
 
 /** The profile with its ETag, or null when onboarding has not created it yet (404). */
@@ -112,5 +117,39 @@ export function useDeleteDocument() {
   return useMutation({
     mutationFn: (id: string) => documentApi.remove(id),
     onSettled: () => client.invalidateQueries({ queryKey: keys.documents }),
+  });
+}
+
+export function useReports() {
+  return useInfiniteQuery({
+    queryKey: keys.reports,
+    queryFn: ({ pageParam }) => laboratoryApi.list(pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+  });
+}
+
+/** The report with its ETag; every review response replaces both. */
+export function useReport(id: string) {
+  return useQuery({ queryKey: keys.report(id), queryFn: () => laboratoryApi.get(id) });
+}
+
+export function usePendingReviews() {
+  return useQuery({ queryKey: keys.pendingReviews, queryFn: laboratoryApi.pendingCount });
+}
+
+export function useReview(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ body, etag }: { body: ReviewRequest; etag: string }) => laboratoryApi.review(id, body, etag),
+    onSuccess: (result) => {
+      client.setQueryData(keys.report(id), result);
+      void client.invalidateQueries({ queryKey: keys.reports, exact: true });
+      void client.invalidateQueries({ queryKey: keys.pendingReviews });
+    },
+    onError: (error) => {
+      // Someone (another tab) changed the report: reload it so the patient sees the current state.
+      if (problemStatus(error) === 412) void client.invalidateQueries({ queryKey: keys.report(id) });
+    },
   });
 }

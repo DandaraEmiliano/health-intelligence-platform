@@ -90,3 +90,26 @@ export const accountApi = {
   /** 202: access is blocked now; everything is purged by a scheduled job. */
   requestDeletion: () => apiRequest<void>("/api/v1/accounts/me", { method: "DELETE" }),
 };
+
+export type LaboratoryReport = Schemas["LaboratoryReport"];
+export type LaboratoryReportSummary = Schemas["LaboratoryReportSummary"];
+export type LaboratoryResult = Schemas["LaboratoryResult"];
+/** The generated type marks fields with a default as required; on the wire they are optional. */
+export type ReviewRequest = Omit<Schemas["ReviewRequest"], "confirmAllRemaining" | "finalize"> & {
+  confirmAllRemaining?: boolean;
+  finalize?: boolean;
+};
+export type Measurement = Schemas["Measurement"];
+export type ReferenceRange = Schemas["ReferenceRange"];
+
+export const laboratoryApi = {
+  list: (cursor?: string) =>
+    apiRequest<{ items: LaboratoryReportSummary[]; nextCursor: string | null }>(
+      `/api/v1/laboratory-reports?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    ).then((r) => r.data),
+  get: (id: string) => apiRequest<LaboratoryReport>(`/api/v1/laboratory-reports/${id}`),
+  review: (id: string, body: ReviewRequest, etag: string) =>
+    apiRequest<LaboratoryReport>(`/api/v1/laboratory-reports/${id}/review`, { method: "POST", body, ifMatch: etag }),
+  pendingCount: () =>
+    apiRequest<{ reports: number }>("/api/v1/laboratory-reports/pending-review/count").then((r) => r.data.reports),
+};

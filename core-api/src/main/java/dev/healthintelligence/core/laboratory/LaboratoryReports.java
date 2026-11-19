@@ -36,6 +36,11 @@ class LaboratoryReports {
     }
 
     @Transactional(readOnly = true)
+    long countPendingReview(PatientScope scope) {
+        return reports.countPendingReview(scope.patient());
+    }
+
+    @Transactional(readOnly = true)
     ReportWithResults get(PatientScope scope, UUID id) {
         LaboratoryReport report = reports.findVisible(id, scope.patient())
                 .orElseThrow(() -> ProblemException.notFound(NOT_FOUND));

@@ -1,9 +1,9 @@
-import { IconAlertTriangle, IconArrowRight, IconFileUpload, IconPill, IconSparkles, IconStethoscope } from "@tabler/icons-react";
+import { IconAlertTriangle, IconArrowRight, IconClipboardCheck, IconFileUpload, IconPill, IconSparkles, IconStethoscope } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 import { fetchReadiness } from "../api/health";
-import { useConsents, useDocuments, useHealthRecords, usePatient } from "../api/queries";
+import { useConsents, useDocuments, useHealthRecords, usePatient, usePendingReviews } from "../api/queries";
 import { firstName, greeting } from "../ui/format";
 
 export function Home() {
@@ -13,6 +13,7 @@ export function Home() {
   const medications = useHealthRecords("medications");
   const conditions = useHealthRecords("conditions");
   const documents = useDocuments();
+  const pendingReviews = usePendingReviews();
   const documentCount = documents.data?.pages.reduce((total, page) => total + page.items.length, 0);
   const readiness = useQuery({ queryKey: ["core-api-readiness"], queryFn: () => fetchReadiness() });
 
@@ -27,6 +28,19 @@ export function Home() {
         <h1>{greeting()}{name ? `, ${name}` : ""}</h1>
         <p className="muted">Que bom te ver por aqui. Este é o resumo do que você já registrou.</p>
       </header>
+
+      {(pendingReviews.data ?? 0) > 0 && (
+        <div className="card tinted tone-amber" style={{ display: "flex", gap: "0.9rem", alignItems: "center" }}>
+          <span className="bubble solid" aria-hidden="true"><IconClipboardCheck size={20} /></span>
+          <div style={{ flex: 1 }}>
+            <h3>
+              {pendingReviews.data === 1 ? "1 laudo esperando sua revisão" : `${pendingReviews.data} laudos esperando sua revisão`}
+            </h3>
+            <p style={{ fontSize: "0.9rem" }}>Confira os valores antes de usarmos.</p>
+          </div>
+          <Link className="button small primary" to="/exames">Revisar agora</Link>
+        </div>
+      )}
 
       {consents.isSuccess && !aiGranted && (
         <div className="card tinted tone-pink" style={{ display: "flex", gap: "0.9rem", alignItems: "center" }}>

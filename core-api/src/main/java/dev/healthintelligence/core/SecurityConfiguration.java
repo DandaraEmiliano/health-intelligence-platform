@@ -1,12 +1,18 @@
 package dev.healthintelligence.core;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+
+import dev.healthintelligence.core.shared.CorrelationIds;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,6 +22,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -34,7 +44,7 @@ class SecurityConfiguration {
     static final String ROLES_CLAIM = "roles";
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, CorrelationIds correlationIds) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // stateless bearer-token API, no cookies
                 .cors(Customizer.withDefaults())
@@ -45,10 +55,42 @@ class SecurityConfiguration {
                         .requestMatchers("/actuator/prometheus").permitAll()
                         // Present only when springdoc is enabled (local and test profiles).
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        // The MVP API serves patients only; ADMIN has no clinical access (ADR 0002).
+                        .requestMatchers("/api/**").hasRole("PATIENT")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                        .authenticationEntryPoint(problemEntryPoint(correlationIds))
+                        .accessDeniedHandler(problemAccessDeniedHandler(correlationIds)))
                 .build();
+    }
+
+    /** 401 with the standard {@code WWW-Authenticate} header and a Problem Details body (ADR 0009). */
+    static AuthenticationEntryPoint problemEntryPoint(CorrelationIds correlationIds) {
+        BearerTokenAuthenticationEntryPoint bearer = new BearerTokenAuthenticationEntryPoint();
+        return (request, response, exception) -> {
+            bearer.commence(request, response, exception);
+            writeProblem(response, "UNAUTHORIZED", "Missing or invalid access token", correlationIds.current());
+        };
+    }
+
+    /** 403 for authenticated callers without the required role. */
+    static AccessDeniedHandler problemAccessDeniedHandler(CorrelationIds correlationIds) {
+        BearerTokenAccessDeniedHandler bearer = new BearerTokenAccessDeniedHandler();
+        return (request, response, exception) -> {
+            bearer.handle(request, response, exception);
+            writeProblem(response, "FORBIDDEN", "Forbidden", correlationIds.current());
+        };
+    }
+
+    /** Hand-written JSON: every value is a constant or a hex id, so nothing needs escaping. */
+    private static void writeProblem(HttpServletResponse response, String code, String title, String correlationId)
+            throws IOException {
+        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+        response.getWriter().write("""
+                {"type":"https://docs.health-intelligence-platform.dev/problems/%s","title":"%s","status":%d,\
+                "code":"%s","correlationId":"%s"}""".formatted(
+                code.toLowerCase(Locale.ROOT), title, response.getStatus(), code, correlationId));
     }
 
     /**

@@ -32,6 +32,10 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  jackson:
+    deserialization:
+      # Request schemas are closed (additionalProperties: false in the contract).
+      fail-on-unknown-properties: true
   security:
     oauth2:
       resourceserver:

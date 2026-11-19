@@ -8,7 +8,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -16,54 +15,11 @@ import java.sql.Statement;
 import org.junit.jupiter.api.Test;
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
+import dev.healthintelligence.core.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
-/**
- * Boots the whole application against a real PostgreSQL + pgvector, bootstrapped with the same
- * init script as Docker Compose, and checks the Phase 3 acceptance criteria.
- */
-@Testcontainers
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class CoreApplicationIntegrationTests {
-
-    private static final String CORE_OWNER_PASSWORD = "test-core-owner";
-    private static final String CORE_APP_PASSWORD = "test-core-app";
-
-    @Container
-    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
-            DockerImageName.parse("pgvector/pgvector:0.8.7-pg16").asCompatibleSubstituteFor("postgres"))
-            .withEnv("CORE_OWNER_PASSWORD", CORE_OWNER_PASSWORD)
-            .withEnv("CORE_APP_PASSWORD", CORE_APP_PASSWORD)
-            .withEnv("AI_OWNER_PASSWORD", "test-ai-owner")
-            .withEnv("AI_APP_PASSWORD", "test-ai-app")
-            .withCopyFileToContainer(
-                    MountableFile.forHostPath("../infra/docker/postgres/init/01-roles-and-schemas.sh", 0755),
-                    "/docker-entrypoint-initdb.d/01-roles-and-schemas.sh");
-
-    @DynamicPropertySource
-    static void properties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", () -> "core_app");
-        registry.add("spring.datasource.password", () -> CORE_APP_PASSWORD);
-        registry.add("spring.flyway.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.flyway.user", () -> "core_owner");
-        registry.add("spring.flyway.password", () -> CORE_OWNER_PASSWORD);
-        // The JWT decoder resolves the issuer lazily; no identity provider is needed to boot.
-        registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
-                () -> "http://localhost:1/realms/hip");
-    }
-
-    @Value("${local.server.port}")
-    int port;
+/** Platform acceptance criteria from Phase 3: probes, auth, CORS, telemetry, database roles. */
+class CoreApplicationIntegrationTests extends IntegrationTest {
 
     private final HttpClient http = HttpClient.newHttpClient();
 
@@ -193,7 +149,4 @@ class CoreApplicationIntegrationTests {
         return http.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
-    private static Connection connect(String user, String password) throws SQLException {
-        return DriverManager.getConnection(POSTGRES.getJdbcUrl(), user, password);
-    }
 }

@@ -72,8 +72,9 @@ paths:
     patch:
       tags: [Patients]
       operationId: updateMyPatient
+      description: JSON Merge Patch (RFC 7396). `null` clears `biologicalSex` or `heightCm`; `fullName` and `birthDate` cannot be cleared.
       parameters:
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IfMatchRequired'
       requestBody:
         required: true
         content:
@@ -89,7 +90,9 @@ paths:
               schema: { $ref: '#/components/schemas/Patient' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
 
   /api/v1/patients/me/allergies:
     get:
@@ -737,6 +740,13 @@ components:
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: >-
+        Token lacks the PATIENT role (`FORBIDDEN`), lacks the `sub` or `email` claim (`ACCOUNT_CLAIMS_MISSING`),
+        or the account is not active (`ACCOUNT_NOT_ACTIVE`). Applies to every `/api/v1` operation.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
     ConsentRequired:
       description: AI consent not granted (`AI_CONSENT_REQUIRED`)
       content:
@@ -888,7 +898,7 @@ components:
       properties:
         type: { $ref: '#/components/schemas/ConsentType' }
         granted: { type: boolean }
-        documentVersion: { type: string, maxLength: 50 }
+        documentVersion: { type: string, minLength: 1, maxLength: 50, pattern: '^[A-Za-z0-9._-]+$' }
 
     ConsentState:
       type: object
@@ -1258,7 +1268,7 @@ components:
         uncertainty: LOW
         insufficientData: false
         seekProfessionalCare: { recommended: true, urgency: ROUTINE }
-        suggestedQuestionsForDoctor: [Esse valor precisa de investigação adicional?]
+        suggestedQuestionsForDoctor: ['Esse valor precisa de investigação adicional?']
         safety: { refused: false, reasonCode: null }
         createdAt: '2026-11-12T22:45:00Z'
 

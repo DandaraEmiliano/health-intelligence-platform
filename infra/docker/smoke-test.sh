@@ -35,6 +35,27 @@ retry 30 curl -sf http://localhost:8180/realms/hip/.well-known/openid-configurat
 curl -sf http://localhost:8180/realms/hip/.well-known/openid-configuration | grep -q '"issuer":"http://localhost:8180/realms/hip"'
 echo "PASS"
 
+echo "-- Keycloak access token carries the claims core-api needs (sub, email, aud, roles)"
+if [[ -z "${KC_SYNTHETIC_USER_PASSWORD:-}" && -f .env ]]; then
+  KC_SYNTHETIC_USER_PASSWORD=$(grep -E '^KC_SYNTHETIC_USER_PASSWORD=' .env | cut -d= -f2-)
+fi
+token=$(curl -sf -X POST http://localhost:8180/realms/hip/protocol/openid-connect/token \
+  -d grant_type=password -d client_id=hip-dev-cli -d username=patient.a@example.test \
+  --data-urlencode "password=${KC_SYNTHETIC_USER_PASSWORD:?set KC_SYNTHETIC_USER_PASSWORD or create .env}" \
+  | python3 -c 'import json, sys; print(json.load(sys.stdin)["access_token"])')
+python3 - "$token" <<'PY'
+import base64, json, sys
+payload = sys.argv[1].split(".")[1]
+claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+aud = claims.get("aud")
+aud = aud if isinstance(aud, list) else [aud]
+assert claims.get("sub"), "access token has no sub (is the 'basic' client scope in the realm?)"
+assert claims.get("email") == "patient.a@example.test", "access token has no email claim"
+assert "core-api" in aud, "access token audience lacks core-api"
+assert "PATIENT" in claims.get("roles", []), "access token lacks the PATIENT role"
+PY
+echo "PASS"
+
 echo "-- S3 (S3Mock): bucket exists, object round trip"
 retry 30 aws --endpoint-url http://localhost:9090 s3api head-bucket --bucket hip-documents-local
 echo "synthetic" > /tmp/hip-smoke.txt

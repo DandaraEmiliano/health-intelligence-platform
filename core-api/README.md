@@ -43,5 +43,19 @@ mvn verify
 | Test | What it proves |
 | --- | --- |
 | `ModularityTests` | Module boundaries hold (Spring Modulith) and all 12 modules exist |
+| `ArchitectureTests` | ADR 0011 rules: clinical repositories expose no unscoped lookups (`CrudRepository`), controllers never touch repositories |
 | `SecurityConfigurationTests` | Realm roles map to Spring authorities |
 | `CoreApplicationIntegrationTests` | Boots against PostgreSQL + pgvector (Testcontainers): probes up, API requires auth, Flyway ran as owner, app role is DML-only, audit and consent are append-only, no access to schema `ai` |
+| `PatientIsolationTests` | Two patients: B can never read, modify or infer A's data. Every new patient endpoint adds its case here |
+| `ContractConformanceTests` | Every implemented operation exists in `contracts/core-api.openapi.yaml` with the same path, method and operationId |
+| `IdentityApiTests`, `PatientApiTests`, `ConsentApiTests` | Behaviour of each endpoint, errors as Problem Details, audit rows |
+
+Integration tests share one PostgreSQL container and one Spring context (`support/IntegrationTest`). Tokens are signed by a test key with the same claims as the local realm (`support/TestTokens`), so no Keycloak is needed.
+
+## Identity and patient scope
+
+- The first authenticated request provisions the local `user_account` from the token (`sub`, `email`, `roles`), just in time; later requests keep email and roles in sync. Concurrent first requests create exactly one account.
+- `/api/**` requires the `PATIENT` role. Tokens without `sub` or `email` get 403 `ACCOUNT_CLAIMS_MISSING`.
+- The patient is always resolved from the token. A missing profile and another patient's profile are the same 404.
+- Profile updates use JSON Merge Patch and require `If-Match` (428 without it, 412 when stale).
+- Profile changes and consent changes write an `audit_event` with field names and codes only, never values.

@@ -34,6 +34,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** @description JSON Merge Patch (RFC 7396). `null` clears `biologicalSex` or `heightCm`; `fullName` and `birthDate` cannot be cleared. */
         patch: operations["updateMyPatient"];
         trace?: never;
     };
@@ -925,6 +926,15 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /** @description Token lacks the PATIENT role (`FORBIDDEN`), lacks the `sub` or `email` claim (`ACCOUNT_CLAIMS_MISSING`), or the account is not active (`ACCOUNT_NOT_ACTIVE`). Applies to every `/api/v1` operation. */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description AI consent not granted (`AI_CONSENT_REQUIRED`) */
         ConsentRequired: {
             headers: {
@@ -1094,8 +1104,8 @@ export interface operations {
     updateMyPatient: {
         parameters: {
             query?: never;
-            header?: {
-                "If-Match"?: components["parameters"]["IfMatch"];
+            header: {
+                "If-Match": components["parameters"]["IfMatchRequired"];
             };
             path?: never;
             cookie?: never;
@@ -1118,7 +1128,9 @@ export interface operations {
             };
             400: components["responses"]["ValidationError"];
             401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             412: components["responses"]["PreconditionFailed"];
+            428: components["responses"]["PreconditionRequired"];
         };
     };
     listAllergies: {

@@ -26,6 +26,93 @@
   "defaultRoles": ["PATIENT"],
   "clientScopes": [
     {
+      "name": "basic",
+      "description": "Subject and auth time. Must be declared here: a realm import that lists clientScopes does not get Keycloak's built-in ones, and without it access tokens carry no sub.",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "false" },
+      "protocolMappers": [
+        {
+          "name": "sub",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-sub-mapper",
+          "config": { "access.token.claim": "true", "introspection.token.claim": "true" }
+        },
+        {
+          "name": "auth_time",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "config": {
+            "user.session.note": "AUTH_TIME",
+            "claim.name": "auth_time",
+            "jsonType.label": "long",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "email",
+      "description": "email and email_verified; core-api maps the account by sub and keeps email in sync from this claim.",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true" },
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "email",
+            "claim.name": "email",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "email verified",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": {
+            "user.attribute": "emailVerified",
+            "claim.name": "email_verified",
+            "jsonType.label": "boolean",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "description": "Display name for the web client (ID token only). Health data never goes into tokens.",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true" },
+      "protocolMappers": [
+        {
+          "name": "full name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-full-name-mapper",
+          "config": { "id.token.claim": "true", "access.token.claim": "false", "userinfo.token.claim": "true" }
+        },
+        {
+          "name": "username",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "username",
+            "claim.name": "preferred_username",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
       "name": "core-api-audience",
       "protocol": "openid-connect",
       "attributes": { "include.in.token.scope": "false" },
@@ -91,7 +178,7 @@
       "redirectUris": ["http://localhost:5173/*"],
       "webOrigins": ["http://localhost:5173"],
       "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:5173/*" },
-      "defaultClientScopes": ["openid", "profile", "email", "core-api-audience", "realm-roles"]
+      "defaultClientScopes": ["basic", "profile", "email", "core-api-audience", "realm-roles"]
     },
     {
       "clientId": "hip-dev-cli",
@@ -99,7 +186,7 @@
       "publicClient": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": true,
-      "defaultClientScopes": ["openid", "profile", "email", "core-api-audience", "realm-roles"]
+      "defaultClientScopes": ["basic", "profile", "email", "core-api-audience", "realm-roles"]
     },
     {
       "clientId": "core-api-service",
@@ -110,7 +197,7 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
-      "defaultClientScopes": ["ai-service-audience"]
+      "defaultClientScopes": ["basic", "ai-service-audience"]
     }
   ],
   "users": [

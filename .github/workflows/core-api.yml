@@ -3,9 +3,10 @@ name: core-api
 on:
   push:
     branches: [main]
-    paths: ["core-api/**", "infra/docker/postgres/**", ".github/workflows/core-api.yml"]
+    paths: ["core-api/**", "contracts/core-api.openapi.yaml", "infra/docker/postgres/**", ".github/workflows/core-api.yml"]
   pull_request:
-    paths: ["core-api/**", "infra/docker/postgres/**", ".github/workflows/core-api.yml"]
+    # The contract is included because ContractConformanceTests checks the implementation against it.
+    paths: ["core-api/**", "contracts/core-api.openapi.yaml", "infra/docker/postgres/**", ".github/workflows/core-api.yml"]
 
 permissions:
   contents: read

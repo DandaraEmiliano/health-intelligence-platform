@@ -98,6 +98,7 @@ paths:
     get:
       tags: [Health records]
       operationId: listAllergies
+      summary: Allergies of the authenticated patient, oldest first
       responses:
         '200':
           description: Allergies
@@ -107,8 +108,9 @@ paths:
                 type: object
                 required: [items]
                 properties:
-                  items: { type: array, items: { $ref: '#/components/schemas/Allergy' } }
+                  items: { type: array, maxItems: 200, items: { $ref: '#/components/schemas/Allergy' } }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
     post:
       tags: [Health records]
       operationId: createAllergy
@@ -120,11 +122,16 @@ paths:
       responses:
         '201':
           description: Created
+          headers:
+            Location: { schema: { type: string } }
+            ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Allergy' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
 
   /api/v1/patients/me/allergies/{allergyId}:
     parameters:
@@ -132,11 +139,24 @@ paths:
         in: path
         required: true
         schema: { type: string, format: uuid }
+    get:
+      tags: [Health records]
+      operationId: getAllergy
+      responses:
+        '200':
+          description: The record
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Allergy' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
     put:
       tags: [Health records]
       operationId: replaceAllergy
       parameters:
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IfMatchRequired'
       requestBody:
         required: true
         content:
@@ -145,6 +165,8 @@ paths:
       responses:
         '200':
           description: Updated
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Allergy' }
@@ -152,6 +174,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
     delete:
       tags: [Health records]
       operationId: deleteAllergy
@@ -159,8 +182,184 @@ paths:
         '204': { description: Deleted }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
-  # /api/v1/patients/me/medications and /conditions follow the same pattern as allergies.
-  # They are specified in full in Phase 4 together with their schemas.
+
+  /api/v1/patients/me/medications:
+    get:
+      tags: [Health records]
+      operationId: listMedications
+      summary: Medications of the authenticated patient, oldest first
+      responses:
+        '200':
+          description: Medications
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, maxItems: 200, items: { $ref: '#/components/schemas/Medication' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Health records]
+      operationId: createMedication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MedicationRequest' }
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location: { schema: { type: string } }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Medication' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/patients/me/medications/{medicationId}:
+    parameters:
+      - name: medicationId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Health records]
+      operationId: getMedication
+      responses:
+        '200':
+          description: The record
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Medication' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Health records]
+      operationId: replaceMedication
+      parameters:
+        - $ref: '#/components/parameters/IfMatchRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MedicationRequest' }
+      responses:
+        '200':
+          description: Updated
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Medication' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+    delete:
+      tags: [Health records]
+      operationId: deleteMedication
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/patients/me/conditions:
+    get:
+      tags: [Health records]
+      operationId: listConditions
+      summary: Medical conditions of the authenticated patient, oldest first
+      responses:
+        '200':
+          description: Medical conditions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, maxItems: 200, items: { $ref: '#/components/schemas/MedicalCondition' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Health records]
+      operationId: createCondition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MedicalConditionRequest' }
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location: { schema: { type: string } }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MedicalCondition' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/patients/me/conditions/{conditionId}:
+    parameters:
+      - name: conditionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Health records]
+      operationId: getCondition
+      responses:
+        '200':
+          description: The record
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MedicalCondition' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Health records]
+      operationId: replaceCondition
+      parameters:
+        - $ref: '#/components/parameters/IfMatchRequired'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MedicalConditionRequest' }
+      responses:
+        '200':
+          description: Updated
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MedicalCondition' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+    delete:
+      tags: [Health records]
+      operationId: deleteCondition
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /api/v1/consents:
     get:
@@ -758,7 +957,7 @@ components:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
     Conflict:
-      description: Conflict (`PATIENT_ALREADY_EXISTS`, `DUPLICATE_DOCUMENT`, `REVIEW_INCOMPLETE`, `INVALID_STATE`)
+      description: Conflict (`PATIENT_ALREADY_EXISTS`, `RECORD_LIMIT_REACHED`, `DUPLICATE_DOCUMENT`, `REVIEW_INCOMPLETE`, `INVALID_STATE`)
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
@@ -869,6 +1068,14 @@ components:
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
 
+    RecordMetadata:
+      type: object
+      required: [id, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
     AllergyRequest:
       type: object
       additionalProperties: false
@@ -882,11 +1089,40 @@ components:
     Allergy:
       allOf:
         - $ref: '#/components/schemas/AllergyRequest'
-        - type: object
-          required: [id, createdAt]
-          properties:
-            id: { type: string, format: uuid }
-            createdAt: { type: string, format: date-time }
+        - $ref: '#/components/schemas/RecordMetadata'
+
+    MedicationRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        What the patient reports taking, as free text. The platform never suggests, changes or
+        validates dosages.
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        dosageText: { type: string, maxLength: 200, examples: ['500 mg'] }
+        frequencyText: { type: string, maxLength: 200, examples: ['twice a day'] }
+        startedOn: { type: string, format: date, description: Not in the future. }
+        endedOn: { type: string, format: date, description: 'Not in the future; on or after startedOn (`INVALID_PERIOD`).' }
+
+    Medication:
+      allOf:
+        - $ref: '#/components/schemas/MedicationRequest'
+        - $ref: '#/components/schemas/RecordMetadata'
+
+    MedicalConditionRequest:
+      type: object
+      additionalProperties: false
+      required: [description, status]
+      properties:
+        description: { type: string, minLength: 1, maxLength: 500 }
+        status: { enum: [ACTIVE, RESOLVED, UNKNOWN] }
+        onsetDateApprox: { type: string, format: date, description: Approximate onset; not in the future. }
+
+    MedicalCondition:
+      allOf:
+        - $ref: '#/components/schemas/MedicalConditionRequest'
+        - $ref: '#/components/schemas/RecordMetadata'
 
     ConsentType:
       enum: [TERMS_OF_USE, PRIVACY_POLICY, AI_PROCESSING]

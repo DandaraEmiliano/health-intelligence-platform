@@ -8,6 +8,8 @@ import dev.healthintelligence.core.support.IntegrationTest;
 import dev.healthintelligence.core.support.TestTokens;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -74,6 +76,29 @@ class PatientIsolationTests extends IntegrationTest {
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(json.readTree(response.body()).get("items").isEmpty()).isTrue();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {
+            "allergies:{\"substance\":\"Penicilina\",\"allergyType\":\"MEDICATION\"}",
+            "medications:{\"name\":\"Metformina\"}",
+            "conditions:{\"description\":\"Asma\",\"status\":\"ACTIVE\"}"})
+    void healthRecordsOfAnotherPatientCannotBeReadChangedOrDeleted(String kindAndBody) {
+        String collection = "/api/v1/patients/me/" + kindAndBody.substring(0, kindAndBody.indexOf(':'));
+        String body = kindAndBody.substring(kindAndBody.indexOf(':') + 1);
+        String recordOfA = json.readTree(api().postJson(collection, patientA, body).body()).get("id").stringValue();
+        api().postJson("/api/v1/patients", patientB, "{\"fullName\":\"Paciente B\",\"birthDate\":\"1995-09-09\"}");
+
+        assertThat(api().get(collection + "/" + recordOfA, patientB).statusCode()).isEqualTo(404);
+        assertThat(api().putJson(collection + "/" + recordOfA, patientB, "\"0\"", body).statusCode()).isEqualTo(404);
+        assertThat(api().delete(collection + "/" + recordOfA, patientB).statusCode()).isEqualTo(404);
+        HttpResponse<String> listOfB = api().get(collection, patientB);
+        assertThat(listOfB.statusCode()).isEqualTo(200);
+        assertThat(json.readTree(listOfB.body()).get("items").isEmpty()).isTrue();
+
+        HttpResponse<String> stillThere = api().get(collection + "/" + recordOfA, patientA);
+        assertThat(stillThere.statusCode()).isEqualTo(200);
+        assertThat(stillThere.headers().firstValue("ETag")).hasValue("\"0\"");
     }
 
     @Test

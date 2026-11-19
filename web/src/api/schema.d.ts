@@ -45,6 +45,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Allergies of the authenticated patient, oldest first */
         get: operations["listAllergies"];
         put?: never;
         post: operations["createAllergy"];
@@ -63,10 +64,80 @@ export interface paths {
             };
             cookie?: never;
         };
-        get?: never;
+        get: operations["getAllergy"];
         put: operations["replaceAllergy"];
         post?: never;
         delete: operations["deleteAllergy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/patients/me/medications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Medications of the authenticated patient, oldest first */
+        get: operations["listMedications"];
+        put?: never;
+        post: operations["createMedication"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/patients/me/medications/{medicationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                medicationId: string;
+            };
+            cookie?: never;
+        };
+        get: operations["getMedication"];
+        put: operations["replaceMedication"];
+        post?: never;
+        delete: operations["deleteMedication"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/patients/me/conditions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Medical conditions of the authenticated patient, oldest first */
+        get: operations["listConditions"];
+        put?: never;
+        post: operations["createCondition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/patients/me/conditions/{conditionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conditionId: string;
+            };
+            cookie?: never;
+        };
+        get: operations["getCondition"];
+        put: operations["replaceCondition"];
+        post?: never;
+        delete: operations["deleteCondition"];
         options?: never;
         head?: never;
         patch?: never;
@@ -530,6 +601,14 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        RecordMetadata: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         AllergyRequest: {
             substance: string;
             /** @enum {unknown} */
@@ -538,12 +617,37 @@ export interface components {
             severity?: "MILD" | "MODERATE" | "SEVERE" | "UNKNOWN";
             notes?: string;
         };
-        Allergy: components["schemas"]["AllergyRequest"] & {
-            /** Format: uuid */
-            id: string;
-            /** Format: date-time */
-            createdAt: string;
+        Allergy: components["schemas"]["AllergyRequest"] & components["schemas"]["RecordMetadata"];
+        /** @description What the patient reports taking, as free text. The platform never suggests, changes or validates dosages. */
+        MedicationRequest: {
+            name: string;
+            /** @example 500 mg */
+            dosageText?: string;
+            /** @example twice a day */
+            frequencyText?: string;
+            /**
+             * Format: date
+             * @description Not in the future.
+             */
+            startedOn?: string;
+            /**
+             * Format: date
+             * @description Not in the future; on or after startedOn (`INVALID_PERIOD`).
+             */
+            endedOn?: string;
         };
+        Medication: components["schemas"]["MedicationRequest"] & components["schemas"]["RecordMetadata"];
+        MedicalConditionRequest: {
+            description: string;
+            /** @enum {unknown} */
+            status: "ACTIVE" | "RESOLVED" | "UNKNOWN";
+            /**
+             * Format: date
+             * @description Approximate onset; not in the future.
+             */
+            onsetDateApprox?: string;
+        };
+        MedicalCondition: components["schemas"]["MedicalConditionRequest"] & components["schemas"]["RecordMetadata"];
         /** @enum {unknown} */
         ConsentType: "TERMS_OF_USE" | "PRIVACY_POLICY" | "AI_PROCESSING";
         ConsentRequest: {
@@ -953,7 +1057,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description Conflict (`PATIENT_ALREADY_EXISTS`, `DUPLICATE_DOCUMENT`, `REVIEW_INCOMPLETE`, `INVALID_STATE`) */
+        /** @description Conflict (`PATIENT_ALREADY_EXISTS`, `RECORD_LIMIT_REACHED`, `DUPLICATE_DOCUMENT`, `REVIEW_INCOMPLETE`, `INVALID_STATE`) */
         Conflict: {
             headers: {
                 [name: string]: unknown;
@@ -1154,6 +1258,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
         };
     };
     createAllergy: {
@@ -1172,6 +1277,8 @@ export interface operations {
             /** @description Created */
             201: {
                 headers: {
+                    Location?: string;
+                    ETag: components["headers"]["ETag"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1180,13 +1287,40 @@ export interface operations {
             };
             400: components["responses"]["ValidationError"];
             401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getAllergy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                allergyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The record */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Allergy"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
         };
     };
     replaceAllergy: {
         parameters: {
             query?: never;
-            header?: {
-                "If-Match"?: components["parameters"]["IfMatch"];
+            header: {
+                "If-Match": components["parameters"]["IfMatchRequired"];
             };
             path: {
                 allergyId: string;
@@ -1202,6 +1336,7 @@ export interface operations {
             /** @description Updated */
             200: {
                 headers: {
+                    ETag: components["headers"]["ETag"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1212,6 +1347,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             412: components["responses"]["PreconditionFailed"];
+            428: components["responses"]["PreconditionRequired"];
         };
     };
     deleteAllergy: {
@@ -1220,6 +1356,276 @@ export interface operations {
             header?: never;
             path: {
                 allergyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listMedications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Medications */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Medication"][];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    createMedication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    Location?: string;
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Medication"];
+                };
+            };
+            400: components["responses"]["ValidationError"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getMedication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                medicationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The record */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Medication"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    replaceMedication: {
+        parameters: {
+            query?: never;
+            header: {
+                "If-Match": components["parameters"]["IfMatchRequired"];
+            };
+            path: {
+                medicationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicationRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Medication"];
+                };
+            };
+            400: components["responses"]["ValidationError"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            412: components["responses"]["PreconditionFailed"];
+            428: components["responses"]["PreconditionRequired"];
+        };
+    };
+    deleteMedication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                medicationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listConditions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Medical conditions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["MedicalCondition"][];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    createCondition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalConditionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    Location?: string;
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalCondition"];
+                };
+            };
+            400: components["responses"]["ValidationError"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getCondition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conditionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The record */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalCondition"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    replaceCondition: {
+        parameters: {
+            query?: never;
+            header: {
+                "If-Match": components["parameters"]["IfMatchRequired"];
+            };
+            path: {
+                conditionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalConditionRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalCondition"];
+                };
+            };
+            400: components["responses"]["ValidationError"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            412: components["responses"]["PreconditionFailed"];
+            428: components["responses"]["PreconditionRequired"];
+        };
+    };
+    deleteCondition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conditionId: string;
             };
             cookie?: never;
         };

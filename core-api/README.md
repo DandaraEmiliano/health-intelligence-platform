@@ -43,12 +43,12 @@ mvn verify
 | Test | What it proves |
 | --- | --- |
 | `ModularityTests` | Module boundaries hold (Spring Modulith) and all 12 modules exist |
-| `ArchitectureTests` | ADR 0011 rules: clinical repositories expose no unscoped lookups (`CrudRepository`), controllers never touch repositories |
+| `ArchitectureTests` | ADR 0011 rules: clinical repositories expose no unscoped lookups (`CrudRepository`), every repository query takes a typed `PatientId` (or `UserId` for the profile), controllers never touch repositories |
 | `SecurityConfigurationTests` | Realm roles map to Spring authorities |
 | `CoreApplicationIntegrationTests` | Boots against PostgreSQL + pgvector (Testcontainers): probes up, API requires auth, Flyway ran as owner, app role is DML-only, audit and consent are append-only, no access to schema `ai` |
 | `PatientIsolationTests` | Two patients: B can never read, modify or infer A's data. Every new patient endpoint adds its case here |
 | `ContractConformanceTests` | Every implemented operation exists in `contracts/core-api.openapi.yaml` with the same path, method and operationId |
-| `IdentityApiTests`, `PatientApiTests`, `ConsentApiTests` | Behaviour of each endpoint, errors as Problem Details, audit rows |
+| `IdentityApiTests`, `PatientApiTests`, `ConsentApiTests`, `HealthRecordsApiTests` | Behaviour of each endpoint, errors as Problem Details, audit rows |
 
 Integration tests share one PostgreSQL container and one Spring context (`support/IntegrationTest`). Tokens are signed by a test key with the same claims as the local realm (`support/TestTokens`), so no Keycloak is needed.
 
@@ -57,5 +57,8 @@ Integration tests share one PostgreSQL container and one Spring context (`suppor
 - The first authenticated request provisions the local `user_account` from the token (`sub`, `email`, `roles`), just in time; later requests keep email and roles in sync. Concurrent first requests create exactly one account.
 - `/api/**` requires the `PATIENT` role. Tokens without `sub` or `email` get 403 `ACCOUNT_CLAIMS_MISSING`.
 - The patient is always resolved from the token. A missing profile and another patient's profile are the same 404.
-- Profile updates use JSON Merge Patch and require `If-Match` (428 without it, 412 when stale).
-- Profile changes and consent changes write an `audit_event` with field names and codes only, never values.
+- Profile updates use JSON Merge Patch.
+- Profile updates and health record replacements require `If-Match` (428 without it, 412 when stale).
+- Allergies, medications and conditions live under `/api/v1/patients/me/...` and need the profile first (404 `PATIENT_NOT_FOUND` otherwise). Each patient may keep up to 200 of each (409 `RECORD_LIMIT_REACHED`). Medications are free text; the platform never interprets or changes dosages.
+- Clinical modules get the caller through `CurrentPatient.scope()` (user and patient, from the token) and pass `PatientId` to every repository query.
+- Profile, consent and health record changes write an `audit_event` with field names and codes only, never values.

@@ -35,6 +35,19 @@ public final class Api {
         return send(builder);
     }
 
+    public HttpResponse<String> putJson(String path, String token, String ifMatch, String json) {
+        HttpRequest.Builder builder = builder(path, token).header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(json));
+        if (ifMatch != null) {
+            builder.header("If-Match", ifMatch);
+        }
+        return send(builder);
+    }
+
+    public HttpResponse<String> delete(String path, String token) {
+        return send(builder(path, token).DELETE());
+    }
+
     private HttpRequest.Builder builder(String path, String token) {
         HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
                 .header("User-Agent", "core-api-tests");

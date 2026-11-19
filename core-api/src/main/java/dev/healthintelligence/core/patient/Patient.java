@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import dev.healthintelligence.core.shared.UserId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -24,7 +25,7 @@ class Patient {
     private UUID id;
 
     @Column(name = "user_id", nullable = false, updatable = false)
-    private UUID userId;
+    private UserId userId;
 
     @Column(name = "full_name", nullable = false)
     private String fullName;
@@ -54,7 +55,7 @@ class Patient {
     protected Patient() {
     }
 
-    Patient(UUID id, UUID userId, PatientProfile profile) {
+    Patient(UUID id, UserId userId, PatientProfile profile) {
         this.id = id;
         this.userId = userId;
         apply(profile);

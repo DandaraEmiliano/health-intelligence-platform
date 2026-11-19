@@ -3,11 +3,13 @@ package dev.healthintelligence.core.patient;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Optional;
 
 import dev.healthintelligence.core.audit.AuditLog;
 import dev.healthintelligence.core.audit.AuditRecord;
 import dev.healthintelligence.core.shared.ETags;
 import dev.healthintelligence.core.shared.Ids;
+import dev.healthintelligence.core.shared.PatientId;
 import dev.healthintelligence.core.shared.ProblemException;
 import dev.healthintelligence.core.shared.UserId;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -32,12 +34,12 @@ class PatientService {
     @Transactional
     Patient create(UserId owner, PatientProfile requested) {
         PatientProfile profile = requested.validated(today());
-        if (patients.existsByUserId(owner.value())) {
+        if (patients.existsByUserId(owner)) {
             throw ProblemException.conflict("PATIENT_ALREADY_EXISTS");
         }
         Patient patient;
         try {
-            patient = patients.saveAndFlush(new Patient(Ids.newId(), owner.value(), profile));
+            patient = patients.saveAndFlush(new Patient(Ids.newId(), owner, profile));
         } catch (DataIntegrityViolationException concurrentlyCreated) {
             throw ProblemException.conflict("PATIENT_ALREADY_EXISTS");
         }
@@ -48,7 +50,7 @@ class PatientService {
 
     @Transactional(readOnly = true)
     Patient get(UserId owner) {
-        return patients.findByUserId(owner.value()).orElseThrow(() -> ProblemException.notFound(NOT_FOUND));
+        return patients.findByUserId(owner).orElseThrow(() -> ProblemException.notFound(NOT_FOUND));
     }
 
     @Transactional
@@ -64,6 +66,12 @@ class PatientService {
         auditLog.record(AuditRecord.userSuccess(owner.value(), "PATIENT_PROFILE_UPDATED", "PATIENT",
                 patient.id(), patient.id(), Map.of("fields", String.join(",", patch.fieldNames()))));
         return patient;
+    }
+
+    /** The caller's patient id, for other modules (via {@link CurrentPatient}). */
+    @Transactional(readOnly = true)
+    Optional<PatientId> findId(UserId owner) {
+        return patients.findByUserId(owner).map(patient -> new PatientId(patient.id()));
     }
 
     private LocalDate today() {

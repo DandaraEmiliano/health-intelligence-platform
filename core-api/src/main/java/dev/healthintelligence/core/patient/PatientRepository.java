@@ -3,6 +3,7 @@ package dev.healthintelligence.core.patient;
 import java.util.Optional;
 import java.util.UUID;
 
+import dev.healthintelligence.core.shared.UserId;
 import org.springframework.data.repository.Repository;
 
 /**
@@ -11,9 +12,9 @@ import org.springframework.data.repository.Repository;
  */
 interface PatientRepository extends Repository<Patient, UUID> {
 
-    Optional<Patient> findByUserId(UUID userId);
+    Optional<Patient> findByUserId(UserId userId);
 
-    boolean existsByUserId(UUID userId);
+    boolean existsByUserId(UserId userId);
 
     Patient saveAndFlush(Patient patient);
 }

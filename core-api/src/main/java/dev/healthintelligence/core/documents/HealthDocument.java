@@ -80,6 +80,16 @@ class HealthDocument {
         return "documents/" + id;
     }
 
+    /** Status after extraction; failureCode is set only for FAILED (ck_health_document_failure). */
+    void extractionFinished(DocumentStatus outcome, String failure) {
+        status = outcome;
+        failureCode = outcome == DocumentStatus.FAILED ? failure : null;
+    }
+
+    boolean isDeleted() {
+        return deletedAt != null;
+    }
+
     void delete(Instant at) {
         deletedAt = at;
     }

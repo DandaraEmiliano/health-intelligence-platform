@@ -32,6 +32,12 @@ class ExtractionJob {
     @Column(name = "requested_at", nullable = false)
     private Instant requestedAt;
 
+    @Column(name = "failure_code")
+    private String failureCode;
+
+    @Column(name = "completed_at")
+    private Instant completedAt;
+
     protected ExtractionJob() {
     }
 
@@ -44,5 +50,19 @@ class ExtractionJob {
         this.requestedAt = requestedAt;
     }
 
+    /** False when the job was already completed: a redelivered result is a no-op (ADR 0003). */
+    boolean complete(String outcome, String failure, Instant at) {
+        if (!"REQUESTED".equals(status)) {
+            return false;
+        }
+        status = outcome;
+        failureCode = failure;
+        completedAt = at;
+        return true;
+    }
+
     UUID id() { return id; }
+    UUID documentId() { return documentId; }
+    PatientId patientId() { return patientId; }
+    String extractorVersion() { return extractorVersion; }
 }

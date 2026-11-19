@@ -82,6 +82,7 @@ public abstract class IntegrationTest {
         registry.add("hip.aws.s3-endpoint", IntegrationTest::s3Endpoint);
         registry.add("hip.aws.sqs-endpoint", IntegrationTest::sqsEndpoint);
         registry.add("hip.outbox.relay.fixed-delay", () -> "200ms");
+        registry.add("hip.extraction.results.poll-interval", () -> "200ms");
         // Tests run the purge themselves, with no delay, against a recording identity provider.
         registry.add("hip.identity.admin.enabled", () -> "false");
         registry.add("hip.accounts.purge.after", () -> "0s");

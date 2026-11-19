@@ -81,6 +81,11 @@ hip:
   extraction:
     extractor-version: ${EXTRACTOR_VERSION:1.0.0}
     queue: document-extraction-requests
+    results:
+      queue: document-extraction-results
+      poll-interval: 1s
+      listener:
+        enabled: ${EXTRACTION_RESULTS_LISTENER_ENABLED:true}
   idempotency:
     ttl: 24h
   outbox:

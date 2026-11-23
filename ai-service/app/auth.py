@@ -18,13 +18,14 @@ _bearer = HTTPBearer(auto_error=False)
 
 
 @lru_cache
-def _jwks_client(issuer: str) -> jwt.PyJWKClient:
-    return jwt.PyJWKClient(f"{issuer}/protocol/openid-connect/certs", cache_keys=True, lifespan=600, timeout=3)
+def _jwks_client(url: str) -> jwt.PyJWKClient:
+    return jwt.PyJWKClient(url, cache_keys=True, lifespan=600, timeout=3)
 
 
 def get_key_resolver(settings: Annotated[Settings, Depends(get_settings)]) -> Callable[[str], object]:
     """Signing key for a token, from the realm's JWKS. Tests override this dependency."""
-    return lambda token: _jwks_client(settings.oidc_issuer).get_signing_key_from_jwt(token).key
+    url = settings.oidc_jwks_url or f"{settings.oidc_issuer}/protocol/openid-connect/certs"
+    return lambda token: _jwks_client(url).get_signing_key_from_jwt(token).key
 
 
 def _unauthorized(detail: str) -> HTTPException:

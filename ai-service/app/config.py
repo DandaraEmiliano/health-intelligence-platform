@@ -39,6 +39,9 @@ class Settings(BaseSettings):
 
     # Service-to-service authentication (ADR 0002): only core-api's client-credentials tokens.
     oidc_issuer: str = "http://localhost:8180/realms/hip"
+    # Where the signing keys are fetched; defaults to the issuer's. In containers the issuer is the
+    # public URL (localhost) while the keys are reached through the internal name.
+    oidc_jwks_url: str | None = None
     oidc_audience: str = "ai-service"
     allowed_client_ids: list[str] = ["core-api-service"]
 

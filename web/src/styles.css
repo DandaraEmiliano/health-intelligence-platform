@@ -333,3 +333,14 @@ a.fact:hover { border-color: var(--tone-400); }
   .notices .label { display: none; }
   .notices .badge { position: absolute; top: 0; right: -0.2rem; min-width: 1rem; height: 1rem; font-size: 0.62rem; }
 }
+
+/* Comparison */
+.compare-pickers { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.compare-pickers select { font: inherit; padding: 0.5rem 0.7rem; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); width: 100%; }
+.compare-pickers .field { display: grid; gap: 0.3rem; font-size: 0.88rem; color: var(--muted); }
+.table-wrap { overflow-x: auto; padding: 0.4rem 0.6rem; }
+table.compare { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+table.compare th, table.compare td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+table.compare thead th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+table.compare tbody th { font-weight: 500; }
+@media (max-width: 760px) { .compare-pickers { grid-template-columns: 1fr; } }

@@ -1,6 +1,5 @@
 package dev.healthintelligence.core.laboratory;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -34,11 +33,11 @@ class LaboratoryReportController {
     private final LaboratoryReports reports;
     private final ReviewService review;
     private final JsonMapper json;
-    private final AnalyteCatalog catalog;
+    private final ResultViews views;
 
     LaboratoryReportController(CurrentPatient currentPatient, LaboratoryReports reports, ReviewService review,
-                               JsonMapper json, AnalyteCatalog catalog) {
-        this.catalog = catalog;
+                               JsonMapper json, ResultViews views) {
+        this.views = views;
         this.currentPatient = currentPatient;
         this.reports = reports;
         this.review = review;
@@ -83,30 +82,7 @@ class LaboratoryReportController {
         return new Detail(summary.id(), summary.documentId(), summary.laboratoryName(), summary.collectedAt(),
                 summary.status(), summary.resultCount(), summary.pendingCount(), report.collectedAtRaw(),
                 json.readTree(report.validationWarnings()), report.verifiedAt(),
-                found.results().stream().map(r -> result(report, r)).toList());
-    }
-
-    private Result result(LaboratoryReport report, LaboratoryResult result) {
-        ExtractedValues v = result.values();
-        Flag flag = v.labFlag() != null ? new Flag(v.labFlag(), "LABORATORY")
-                : v.computedFlag() != null ? new Flag(v.computedFlag(), "COMPUTED") : null;
-        JsonNode original = "CORRECTED".equals(result.reviewStatus())
-                ? json.readTree(result.extractedSnapshot()).get("measurement") : null;
-        AnalyteController.AnalyteView analyte = catalog.find(result.analyteId()).map(AnalyteController.AnalyteView::of).orElse(null);
-        return new Result(result.id(), report.id(), v.sequence(), analyte, v.rawName(),
-                new Measurement(v.valueKind(), v.valueRaw(), plain(v.valueNumeric()), v.valueComparator(), v.valueText()),
-                v.unitRaw(), new Range(v.refRangeText(), plain(v.refLow()), plain(v.refHigh()), v.refAppliesTo()),
-                flag, result.collectedAt(), result.reviewStatus(), original, json.readTree(result.validationWarnings()),
-                new Source(report.documentId(), v.sourcePage(), v.sourceExcerpt()));
-    }
-
-    /** numeric(20,6) comes back as 206.000000; the API shows the decimal without the padding. */
-    private static String plain(BigDecimal value) {
-        if (value == null) {
-            return null;
-        }
-        BigDecimal stripped = value.stripTrailingZeros();
-        return (stripped.scale() < 0 ? stripped.setScale(0) : stripped).toPlainString();
+                found.results().stream().map(r -> views.result(report, r)).toList());
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

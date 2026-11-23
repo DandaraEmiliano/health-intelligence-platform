@@ -1,4 +1,6 @@
 import { NotificationsPage } from "./notifications/NotificationsPage";
+import { ComparePage } from "./exams/ComparePage";
+import { OutOfRangePage } from "./exams/OutOfRangePage";
 import { AssistantPage } from "./assistant/AssistantPage";
 import type { ReactNode } from "react";
 import { useAuth } from "react-oidc-context";
@@ -83,6 +85,8 @@ export function App() {
               <Route path="/" element={<Home />} />
               <Route path="/documentos" element={<DocumentsPage />} />
               <Route path="/exames" element={<ExamsPage />} />
+              <Route path="/exames/comparar" element={<ComparePage />} />
+              <Route path="/exames/fora-da-referencia" element={<OutOfRangePage />} />
               <Route path="/exames/:reportId" element={<ReportReview />} />
               <Route path="/linha-do-tempo" element={<TimelinePage />} />
               <Route path="/linha-do-tempo/:analyteId" element={<AnalyteDetail />} />

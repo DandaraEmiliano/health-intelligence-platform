@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 import { fetchReadiness } from "../api/health";
-import { useConsents, useDocuments, useHealthRecords, usePatient, usePendingReviews } from "../api/queries";
-import { firstName, greeting } from "../ui/format";
+import { useConsents, useDocuments, useHealthRecords, useHealthSummary, usePatient, usePendingReviews } from "../api/queries";
+import { resultLabel, valueText } from "../exams/resultText";
+import { firstName, formatDate, greeting } from "../ui/format";
 
 export function Home() {
   const patient = usePatient();
@@ -14,6 +15,7 @@ export function Home() {
   const conditions = useHealthRecords("conditions");
   const documents = useDocuments();
   const pendingReviews = usePendingReviews();
+  const summary = useHealthSummary();
   const documentCount = documents.data?.pages.reduce((total, page) => total + page.items.length, 0);
   const readiness = useQuery({ queryKey: ["core-api-readiness"], queryFn: () => fetchReadiness() });
 
@@ -70,6 +72,45 @@ export function Home() {
           <span>{activeConditions === 1 ? "condição ativa" : "condições ativas"}</span>
         </Link>
       </div>
+
+      {summary.data && summary.data.verifiedResultCount > 0 && (
+        <section className="card tone-amber stack" aria-label="Seus exames conferidos" style={{ gap: "0.7rem" }}>
+          <div style={{ display: "flex", gap: "0.9rem", alignItems: "center" }}>
+            <span className="bubble" aria-hidden="true"><IconClipboardCheck size={20} /></span>
+            <div style={{ flex: 1 }}>
+              <h3>Seus exames conferidos</h3>
+              <p className="muted" style={{ fontSize: "0.9rem" }}>
+                {summary.data.verifiedResultCount} {summary.data.verifiedResultCount === 1 ? "resultado" : "resultados"}
+                {summary.data.firstCollectedAt && summary.data.lastCollectedAt
+                  ? summary.data.firstCollectedAt === summary.data.lastCollectedAt
+                    ? ` de ${formatDate(summary.data.lastCollectedAt)}`
+                    : ` entre ${formatDate(summary.data.firstCollectedAt)} e ${formatDate(summary.data.lastCollectedAt)}`
+                  : ""}
+                .
+              </p>
+            </div>
+            <Link className="button small" to="/linha-do-tempo">Ver evolução</Link>
+          </div>
+          {(summary.data.recentOutOfRange ?? []).length > 0 && (
+            <div>
+              <p className="section-label">Fora da referência, mais recentes</p>
+              <ul className="facts">
+                {(summary.data.recentOutOfRange ?? []).slice(0, 3).map((result) => (
+                  <li key={result.id}>
+                    <Link className="fact" to={`/exames/${result.reportId}`}>
+                      <span className="body">
+                        <span className="title">{resultLabel(result)}: {valueText(result)}</span>
+                        <span className="sub">{result.collectedAt ? `Coleta em ${formatDate(result.collectedAt)}` : ""}</span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/exames/fora-da-referencia" style={{ fontSize: "0.88rem" }}>Ver todos fora da referência</Link>
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="card tone-blue" style={{ display: "flex", gap: "0.9rem", alignItems: "center" }}>
         <span className="bubble" aria-hidden="true"><IconFileUpload size={20} /></span>

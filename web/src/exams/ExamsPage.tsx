@@ -20,6 +20,12 @@ export function ExamsPage() {
   return (
     <section className="stack tone-amber">
       <PageHeader item={navItem("/exames")} />
+      {items.length > 0 && (
+        <nav className="tabs" aria-label="Mais sobre seus exames">
+          <Link to="/exames/fora-da-referencia">Fora da referência</Link>
+          {items.filter((r) => r.status === "VERIFIED").length >= 2 && <Link to="/exames/comparar">Comparar laudos</Link>}
+        </nav>
+      )}
       {reports.isPending && <p className="loading">Carregando…</p>}
       {reports.isError && <p className="error-box" role="alert">{problemMessage(reports.error)}</p>}
       {reports.isSuccess && items.length === 0 && (

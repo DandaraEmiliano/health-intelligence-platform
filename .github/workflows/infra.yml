@@ -31,7 +31,7 @@ jobs:
         run: terraform init -backend=false -input=false && terraform validate
       # High and critical misconfigurations fail the build; accepted ones are annotated in place.
       - name: Static analysis (trivy config)
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0, pinned by commit (GHSA-69fq-xp46-6x23: tags were once force-pushed)
         with:
           scan-type: config
           scan-ref: infra/terraform
@@ -64,7 +64,7 @@ jobs:
           echo "user=$user"
           test -n "$user" && test "${user%%:*}" != "0" && test "$user" != "root"
       - name: Image vulnerabilities (high and critical with a fix)
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0, pinned by commit (GHSA-69fq-xp46-6x23: tags were once force-pushed)
         with:
           image-ref: hip/${{ matrix.service }}:ci
           # Vulnerabilities only: the secret scanner flags example strings inside SDKs; real

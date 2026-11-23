@@ -37,6 +37,15 @@ See [`docs/adr/`](docs/adr/) for the reasoning behind each decision.
 
 It uses Java 25 only for core-api, so other projects keep their own Java version.
 
+**As containers** (no JDK, Python or Node needed), the way they will run in AWS: non-root, read-only file systems, no Linux capabilities, CPU and memory limits on the service that parses PDFs.
+
+```bash
+cp .env.example .env
+docker compose --profile infra --profile apps up -d --build --wait
+```
+
+The web is served by nginx on http://localhost:5173 with a strict Content Security Policy; stop `scripts/dev.sh` first (same ports). ai-service has no published port: only core-api reaches it.
+
 **Manually**, step by step:
 
 Prerequisites: Docker, JDK 25 + Maven 3.9 (core-api), Python 3.12 + [uv](https://docs.astral.sh/uv/) (ai-service), Node.js 22+ (web).

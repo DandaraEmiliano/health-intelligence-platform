@@ -27,6 +27,9 @@ import org.springframework.security.oauth2.server.resource.web.access.BearerToke
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -49,6 +52,14 @@ class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable) // stateless bearer-token API, no cookies
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // JSON only: nothing may be rendered, framed or referred (threat model). Spring's
+                // defaults already add nosniff, X-Frame-Options DENY and no-cache for responses.
+                .headers(headers -> headers
+                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                                request -> request.getRequestURI().startsWith("/api/"),
+                                new StaticHeadersWriter("Content-Security-Policy",
+                                        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"))))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         // Scraped from the private network only; restricted further in Phase 7.

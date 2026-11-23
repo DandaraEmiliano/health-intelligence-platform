@@ -28,7 +28,12 @@ class AwsConfiguration {
     }
 
     @Bean(destroyMethod = "close")
-    S3Presigner s3Presigner(@Value("${hip.aws.region}") String region, @Value("${hip.aws.s3-endpoint:}") String endpoint) {
+    /**
+     * Pre-signed links are opened by the browser, so in containers they need the host the browser
+     * reaches ({@code hip.aws.s3-public-endpoint}), not the internal one. Empty: same as the client.
+     */
+    S3Presigner s3Presigner(@Value("${hip.aws.region}") String region,
+                            @Value("${hip.aws.s3-public-endpoint:${hip.aws.s3-endpoint:}}") String endpoint) {
         var builder = S3Presigner.builder().region(Region.of(region));
         if (!endpoint.isBlank()) {
             builder.endpointOverride(URI.create(endpoint))

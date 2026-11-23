@@ -37,6 +37,18 @@ class CoreApplicationIntegrationTests extends IntegrationTest {
     }
 
     @Test
+    void apiResponsesCarrySecurityHeaders() throws Exception {
+        HttpResponse<String> response = get("/api/v1/patients/me");
+
+        assertThat(response.headers().firstValue("Content-Security-Policy")).hasValueSatisfying(
+                value -> assertThat(value).contains("default-src 'none'").contains("frame-ancestors 'none'"));
+        assertThat(response.headers().firstValue("Referrer-Policy")).hasValue("no-referrer");
+        assertThat(response.headers().firstValue("X-Content-Type-Options")).hasValue("nosniff");
+        assertThat(response.headers().firstValue("X-Frame-Options")).hasValue("DENY");
+        assertThat(get("/actuator/health/readiness").headers().firstValue("Content-Security-Policy")).isEmpty();
+    }
+
+    @Test
     void apiRequiresAuthentication() throws Exception {
         HttpResponse<String> response = get("/api/v1/patients/me");
 

@@ -7,7 +7,10 @@
 # Profiles:
 #   infra          PostgreSQL + pgvector, Redis, Keycloak, S3 (S3Mock), SQS (ElasticMQ)
 #   observability  OpenTelemetry Collector, Tempo (traces), Prometheus (metrics), Grafana
-#   apps   core-api and ai-service (added when their images are built; Phase 3 runs them from the IDE)
+#   apps           core-api, ai-service and web as containers (needs infra):
+#                  docker compose --profile infra --profile apps up -d --build --wait
+#                  The web runs on http://localhost:5173 (the only redirect Keycloak allows), so stop
+#                  scripts/dev.sh first. Without ANTHROPIC_API_KEY extraction and answers stay off.
 #
 # Images are pinned to explicit versions; upgrades go through pull requests.
 name: hip
@@ -93,6 +96,74 @@ services:
       - "127.0.0.1:9325:9325"
     volumes:
       - ./infra/docker/elasticmq/elasticmq.conf:/opt/elasticmq.conf:ro
+
+  # --- apps profile (Phase 7): the services as non-root containers --------------------------------
+  core-api:
+    profiles: [apps]
+    build: { context: ., dockerfile: core-api/Dockerfile }
+    image: hip/core-api:local
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CORE_OWNER_PASSWORD: ${CORE_OWNER_PASSWORD:?set CORE_OWNER_PASSWORD in .env}
+      CORE_APP_PASSWORD: ${CORE_APP_PASSWORD:?set CORE_APP_PASSWORD in .env}
+      KC_CORE_API_SERVICE_SECRET: ${KC_CORE_API_SERVICE_SECRET:?set KC_CORE_API_SERVICE_SECRET in .env}
+      KC_CORE_API_ADMIN_SECRET: ${KC_CORE_API_ADMIN_SECRET:?set KC_CORE_API_ADMIN_SECRET in .env}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-local}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-local}
+      AWS_REGION: ${AWS_REGION:-sa-east-1}
+      API_DOCS_ENABLED: "false"
+    ports:
+      - "127.0.0.1:8080:8080"
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      keycloak: { condition: service_healthy }
+      ai-service: { condition: service_healthy }
+
+  ai-service:
+    profiles: [apps]
+    build: { context: ., dockerfile: ai-service/Dockerfile }
+    image: hip/ai-service:local
+    environment:
+      AI_DB_HOST: postgres
+      AI_APP_PASSWORD: ${AI_APP_PASSWORD:?set AI_APP_PASSWORD in .env}
+      AI_OWNER_PASSWORD: ${AI_OWNER_PASSWORD:?set AI_OWNER_PASSWORD in .env}
+      AI_OIDC_ISSUER: http://localhost:8180/realms/hip
+      AI_OIDC_JWKS_URL: http://keycloak:8080/realms/hip/protocol/openid-connect/certs
+      AWS_ENDPOINT_URL_S3: http://s3:9090
+      AWS_ENDPOINT_URL_SQS: http://sqs:9324
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-local}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-local}
+      AWS_REGION: ${AWS_REGION:-sa-east-1}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    # Internal only: no published port; core-api is the only caller (ADR 0001).
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    # Parses untrusted PDFs (threat model T06).
+    cpus: 1.0
+    mem_limit: 768m
+    pids_limit: 128
+    depends_on:
+      postgres: { condition: service_healthy }
+      keycloak: { condition: service_healthy }
+
+  web:
+    profiles: [apps]
+    build: { context: ., dockerfile: web/Dockerfile }
+    image: hip/web:local
+    ports:
+      - "127.0.0.1:5173:8080"
+    read_only: true
+    # nginx-unprivileged runs as uid 101 and renders its config into conf.d at start.
+    tmpfs: ["/tmp:uid=101,gid=101", "/var/cache/nginx:uid=101,gid=101", "/etc/nginx/conf.d:uid=101,gid=101"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
 
   # --- observability profile (E2-T6) ------------------------------------------------------------
   otel-collector:

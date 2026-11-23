@@ -1,0 +1,30 @@
+# Profile for the containerised local stack (docker compose --profile apps). Services reach each
+# other by name; the browser still reaches Keycloak and S3 through localhost.
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/hip
+  flyway:
+    url: jdbc:postgresql://postgres:5432/hip
+  data:
+    redis:
+      host: redis
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Tokens carry the public issuer (http://localhost:8180/realms/hip); keys come from the
+          # internal address, so no discovery call goes to localhost from inside the container.
+          jwk-set-uri: http://keycloak:8080/realms/hip/protocol/openid-connect/certs
+
+hip:
+  identity:
+    admin:
+      base-url: http://keycloak:8080
+  aws:
+    s3-endpoint: http://s3:9090
+    s3-public-endpoint: http://localhost:9090
+    sqs-endpoint: http://sqs:9324
+  assistant:
+    ai-service:
+      base-url: http://ai-service:8081
+      token-uri: http://keycloak:8080/realms/hip/protocol/openid-connect/token

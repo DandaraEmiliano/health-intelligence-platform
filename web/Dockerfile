@@ -12,6 +12,10 @@ RUN npm run build
 
 # Unprivileged nginx: listens on 8080 and runs as a non-root user.
 FROM nginxinc/nginx-unprivileged:1.29-alpine
+# Pick up security fixes released after the base image was built, then drop back to nginx (101).
+USER root
+RUN apk upgrade --no-cache
+USER 101
 COPY web/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /web/dist /usr/share/nginx/html
 ENV API_ORIGIN=http://localhost:8080 OIDC_ORIGIN=http://localhost:8180 NGINX_ENVSUBST_FILTER="^(API_ORIGIN|OIDC_ORIGIN)$"

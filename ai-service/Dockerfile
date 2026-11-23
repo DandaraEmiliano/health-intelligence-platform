@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1.7
 # Build from the repository root: docker build -f ai-service/Dockerfile .
 FROM python:3.12-slim
+# Pick up security fixes released after the base image was built.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/*
 COPY --from=ghcr.io/astral-sh/uv:0.11.31 /uv /bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never PYTHONUNBUFFERED=1
 WORKDIR /app

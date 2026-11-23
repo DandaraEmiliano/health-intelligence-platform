@@ -71,7 +71,7 @@ export function TimelinePage() {
 
       {items.length > 0 && (
         <>
-          <h2>Histórico</h2>
+          <h2>Histórico de coletas</h2>
           <ol className="history">
             {items.map((item) => (
               <li key={`${item.type}-${item.id}`}>

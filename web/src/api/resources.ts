@@ -162,6 +162,6 @@ export const analyticsApi = {
     apiRequest<AnalyteSeries>(`/api/v1/health-analytics/analytes/${analyteId}/series`).then((r) => r.data),
   timeline: (cursor?: string) =>
     apiRequest<{ items: TimelineItem[]; nextCursor: string | null }>(
-      `/api/v1/health-timeline?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+      `/api/v1/health-timeline?types=LABORATORY_REPORT&limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
     ).then((r) => r.data),
 };

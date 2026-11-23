@@ -24,13 +24,15 @@ export interface FakeApiState {
   conversations: Record<string, { data: Record<string, unknown>; messages: Record<string, unknown>[] }>;
   /** How the next questions are answered: an assistant message, or a problem code with its status. */
   answers: ({ status: number; code: string } | Record<string, unknown>)[];
+  /** In-app notifications, newest first. */
+  notifications: Record<string, unknown>[];
 }
 
 let sequence = 0;
 const now = "2026-11-18T12:00:00Z";
 
 export function fakeState(partial: Partial<FakeApiState> = {}): FakeApiState {
-  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], reports: {}, tracked: [], series: {}, timeline: [], calls: [], conflictOnNextWrite: false, conversations: {}, answers: [], ...partial };
+  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], reports: {}, tracked: [], series: {}, timeline: [], calls: [], conflictOnNextWrite: false, conversations: {}, answers: [], notifications: [], ...partial };
 }
 
 export function acceptedConsents(ai = true): FakeApiState["consents"] {
@@ -176,6 +178,17 @@ export function fakeFetch(state: FakeApiState): typeof fetch {
         stored.version += 1;
       }
       return json(200, { ...stored.data, ...summary(stored.data) }, stored.version);
+    }
+    if (path === "/api/v1/notifications") {
+      const status = url.searchParams.get("status");
+      return json(200, { items: state.notifications.filter((n) => !status || n.status === status), nextCursor: null });
+    }
+    const notice = path.match(/^\/api\/v1\/notifications\/([^/]+)\/read$/);
+    if (notice && method === "POST") {
+      const found = state.notifications.find((n) => n.id === notice[1]);
+      if (!found) return problem(404, "NOTIFICATION_NOT_FOUND");
+      if (found.status === "UNREAD") Object.assign(found, { status: "READ", readAt: now });
+      return json(204);
     }
     if (path === "/api/v1/ai/conversations") {
       if (method === "POST") {

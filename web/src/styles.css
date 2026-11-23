@@ -319,3 +319,15 @@ a.fact:hover { border-color: var(--tone-400); }
   .conversations ul { max-height: 10rem; }
   .message { max-width: 100%; }
 }
+
+/* Notifications */
+.notices { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.5rem; border-radius: var(--radius); color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+.notices:hover { background: var(--surface-soft); color: var(--text); }
+.notices.active { background: var(--tone-50); color: var(--tone-800); font-weight: 500; }
+.notices .badge { margin-left: auto; min-width: 1.3rem; height: 1.3rem; padding: 0 0.35rem; border-radius: 999px; background: var(--coral-400); color: #fff; font-size: 0.72rem; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+.record.unread .title { font-weight: 700; }
+@media (max-width: 760px) {
+  .notices { position: relative; padding: 0.4rem; }
+  .notices .label { display: none; }
+  .notices .badge { position: absolute; top: 0; right: -0.2rem; min-width: 1rem; height: 1rem; font-size: 0.62rem; }
+}

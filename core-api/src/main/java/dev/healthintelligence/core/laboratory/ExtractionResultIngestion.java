@@ -13,6 +13,7 @@ import dev.healthintelligence.core.audit.AuditRecord;
 import dev.healthintelligence.core.documents.ExtractionJobs;
 import dev.healthintelligence.core.shared.Ids;
 import dev.healthintelligence.core.shared.PatientId;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
@@ -36,11 +37,13 @@ class ExtractionResultIngestion {
     private final AuditLog auditLog;
     private final JsonMapper json;
     private final AnalyteCatalog catalog;
+    private final ApplicationEventPublisher events;
 
     ExtractionResultIngestion(ExtractionJobs jobs, LaboratoryReportRepository reports,
                               LaboratoryResultRepository results, AuditLog auditLog, JsonMapper json,
-                              AnalyteCatalog catalog) {
+                              AnalyteCatalog catalog, ApplicationEventPublisher events) {
         this.catalog = catalog;
+        this.events = events;
         this.jobs = jobs;
         this.reports = reports;
         this.results = results;
@@ -63,6 +66,7 @@ class ExtractionResultIngestion {
         if (outcome != ExtractionJobs.Outcome.SUCCEEDED) {
             audit("DOCUMENT_EXTRACTION_" + outcome.name(), "DOCUMENT", documentId, patient,
                     failureCode == null ? Map.of() : Map.of("failureCode", failureCode));
+            events.publishEvent(new ExtractionResultStored(patient, documentId, null, outcome.name()));
             return Outcome.STORED;
         }
 
@@ -77,6 +81,7 @@ class ExtractionResultIngestion {
         }
         audit("LABORATORY_REPORT_EXTRACTED", "LABORATORY_REPORT", saved.id(), patient,
                 Map.of("documentId", documentId.toString(), "results", String.valueOf(report.get("results").size())));
+        events.publishEvent(new ExtractionResultStored(patient, documentId, saved.id(), outcome.name()));
         return Outcome.STORED;
     }
 

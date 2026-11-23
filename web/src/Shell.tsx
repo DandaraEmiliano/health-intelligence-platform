@@ -1,12 +1,15 @@
-import { IconHeart, IconLogout } from "@tabler/icons-react";
+import { IconBell, IconHeart, IconLogout } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 import { useAuth } from "react-oidc-context";
 import { NavLink } from "react-router";
 
+import { useNotifications } from "./api/queries";
 import { NAV_ITEMS } from "./navigation";
 
 export function Shell({ children }: { children: ReactNode }) {
   const auth = useAuth();
+  const notifications = useNotifications();
+  const unread = notifications.data?.filter((n) => n.status === "UNREAD").length ?? 0;
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -27,6 +30,10 @@ export function Shell({ children }: { children: ReactNode }) {
           })}
         </nav>
         <div className="sidebar-footer">
+          <NavLink to="/avisos" className="notices tone-lilac" aria-label={unread > 0 ? `Avisos, ${unread} não lidos` : "Avisos"}>
+            <IconBell size={18} aria-hidden="true" /> <span className="label">Avisos</span>
+            {unread > 0 && <span className="badge" aria-hidden="true">{unread > 9 ? "9+" : unread}</span>}
+          </NavLink>
           <span className="who">{auth.user?.profile.email}</span>
           <button type="button" className="ghost small" onClick={() => void auth.signoutRedirect()}>
             <IconLogout size={16} aria-hidden="true" /> Sair

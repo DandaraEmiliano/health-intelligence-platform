@@ -72,6 +72,10 @@ class Patient {
         return new PatientProfile(fullName, birthDate, biologicalSex, heightCm);
     }
 
+    UserId userId() {
+        return userId;
+    }
+
     UUID id() {
         return id;
     }

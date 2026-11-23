@@ -1,0 +1,99 @@
+name: deploy
+
+# Continuous delivery to AWS (Phase 7). Defined and reviewed, but OFF: it runs only by hand, only when
+# the repository variable AWS_DEPLOY_ENABLED is "true", and the "staging" environment must be
+# configured with required reviewers. Nothing here has been applied yet.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [staging]
+        default: staging
+
+permissions:
+  contents: read
+  id-token: write # OIDC federation to AWS; no long-lived keys in GitHub
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.AWS_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: ${{ inputs.environment }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'sa-east-1' }}
+      TAG: ${{ github.sha }}
+      NAME: hip-${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      # Fargate tasks run on ARM64 (Graviton). Tags are immutable: one tag per commit.
+      - name: Build and push core-api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: core-api/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/${{ env.NAME }}/core-api:${{ env.TAG }}
+      - name: Build and push ai-service
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ai-service/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/${{ env.NAME }}/ai-service:${{ env.TAG }}
+      - name: Build and push web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: web/Dockerfile
+          platforms: linux/arm64
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=https://${{ vars.DOMAIN_NAME }}
+            VITE_OIDC_AUTHORITY=${{ vars.OIDC_ISSUER_URL }}
+          tags: ${{ steps.ecr.outputs.registry }}/${{ env.NAME }}/web:${{ env.TAG }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.13.4"
+
+      # ECS rolls the services to the new task definitions; the circuit breaker rolls back on failure.
+      - name: Terraform apply (new image tag)
+        working-directory: infra/terraform/environments/${{ inputs.environment }}
+        env:
+          TF_VAR_image_tag: ${{ env.TAG }}
+          TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
+          TF_VAR_certificate_arn: ${{ vars.CERTIFICATE_ARN }}
+          TF_VAR_oidc_issuer_url: ${{ vars.OIDC_ISSUER_URL }}
+          TF_VAR_identity_admin_base_url: ${{ vars.IDENTITY_ADMIN_BASE_URL }}
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=hip/${{ inputs.environment }}/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" -backend-config="use_lockfile=true"
+          terraform apply -input=false -auto-approve
+
+      - name: Wait for the services to be stable
+        run: aws ecs wait services-stable --cluster "$NAME" --services core-api ai-service web

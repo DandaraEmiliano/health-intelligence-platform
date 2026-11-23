@@ -1,0 +1,75 @@
+name: infra
+
+on:
+  push:
+    branches: [main]
+    paths: ["infra/terraform/**", "**/Dockerfile", "web/nginx/**", ".dockerignore", "docker-compose.yml", ".github/workflows/infra.yml"]
+  pull_request:
+    paths: ["infra/terraform/**", "**/Dockerfile", "web/nginx/**", ".dockerignore", "docker-compose.yml", ".github/workflows/infra.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform:
+    name: terraform fmt, validate and scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.13.4"
+      - name: Format
+        run: terraform fmt -check -recursive infra/terraform
+      - name: Validate (no backend, no credentials)
+        working-directory: infra/terraform/environments/staging
+        run: terraform init -backend=false -input=false && terraform validate
+      # High and critical misconfigurations fail the build; accepted ones are annotated in place.
+      - name: Static analysis (trivy config)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0, pinned by commit (GHSA-69fq-xp46-6x23: tags were once force-pushed)
+        with:
+          scan-type: config
+          scan-ref: infra/terraform
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+  images:
+    name: build images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        service: [core-api, ai-service, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build ${{ matrix.service }} (not pushed)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.service }}/Dockerfile
+          push: false
+          load: true
+          tags: hip/${{ matrix.service }}:ci
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+      - name: Runs as a non-root user
+        run: |
+          user=$(docker image inspect hip/${{ matrix.service }}:ci --format '{{.Config.User}}')
+          echo "user=$user"
+          test -n "$user" && test "${user%%:*}" != "0" && test "$user" != "root"
+      - name: Image vulnerabilities (high and critical with a fix)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0, pinned by commit (GHSA-69fq-xp46-6x23: tags were once force-pushed)
+        with:
+          image-ref: hip/${{ matrix.service }}:ci
+          # Vulnerabilities only: the secret scanner flags example strings inside SDKs; real
+          # secret scanning runs on the repository (security workflow).
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"

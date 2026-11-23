@@ -1,0 +1,5 @@
+domain_name             = "staging.example.org"
+certificate_arn         = "arn:aws:acm:sa-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+oidc_issuer_url         = "https://id.staging.example.org/realms/hip"
+identity_admin_base_url = "https://id.staging.example.org"
+image_tag               = "replace-with-commit-sha"

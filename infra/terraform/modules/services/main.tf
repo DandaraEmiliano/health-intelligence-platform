@@ -1,10 +1,12 @@
-# ECS on Fargate behind one HTTPS load balancer. The web app and the API share one origin:
-# /api/* goes to core-api, everything else to the web container. ai-service has no public route.
+# ECS on Fargate behind one HTTPS load balancer. The web app and the BFF share one origin (ADR 0014):
+# /api, /bff, /oauth2, /login and /logout go to the BFF, everything else to the web container.
+# core-api and ai-service have no public route; they are reached by private DNS only.
 
 data "aws_region" "current" {}
 
 locals {
-  services = toset(["core-api", "ai-service", "web"])
+  services = toset(["core-api", "ai-service", "bff", "web"])
+  internal = toset(["core-api", "ai-service", "bff"])
   region   = data.aws_region.current.region
   origin   = "https://${var.domain_name}"
 }
@@ -59,8 +61,9 @@ resource "aws_service_discovery_private_dns_namespace" "this" {
   vpc  = var.vpc_id
 }
 
-resource "aws_service_discovery_service" "ai" {
-  name = "ai-service"
+resource "aws_service_discovery_service" "this" {
+  for_each = local.internal
+  name     = each.key
   dns_config {
     namespace_id   = aws_service_discovery_private_dns_namespace.this.id
     routing_policy = "MULTIVALUE"
@@ -97,8 +100,8 @@ resource "aws_lb_target_group" "web" {
   }
 }
 
-resource "aws_lb_target_group" "core" {
-  name        = "${var.name}-core"
+resource "aws_lb_target_group" "bff" {
+  name        = "${var.name}-bff"
   port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
@@ -135,17 +138,17 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-resource "aws_lb_listener_rule" "api" {
+resource "aws_lb_listener_rule" "bff" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 10
   condition {
     path_pattern {
-      values = ["/api/*"]
+      values = ["/api/*", "/bff/*", "/oauth2/*", "/login/*", "/logout"]
     }
   }
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.core.arn
+    target_group_arn = aws_lb_target_group.bff.arn
   }
 }
 
@@ -240,6 +243,12 @@ resource "aws_iam_role_policy" "ai_service" {
       { Effect = "Allow", Action = ["kms:Decrypt", "kms:GenerateDataKey"], Resource = var.kms_key_arn }
     ]
   })
+}
+
+# The BFF calls no AWS API: sessions are in Redis, tokens come from the identity provider.
+resource "aws_iam_role" "bff" {
+  name               = "${var.name}-bff"
+  assume_role_policy = data.aws_iam_policy_document.ecs_assume.json
 }
 
 resource "aws_iam_role" "web" {
@@ -353,6 +362,43 @@ resource "aws_ecs_task_definition" "ai_service" {
   })])
 }
 
+resource "aws_ecs_task_definition" "bff" {
+  family                   = "${var.name}-bff"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = 512
+  memory                   = 1024
+  execution_role_arn       = aws_iam_role.execution.arn
+  task_role_arn            = aws_iam_role.bff.arn
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "ARM64"
+  }
+  volume {
+    name = "tmp"
+  }
+  container_definitions = jsonencode([merge(local.common_container, {
+    name         = "bff"
+    image        = "${aws_ecr_repository.this["bff"].repository_url}:${var.image_tag}"
+    portMappings = [{ containerPort = 8080, protocol = "tcp" }]
+    mountPoints  = [{ sourceVolume = "tmp", containerPath = "/tmp" }]
+    environment = [
+      { name = "SERVER_PORT", value = "8080" },
+      { name = "OIDC_ISSUER_URI", value = var.oidc_issuer_url },
+      { name = "OIDC_PUBLIC_BASE", value = var.identity_admin_base_url },
+      { name = "OIDC_INTERNAL_BASE", value = var.identity_admin_base_url },
+      { name = "CORE_API_URL", value = "http://core-api.${var.name}.internal:8080" },
+      { name = "REDIS_HOST", value = var.redis_address },
+      { name = "SPRING_DATA_REDIS_SSL_ENABLED", value = "true" },
+    ]
+    secrets = [
+      { name = "KC_HIP_BFF_SECRET", valueFrom = local.secret["oidc-hip-bff"] },
+      { name = "SPRING_DATA_REDIS_PASSWORD", valueFrom = local.secret["redis-auth-token"] },
+    ]
+    logConfiguration = local.log["bff"]
+  })])
+}
+
 resource "aws_ecs_task_definition" "web" {
   family                   = "${var.name}-web"
   requires_compatibilities = ["FARGATE"]
@@ -382,8 +428,8 @@ resource "aws_ecs_task_definition" "web" {
       { sourceVolume = "conf", containerPath = "/etc/nginx/conf.d" },
     ]
     environment = [
-      { name = "API_ORIGIN", value = local.origin },
       { name = "OIDC_ORIGIN", value = regex("^https://[^/]+", var.oidc_issuer_url) },
+      { name = "BFF_URL", value = "http://bff.${var.name}.internal:8080" },
     ]
     logConfiguration = local.log["web"]
   })])
@@ -395,16 +441,18 @@ locals {
   task_definitions = {
     "core-api"   = aws_ecs_task_definition.core_api.arn
     "ai-service" = aws_ecs_task_definition.ai_service.arn
+    "bff"        = aws_ecs_task_definition.bff.arn
     "web"        = aws_ecs_task_definition.web.arn
   }
   security_groups = {
     "core-api"   = aws_security_group.core_api.id
     "ai-service" = aws_security_group.ai_service.id
+    "bff"        = aws_security_group.bff.id
     "web"        = aws_security_group.web.id
   }
   target_groups = {
-    "core-api" = { arn = aws_lb_target_group.core.arn, port = 8080 }
-    "web"      = { arn = aws_lb_target_group.web.arn, port = 8080 }
+    "bff" = { arn = aws_lb_target_group.bff.arn, port = 8080 }
+    "web" = { arn = aws_lb_target_group.web.arn, port = 8080 }
   }
 }
 
@@ -439,7 +487,7 @@ resource "aws_ecs_service" "this" {
   }
 
   dynamic "service_registries" {
-    for_each = each.key == "ai-service" ? [aws_service_discovery_service.ai.arn] : []
+    for_each = contains(local.internal, each.key) ? [aws_service_discovery_service.this[each.key].arn] : []
     content {
       registry_arn = service_registries.value
     }

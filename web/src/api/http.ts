@@ -1,6 +1,6 @@
 import { config } from "../config";
 import { ApiProblemError, isProblem } from "./client";
-import { tokenStore } from "./tokenStore";
+import { csrfToken } from "../auth/session";
 
 export interface ApiResult<T> {
   data: T;
@@ -18,19 +18,24 @@ export interface RequestOptions {
 }
 
 /**
- * Calls core-api with the in-memory access token. Non-2xx answers become {@link ApiProblemError}
+ * Calls core-api through the BFF with the session cookie (ADR 0014); unsafe methods carry the
+ * CSRF token. Non-2xx answers become {@link ApiProblemError}
  * so screens can show the problem code; nothing is retried here.
  */
 export async function apiRequest<T>(path: string, options: RequestOptions = {}, fetchImpl: typeof fetch = fetch): Promise<ApiResult<T>> {
   const headers = new Headers({ Accept: "application/json, application/problem+json" });
-  const token = tokenStore.get();
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const method = options.method ?? "GET";
+  if (method !== "GET") {
+    const token = csrfToken();
+    if (token) headers.set("X-XSRF-TOKEN", token);
+  }
   if (options.body !== undefined) headers.set("Content-Type", options.contentType ?? "application/json");
   if (options.ifMatch) headers.set("If-Match", options.ifMatch);
   if (options.idempotencyKey) headers.set("Idempotency-Key", options.idempotencyKey);
 
   const response = await fetchImpl(`${config.apiBaseUrl}${path}`, {
-    method: options.method ?? "GET",
+    method,
+    credentials: "same-origin",
     headers,
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });

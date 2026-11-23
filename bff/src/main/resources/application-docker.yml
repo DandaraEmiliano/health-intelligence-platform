@@ -1,0 +1,15 @@
+# Containerised local stack: the browser reaches Keycloak at localhost:8180, this service reaches
+# it at keycloak:8080 (tokens still carry the public issuer).
+spring:
+  data:
+    redis:
+      host: redis
+
+server:
+  port: 8080
+
+hip:
+  oidc:
+    internal-base: http://keycloak:8080
+  core-api:
+    base-url: http://core-api:8080

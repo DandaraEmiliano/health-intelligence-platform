@@ -7,6 +7,8 @@ import type { ConsentState } from "../api/resources";
 interface StoredRecord { id: string; version: number; data: Record<string, unknown> }
 
 export interface FakeApiState {
+  /** Who the BFF says is signed in; null answers /bff/user with 401 (ADR 0014). */
+  session: { email: string | null; name: string | null } | null;
   consents: ConsentState[];
   patient: { version: number; data: Record<string, unknown> } | null;
   records: Record<string, StoredRecord[]>;
@@ -36,7 +38,7 @@ let sequence = 0;
 const now = "2026-11-18T12:00:00Z";
 
 export function fakeState(partial: Partial<FakeApiState> = {}): FakeApiState {
-  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], reports: {}, tracked: [], series: {}, timeline: [], calls: [], conflictOnNextWrite: false, conversations: {}, answers: [], notifications: [], summary: null, outOfRange: [], comparisons: {}, ...partial };
+  return { session: { email: "ana@example.test", name: "Ana Sintética" }, consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], reports: {}, tracked: [], series: {}, timeline: [], calls: [], conflictOnNextWrite: false, conversations: {}, answers: [], notifications: [], summary: null, outOfRange: [], comparisons: {}, ...partial };
 }
 
 export function acceptedConsents(ai = true): FakeApiState["consents"] {
@@ -108,7 +110,7 @@ export function assistantAnswer(extra: Record<string, unknown> = {}): Record<str
 
 export function fakeFetch(state: FakeApiState): typeof fetch {
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new URL(String(input));
+    const url = new URL(String(input), "http://localhost");
     const method = init?.method ?? "GET";
     const headers: Record<string, string> = {};
     new Headers(init?.headers).forEach((value, key) => {
@@ -119,6 +121,7 @@ export function fakeFetch(state: FakeApiState): typeof fetch {
     state.calls.push({ method, path, search: url.search, body, headers });
 
     if (path === "/actuator/health/readiness") return json(200, { status: "UP" });
+    if (path === "/bff/user") return state.session ? json(200, state.session) : json(401);
     if (path === "/api/v1/consents") {
       if (method === "POST") {
         const consent = { ...body, recordedAt: now };

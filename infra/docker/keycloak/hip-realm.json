@@ -19,23 +19,36 @@
   "ssoSessionIdleTimeout": 1800,
   "roles": {
     "realm": [
-      { "name": "PATIENT", "description": "Individual patient (B2C)" },
-      { "name": "ADMIN", "description": "Operational administrator; no clinical data access by default" }
+      {
+        "name": "PATIENT",
+        "description": "Individual patient (B2C)"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Operational administrator; no clinical data access by default"
+      }
     ]
   },
-  "defaultRoles": ["PATIENT"],
+  "defaultRoles": [
+    "PATIENT"
+  ],
   "clientScopes": [
     {
       "name": "basic",
       "description": "Subject and auth time. Must be declared here: a realm import that lists clientScopes does not get Keycloak's built-in ones, and without it access tokens carry no sub.",
       "protocol": "openid-connect",
-      "attributes": { "include.in.token.scope": "false" },
+      "attributes": {
+        "include.in.token.scope": "false"
+      },
       "protocolMappers": [
         {
           "name": "sub",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-sub-mapper",
-          "config": { "access.token.claim": "true", "introspection.token.claim": "true" }
+          "config": {
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
         },
         {
           "name": "auth_time",
@@ -55,7 +68,9 @@
       "name": "email",
       "description": "email and email_verified; core-api maps the account by sub and keeps email in sync from this claim.",
       "protocol": "openid-connect",
-      "attributes": { "include.in.token.scope": "true" },
+      "attributes": {
+        "include.in.token.scope": "true"
+      },
       "protocolMappers": [
         {
           "name": "email",
@@ -89,13 +104,19 @@
       "name": "profile",
       "description": "Display name for the web client (ID token only). Health data never goes into tokens.",
       "protocol": "openid-connect",
-      "attributes": { "include.in.token.scope": "true" },
+      "attributes": {
+        "include.in.token.scope": "true"
+      },
       "protocolMappers": [
         {
           "name": "full name",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-full-name-mapper",
-          "config": { "id.token.claim": "true", "access.token.claim": "false", "userinfo.token.claim": "true" }
+          "config": {
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
         },
         {
           "name": "given name",
@@ -141,7 +162,9 @@
     {
       "name": "core-api-audience",
       "protocol": "openid-connect",
-      "attributes": { "include.in.token.scope": "false" },
+      "attributes": {
+        "include.in.token.scope": "false"
+      },
       "protocolMappers": [
         {
           "name": "core-api-audience",
@@ -158,7 +181,9 @@
     {
       "name": "ai-service-audience",
       "protocol": "openid-connect",
-      "attributes": { "include.in.token.scope": "false" },
+      "attributes": {
+        "include.in.token.scope": "false"
+      },
       "protocolMappers": [
         {
           "name": "ai-service-audience",
@@ -175,7 +200,9 @@
     {
       "name": "realm-roles",
       "protocol": "openid-connect",
-      "attributes": { "include.in.token.scope": "false" },
+      "attributes": {
+        "include.in.token.scope": "false"
+      },
       "protocolMappers": [
         {
           "name": "realm-roles",
@@ -194,17 +221,30 @@
   ],
   "clients": [
     {
-      "clientId": "hip-web",
-      "name": "HIP web client",
-      "publicClient": true,
+      "clientId": "hip-bff",
+      "name": "HIP Backend-for-Frontend (ADR 0014): the only browser-facing client; tokens stay server-side",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${KC_HIP_BFF_SECRET}",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "implicitFlowEnabled": false,
       "serviceAccountsEnabled": false,
-      "redirectUris": ["http://localhost:5173/*"],
-      "webOrigins": ["http://localhost:5173"],
-      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:5173/*" },
-      "defaultClientScopes": ["basic", "profile", "email", "core-api-audience", "realm-roles"]
+      "redirectUris": [
+        "http://localhost:5173/login/oauth2/code/keycloak"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/"
+      },
+      "defaultClientScopes": [
+        "basic",
+        "profile",
+        "email",
+        "core-api-audience",
+        "realm-roles"
+      ]
     },
     {
       "clientId": "hip-dev-cli",
@@ -212,7 +252,13 @@
       "publicClient": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": true,
-      "defaultClientScopes": ["basic", "profile", "email", "core-api-audience", "realm-roles"]
+      "defaultClientScopes": [
+        "basic",
+        "profile",
+        "email",
+        "core-api-audience",
+        "realm-roles"
+      ]
     },
     {
       "clientId": "core-api-service",
@@ -223,7 +269,10 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
-      "defaultClientScopes": ["basic", "ai-service-audience"]
+      "defaultClientScopes": [
+        "basic",
+        "ai-service-audience"
+      ]
     },
     {
       "clientId": "core-api-admin",
@@ -234,7 +283,9 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
-      "defaultClientScopes": ["basic"]
+      "defaultClientScopes": [
+        "basic"
+      ]
     }
   ],
   "users": [
@@ -245,8 +296,16 @@
       "lastName": "Sintetico A",
       "enabled": true,
       "emailVerified": true,
-      "credentials": [{ "type": "password", "value": "${KC_SYNTHETIC_USER_PASSWORD}", "temporary": false }],
-      "realmRoles": ["PATIENT"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KC_SYNTHETIC_USER_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PATIENT"
+      ]
     },
     {
       "username": "patient.b@example.test",
@@ -255,8 +314,16 @@
       "lastName": "Sintetico B",
       "enabled": true,
       "emailVerified": true,
-      "credentials": [{ "type": "password", "value": "${KC_SYNTHETIC_USER_PASSWORD}", "temporary": false }],
-      "realmRoles": ["PATIENT"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KC_SYNTHETIC_USER_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PATIENT"
+      ]
     },
     {
       "username": "service-account-core-api-service",
@@ -267,7 +334,12 @@
       "username": "service-account-core-api-admin",
       "enabled": true,
       "serviceAccountClientId": "core-api-admin",
-      "clientRoles": { "realm-management": ["view-users", "manage-users"] }
+      "clientRoles": {
+        "realm-management": [
+          "view-users",
+          "manage-users"
+        ]
+      }
     }
   ]
 }

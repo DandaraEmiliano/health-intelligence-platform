@@ -113,6 +113,9 @@ hip:
 
 server:
   shutdown: graceful
+  # Behind the BFF and the load balancer: the client address for the audit trail comes from
+  # X-Forwarded-For, trusted only from internal (private-range) proxies.
+  forward-headers-strategy: native
   error:
     include-stacktrace: never
     include-message: never

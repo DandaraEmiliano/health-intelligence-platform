@@ -1,7 +1,4 @@
-import createClient, { type Middleware } from "openapi-fetch";
-
-import { config } from "../config";
-import type { components, paths } from "./schema";
+import type { components } from "./schema";
 
 export type Problem = components["schemas"]["Problem"];
 
@@ -21,24 +18,3 @@ export function isProblem(body: unknown): body is Problem {
   const candidate = body as Record<string, unknown>;
   return typeof candidate.status === "number" && typeof candidate.code === "string";
 }
-
-/** Adds the current access token to every request. The token getter never touches storage. */
-export function bearerTokenMiddleware(getToken: () => string | undefined): Middleware {
-  return {
-    onRequest({ request }) {
-      const token = getToken();
-      if (token) {
-        request.headers.set("Authorization", `Bearer ${token}`);
-      }
-      return request;
-    },
-  };
-}
-
-export function createApiClient(getToken: () => string | undefined, baseUrl = config.apiBaseUrl, fetchImpl?: typeof fetch) {
-  const client = createClient<paths>({ baseUrl, fetch: fetchImpl });
-  client.use(bearerTokenMiddleware(getToken));
-  return client;
-}
-
-export type ApiClient = ReturnType<typeof createApiClient>;

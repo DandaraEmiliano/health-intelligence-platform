@@ -100,11 +100,11 @@ resource "aws_db_instance" "this" {
   performance_insights_kms_key_id     = aws_kms_key.data.arn
 }
 
-# --- Redis: idempotency keys, rate limits (later: BFF sessions, ADR 0014) ---------------------
+# --- Redis: idempotency keys, rate limits and BFF sessions (ADR 0014) --------------------------
 
 resource "aws_security_group" "redis" {
   name        = "${var.name}-redis"
-  description = "Redis, reachable from core-api only"
+  description = "Redis, reachable from core-api and the BFF"
   vpc_id      = var.vpc_id
 }
 
@@ -249,7 +249,7 @@ resource "aws_sqs_queue" "this" {
 # --- Secrets: values are set out of band (never in Terraform state for third-party keys) -------
 
 resource "aws_secretsmanager_secret" "app" {
-  for_each   = toset(["db-core-owner", "db-core-app", "db-ai-owner", "db-ai-app", "oidc-core-api-service", "oidc-core-api-admin", "anthropic-api-key"])
+  for_each   = toset(["db-core-owner", "db-core-app", "db-ai-owner", "db-ai-app", "oidc-core-api-service", "oidc-core-api-admin", "oidc-hip-bff", "anthropic-api-key"])
   name       = "${var.name}/${each.key}"
   kms_key_id = aws_kms_key.data.arn
 }

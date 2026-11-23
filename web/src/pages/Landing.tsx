@@ -1,8 +1,7 @@
 import { IconClipboardCheck, IconHeart, IconLock, IconMessageCircle } from "@tabler/icons-react";
-import { useAuth } from "react-oidc-context";
+import { signIn } from "../auth/session";
 
-export function Landing() {
-  const auth = useAuth();
+export function Landing({ unavailable = false }: { unavailable?: boolean }) {
 
   return (
     <main className="landing">
@@ -14,12 +13,12 @@ export function Landing() {
         <li className="tone-lilac"><IconMessageCircle size={20} aria-hidden="true" /> As explicações citam a fonte e não substituem a avaliação de um profissional de saúde.</li>
         <li className="tone-teal"><IconLock size={20} aria-hidden="true" /> Seus dados nunca são compartilhados com outros pacientes.</li>
       </ul>
-      {auth.error && (
+      {unavailable && (
         <p role="alert" className="error-box">Não foi possível conectar ao serviço de login. Tente novamente em instantes.</p>
       )}
       <div className="actions">
-        <button type="button" className="primary" onClick={() => void auth.signinRedirect()}>Entrar</button>
-        <button type="button" onClick={() => void auth.signinRedirect({ prompt: "create" })}>Criar conta</button>
+        <button type="button" className="primary" onClick={() => signIn()}>Entrar</button>
+        <button type="button" onClick={() => signIn({ createAccount: true })}>Criar conta</button>
       </div>
     </main>
   );

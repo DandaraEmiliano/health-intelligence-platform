@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: bff
+  threads:
+    virtual:
+      enabled: true
+  servlet:
+    multipart:
+      # The proxy streams bodies untouched; parsing multipart here would consume uploads.
+      enabled: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+  session:
+    timeout: 30m # idle timeout (ADR 0014)
+    redis:
+      namespace: hip:bff:session
+
+server:
+  port: ${SERVER_PORT:8088}
+  shutdown: graceful
+  # Behind the dev server proxy, nginx or the load balancer: build redirect URIs from X-Forwarded-*.
+  forward-headers-strategy: framework
+  error:
+    include-stacktrace: never
+    include-message: never
+
+hip:
+  oidc:
+    # Tokens are issued for the public URL; the internal base is how this service reaches Keycloak.
+    issuer: ${OIDC_ISSUER_URI:http://localhost:8180/realms/hip}
+    public-base: ${OIDC_PUBLIC_BASE:http://localhost:8180}
+    internal-base: ${OIDC_INTERNAL_BASE:http://localhost:8180}
+    client-secret: ${KC_HIP_BFF_SECRET:}
+    end-session-uri: ${hip.oidc.public-base}/realms/hip/protocol/openid-connect/logout
+  core-api:
+    base-url: ${CORE_API_URL:http://localhost:8080}
+    # Longer than core-api's own wait for an assistant answer (60 s).
+    timeout: 90s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+logging:
+  structured:
+    format:
+      console: ecs

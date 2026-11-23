@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Local development launcher: infrastructure (Docker Compose) + core-api + ai-service + web.
+# Local development launcher: infrastructure (Docker Compose) + core-api + ai-service + bff + web.
 #
 #   ./scripts/dev.sh            start everything (same as `up`)
 #   ./scripts/dev.sh status     show what is running
-#   ./scripts/dev.sh logs core-api|ai-service|web
+#   ./scripts/dev.sh logs core-api|ai-service|bff|web
 #   ./scripts/dev.sh stop       stop the services and the containers (data is kept)
 #
-# Works on macOS and Linux. Uses Java 25 for core-api only (JAVA_HOME is set for that process),
+# Works on macOS and Linux. Uses Java 25 for core-api and bff only (JAVA_HOME is set for those processes),
 # so other projects on the machine keep their own Java version.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_DIR="$ROOT/.run"
 LOG_DIR="$ROOT/logs"
-SERVICES=(core-api ai-service web)
+SERVICES=(core-api ai-service bff web)
 COMPOSE=(docker compose --profile infra --profile observability)
 
 bold() { printf '\033[1m%s\033[0m\n' "$*"; }
@@ -54,7 +54,7 @@ check_prerequisites() {
   ok "Docker $(docker info --format '{{.ServerVersion}}')"
 
   JAVA25_HOME="$(find_java25)" || fail "Java 25 not found. Install it with: brew install openjdk@25"
-  ok "Java 25 at $JAVA25_HOME (used only for core-api)"
+  ok "Java 25 at $JAVA25_HOME (used only for core-api and bff)"
 
   command -v mvn >/dev/null 2>&1 || fail "Maven not found (brew install maven)"
   ok "$(mvn -v 2>/dev/null | head -1 | cut -d' ' -f1-3)"
@@ -68,7 +68,7 @@ check_prerequisites() {
   command -v uv >/dev/null 2>&1 || fail "uv not found (brew install uv)"
   ok "$(uv --version)"
 
-  for port in 8080 8081 5173; do
+  for port in 8080 8081 8088 5173; do
     if lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1 && ! is_ours_on_port "$port"; then
       fail "Port $port is already in use by another process (lsof -nP -iTCP:$port -sTCP:LISTEN)"
     fi
@@ -77,7 +77,7 @@ check_prerequisites() {
 
 is_ours_on_port() {
   local port=$1 service
-  case $port in 8080) service=core-api ;; 8081) service=ai-service ;; 5173) service=web ;; esac
+  case $port in 8080) service=core-api ;; 8081) service=ai-service ;; 8088) service=bff ;; 5173) service=web ;; esac
   is_running "$service"
 }
 
@@ -158,6 +158,9 @@ up() {
     exec mvn -q spring-boot:run"
   start_service ai-service "cd '$ROOT/ai-service' && export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 && \
     uv sync --quiet && uv run alembic upgrade head && exec uv run uvicorn app.main:app --port 8081"
+  # The BFF (ADR 0014) signs the browser in; the dev server forwards /api, /bff, /oauth2, /login and /logout to it.
+  start_service bff "cd '$ROOT/bff' && export JAVA_HOME='$JAVA25_HOME' && export PATH=\"\$JAVA_HOME/bin:\$PATH\" && \
+    exec mvn -q spring-boot:run"
   start_service web "cd '$ROOT/web' && { [ -d node_modules ] && [ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund; } && \
     exec npm run dev -- --strictPort"
 
@@ -165,16 +168,18 @@ up() {
   wait_for ai-service http://localhost:8081/health/ready 150
   wait_for web http://localhost:5173 150
   wait_for core-api http://localhost:8080/actuator/health/readiness 300
+  wait_for bff http://localhost:8088/actuator/health/readiness 300
 
   bold "Ready"
   cat <<EOF
   Web app      http://localhost:5173   user patient.a@example.test / password KC_SYNTHETIC_USER_PASSWORD in .env
   core-api     http://localhost:8080/swagger-ui.html
   ai-service   http://localhost:8081/health/ready
+  bff          http://localhost:8088/actuator/health (browser traffic goes through http://localhost:5173)
   Keycloak     http://localhost:8180   (admin / KC_BOOTSTRAP_ADMIN_PASSWORD)
   Grafana      http://localhost:3000   (admin / GF_SECURITY_ADMIN_PASSWORD) - dashboard "HIP - Service overview"
 
-  Logs:  ./scripts/dev.sh logs core-api|ai-service|web
+  Logs:  ./scripts/dev.sh logs core-api|ai-service|bff|web
   Stop:  ./scripts/dev.sh stop
 EOF
 }
@@ -200,7 +205,7 @@ status() {
 
 logs() {
   local name=${1:-}
-  [[ " ${SERVICES[*]} " == *" $name "* ]] || fail "usage: ./scripts/dev.sh logs core-api|ai-service|web"
+  [[ " ${SERVICES[*]} " == *" $name "* ]] || fail "usage: ./scripts/dev.sh logs core-api|ai-service|bff|web"
   tail -n 100 -f "$LOG_DIR/$name.log"
 }
 

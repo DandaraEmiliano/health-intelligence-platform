@@ -7,6 +7,7 @@ import {
   laboratoryApi,
   analyticsApi,
   assistantApi,
+  notificationApi,
   healthRecordApi,
   patientApi,
   type ConsentType,
@@ -29,6 +30,7 @@ export const keys = {
   series: (id: string) => ["analytics", "series", id] as const,
   timeline: ["timeline"] as const,
   conversations: ["conversations"] as const,
+  notifications: ["notifications"] as const,
   conversation: (id: string) => ["conversations", id] as const,
 };
 
@@ -222,5 +224,20 @@ export function useAsk() {
       void client.invalidateQueries({ queryKey: keys.conversation(conversationId) });
       void client.invalidateQueries({ queryKey: keys.conversations, exact: true });
     },
+  });
+}
+
+/** Latest notifications; refreshed every 30 s so a finished extraction shows up without reloading. */
+export function useNotifications() {
+  return useQuery({ queryKey: keys.notifications, queryFn: () => notificationApi.list(), refetchInterval: 30_000 });
+}
+
+export function useMarkNotificationsRead() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      for (const id of ids) await notificationApi.markRead(id);
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: keys.notifications }),
   });
 }

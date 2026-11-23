@@ -1,3 +1,4 @@
+import { NotificationsPage } from "./notifications/NotificationsPage";
 import { AssistantPage } from "./assistant/AssistantPage";
 import type { ReactNode } from "react";
 import { useAuth } from "react-oidc-context";
@@ -88,6 +89,7 @@ export function App() {
               <Route path="/minha-saude" element={<HealthRecordsPage />} />
               <Route path="/assistente" element={<AssistantPage />} />
               <Route path="/assistente/:conversationId" element={<AssistantPage />} />
+              <Route path="/avisos" element={<NotificationsPage />} />
               <Route path="/perfil" element={<Profile />} />
               {NAV_ITEMS.filter((item) => item.plannedPhase).map((item) => (
                 <Route key={item.path} path={item.path} element={<ComingSoon item={item} />} />

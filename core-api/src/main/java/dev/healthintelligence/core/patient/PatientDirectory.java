@@ -35,6 +35,12 @@ public class PatientDirectory {
         return patients.findId(owner);
     }
 
+    /** The account that owns a patient, for background work such as notifications. */
+    @Transactional(readOnly = true)
+    public Optional<UserId> ownerOf(PatientId patient) {
+        return repository.findByPatientId(patient).map(Patient::userId);
+    }
+
     @Transactional(readOnly = true)
     public Optional<Demographics> demographics(UserId owner) {
         return repository.findByUserId(owner).map(patient -> {

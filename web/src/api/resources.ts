@@ -188,3 +188,13 @@ export const assistantApi = {
       idempotencyKey,
     }).then((r) => r.data),
 };
+
+export type AppNotification = Schemas["Notification"];
+
+export const notificationApi = {
+  list: (status?: "UNREAD" | "READ") =>
+    apiRequest<{ items: AppNotification[]; nextCursor: string | null }>(
+      `/api/v1/notifications?limit=50${status ? `&status=${status}` : ""}`,
+    ).then((r) => r.data.items),
+  markRead: (id: string) => apiRequest<void>(`/api/v1/notifications/${id}/read`, { method: "POST" }),
+};

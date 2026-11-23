@@ -1,7 +1,6 @@
 /**
- * In-app notifications driven by domain events.
- *
- * <p>Implementation starts in Phase 4. See docs/adr/0001-modular-monolith-and-separate-ai-service.md.
+ * In-app notifications driven by domain events: a document was read, needs review, failed or is
+ * not supported. Payloads hold ids only, never health data.
  */
 @ApplicationModule(displayName = "Notifications")
 package dev.healthintelligence.core.notifications;

@@ -127,7 +127,7 @@ function Assistant({ conversationId }: { conversationId: string | undefined }) {
   const busy = ask.isPending || create.isPending;
 
   return (
-    <div className="assistant">
+    <div className="assistant-layout">
       <aside className="conversations" aria-label="Suas conversas">
         <button className="primary" onClick={() => navigate("/assistente")}>
           <IconPlus size={16} aria-hidden="true" /> Nova conversa

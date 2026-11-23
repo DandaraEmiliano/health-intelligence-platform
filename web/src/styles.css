@@ -279,7 +279,9 @@ table.points td { padding: 0.4rem; border-bottom: 1px solid var(--border); verti
 
 /* Assistant */
 .disclaimer { font-size: 0.88rem; }
-.assistant { display: grid; grid-template-columns: 220px 1fr; gap: 1rem; align-items: start; }
+.assistant-layout { display: grid; grid-template-columns: 220px 1fr; gap: 1rem; align-items: start; }
+/* Grid items default to min-width: auto; long single-line titles would widen the page on phones. */
+.assistant-layout > *, .chat > *, .chat-header h2, .conversations a { min-width: 0; }
 .conversations { display: grid; gap: 0.6rem; position: sticky; top: 1rem; }
 .conversations ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; max-height: 60vh; overflow-y: auto; }
 .conversations a { display: grid; gap: 0.05rem; padding: 0.5rem 0.7rem; border-radius: var(--radius-sm); text-decoration: none; color: var(--text); }
@@ -312,9 +314,9 @@ a.fact:hover { border-color: var(--tone-400); }
 .composer { display: flex; gap: 0.6rem; align-items: flex-end; }
 .composer textarea { flex: 1; font: inherit; resize: vertical; min-height: 2.8rem; padding: 0.6rem 0.8rem; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--surface); }
 .composer textarea:focus { outline: 2px solid var(--tone-400); outline-offset: 1px; }
-.suggestion { white-space: normal; text-align: left; }
+.suggestion { white-space: normal; text-align: left; border: 1px solid var(--border); background: var(--surface); }
 @media (max-width: 760px) {
-  .assistant { grid-template-columns: 1fr; }
+  .assistant-layout { grid-template-columns: 1fr; }
   .conversations { position: static; }
   .conversations ul { max-height: 10rem; }
   .message { max-width: 100%; }

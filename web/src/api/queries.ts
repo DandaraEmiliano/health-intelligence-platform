@@ -6,6 +6,7 @@ import {
   documentApi,
   laboratoryApi,
   analyticsApi,
+  assistantApi,
   healthRecordApi,
   patientApi,
   type ConsentType,
@@ -27,6 +28,8 @@ export const keys = {
   tracked: ["analytics", "tracked"] as const,
   series: (id: string) => ["analytics", "series", id] as const,
   timeline: ["timeline"] as const,
+  conversations: ["conversations"] as const,
+  conversation: (id: string) => ["conversations", id] as const,
 };
 
 /** The profile with its ETag, or null when onboarding has not created it yet (404). */
@@ -174,5 +177,50 @@ export function useTimeline() {
     queryFn: ({ pageParam }) => analyticsApi.timeline(pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+  });
+}
+
+export function useConversations(enabled = true) {
+  return useQuery({ queryKey: keys.conversations, queryFn: assistantApi.list, enabled });
+}
+
+export function useConversation(id: string | undefined) {
+  return useQuery({
+    queryKey: keys.conversation(id ?? ""),
+    queryFn: () => assistantApi.get(id!),
+    enabled: Boolean(id),
+  });
+}
+
+export function useCreateConversation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: assistantApi.create,
+    onSuccess: () => client.invalidateQueries({ queryKey: keys.conversations, exact: true }),
+  });
+}
+
+export function useDeleteConversation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => assistantApi.remove(id),
+    onSuccess: (_result, id) => client.removeQueries({ queryKey: keys.conversation(id) }),
+    onSettled: () => client.invalidateQueries({ queryKey: keys.conversations, exact: true }),
+  });
+}
+
+/**
+ * Asks a question. The caller keeps the idempotency key of a failed attempt and passes it again
+ * on "try again", so a request that did reach the core is replayed instead of asked twice.
+ */
+export function useAsk() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ conversationId, content, idempotencyKey }: { conversationId: string; content: string; idempotencyKey: string }) =>
+      assistantApi.ask(conversationId, content, idempotencyKey),
+    onSuccess: (_answer, { conversationId }) => {
+      void client.invalidateQueries({ queryKey: keys.conversation(conversationId) });
+      void client.invalidateQueries({ queryKey: keys.conversations, exact: true });
+    },
   });
 }

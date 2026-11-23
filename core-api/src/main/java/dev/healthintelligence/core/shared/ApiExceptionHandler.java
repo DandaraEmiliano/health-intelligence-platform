@@ -48,7 +48,11 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ProblemException.class)
     ResponseEntity<ProblemDetail> handleProblem(ProblemException exception) {
-        return ResponseEntity.status(exception.status())
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(exception.status());
+        if (exception.retryAfterSeconds() != null) {
+            response.header(HttpHeaders.RETRY_AFTER, String.valueOf(exception.retryAfterSeconds()));
+        }
+        return response
                 .body(Problems.of(exception.status(), exception.code(), exception.title(),
                         correlationIds.current(), exception.errors()));
     }

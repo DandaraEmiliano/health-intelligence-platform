@@ -88,6 +88,19 @@ hip:
         enabled: ${EXTRACTION_RESULTS_LISTENER_ENABLED:true}
   idempotency:
     ttl: 24h
+  assistant:
+    ai-service:
+      base-url: ${AI_SERVICE_URL:http://localhost:8081}
+      # A model call may be regenerated once by ai-service's checks; past this the patient gets 503.
+      timeout: ${AI_SERVICE_TIMEOUT:60s}
+      # Client credentials of core-api-service, whose tokens carry audience ai-service (ADR 0002).
+      token-uri: ${KEYCLOAK_BASE_URL:http://localhost:8180}/realms/hip/protocol/openid-connect/token
+      client-id: core-api-service
+      client-secret: ${KC_CORE_API_SERVICE_SECRET:}
+    rate-limit:
+      # Questions per user per window; each one may cost a model call.
+      max-questions: ${ASSISTANT_MAX_QUESTIONS:30}
+      window: 1h
   outbox:
     relay:
       enabled: ${OUTBOX_RELAY_ENABLED:true}

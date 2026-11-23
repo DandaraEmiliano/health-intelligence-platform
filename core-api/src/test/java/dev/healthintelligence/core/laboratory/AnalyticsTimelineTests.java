@@ -121,20 +121,6 @@ class AnalyticsTimelineTests extends ReportTestSupport {
         });
     }
 
-    private String ingest(ObjectNode message) throws Exception {
-        String document = message.get("documentId").stringValue();
-        publish(message);
-        await(() -> json.readTree(api().get("/api/v1/documents/" + document, token).body()),
-                d -> d.get("status").stringValue().equals("PROCESSED"));
-        return single("select id::text from core.laboratory_report where document_id = ?::uuid", document);
-    }
-
-    private void finishReview(String reportId) {
-        String etag = api().get("/api/v1/laboratory-reports/" + reportId, token).headers().firstValue("ETag").orElseThrow();
-        assertThat(api().postJsonWithHeaders("/api/v1/laboratory-reports/" + reportId + "/review", token,
-                "{\"decisions\":[],\"confirmAllRemaining\":true,\"finalize\":true}", "If-Match", etag).statusCode()).isEqualTo(200);
-    }
-
     private JsonNode items(String path) {
         return json.readTree(api().get(path, token).body()).get("items");
     }

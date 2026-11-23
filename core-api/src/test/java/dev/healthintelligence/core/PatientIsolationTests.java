@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -112,6 +113,34 @@ class PatientIsolationTests extends IntegrationTest {
         assertThat(api().delete("/api/v1/documents/" + documentOfA, patientB).statusCode()).isEqualTo(404);
         assertThat(json.readTree(api().get("/api/v1/documents", patientB).body()).get("items").isEmpty()).isTrue();
         assertThat(api().get("/api/v1/documents/" + documentOfA, patientA).statusCode()).isEqualTo(200);
+    }
+
+    @Test
+    void conversationsOfAnotherPatientCannotBeReadAskedOrDeleted() {
+        dev.healthintelligence.core.support.FakeAiService.INSTANCE.reset();
+        String conversationOfA = json.readTree(api().postJson("/api/v1/ai/conversations", patientA, "{}").body())
+                .get("id").stringValue();
+        assertThat(api().postJson("/api/v1/ai/conversations/" + conversationOfA + "/messages", patientA,
+                "{\"content\":\"Pergunta da paciente A\"}").statusCode()).isEqualTo(201);
+        api().postJson("/api/v1/patients", patientB, "{\"fullName\":\"Paciente B\",\"birthDate\":\"1995-09-09\"}");
+        api().postJson("/api/v1/consents", patientB, """
+                {"type":"AI_PROCESSING","granted":true,"documentVersion":"ai-2026.1"}""");
+
+        HttpResponse<String> read = api().get("/api/v1/ai/conversations/" + conversationOfA, patientB);
+        HttpResponse<String> asked = api().postJson("/api/v1/ai/conversations/" + conversationOfA + "/messages", patientB,
+                "{\"content\":\"Oi\"}");
+
+        assertThat(read.statusCode()).isEqualTo(404);
+        assertThat(read.body()).doesNotContain("Pergunta da paciente A");
+        assertThat(asked.statusCode()).isEqualTo(404);
+        assertThat(api().delete("/api/v1/ai/conversations/" + conversationOfA, patientB).statusCode()).isEqualTo(404);
+        assertThat(json.readTree(api().get("/api/v1/ai/conversations", patientB).body()).get("items").isEmpty()).isTrue();
+        // Only A's question reached ai-service, scoped to A.
+        assertThat(dev.healthintelligence.core.support.FakeAiService.INSTANCE.requests()).hasSize(1);
+        assertThat(dev.healthintelligence.core.support.FakeAiService.INSTANCE.requests().getFirst().get("patientId")
+                .stringValue()).isEqualTo(patientAId);
+        JsonNode stillThere = json.readTree(api().get("/api/v1/ai/conversations/" + conversationOfA, patientA).body());
+        assertThat(stillThere.get("messages").size()).isEqualTo(2);
     }
 
     @Test

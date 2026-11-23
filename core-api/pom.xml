@@ -186,6 +186,14 @@
                     <include>*.schema.json</include>
                 </includes>
             </resource>
+            <!-- The assistant validates ai-service's answers against the internal contract. -->
+            <resource>
+                <directory>../contracts/internal</directory>
+                <targetPath>contracts/internal</targetPath>
+                <includes>
+                    <include>*.schema.json</include>
+                </includes>
+            </resource>
         </resources>
         <plugins>
             <plugin>

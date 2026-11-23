@@ -1,3 +1,4 @@
+import { AssistantPage } from "./assistant/AssistantPage";
 import type { ReactNode } from "react";
 import { useAuth } from "react-oidc-context";
 import { NavLink, Route, Routes } from "react-router";
@@ -85,6 +86,8 @@ export function App() {
               <Route path="/linha-do-tempo" element={<TimelinePage />} />
               <Route path="/linha-do-tempo/:analyteId" element={<AnalyteDetail />} />
               <Route path="/minha-saude" element={<HealthRecordsPage />} />
+              <Route path="/assistente" element={<AssistantPage />} />
+              <Route path="/assistente/:conversationId" element={<AssistantPage />} />
               <Route path="/perfil" element={<Profile />} />
               {NAV_ITEMS.filter((item) => item.plannedPhase).map((item) => (
                 <Route key={item.path} path={item.path} element={<ComingSoon item={item} />} />

@@ -14,13 +14,25 @@ public class ProblemException extends RuntimeException {
     private final String code;
     private final String title;
     private final List<FieldViolation> errors;
+    private final Long retryAfterSeconds;
 
     public ProblemException(HttpStatus status, String code, String title, List<FieldViolation> errors) {
+        this(status, code, title, errors, null);
+    }
+
+    private ProblemException(HttpStatus status, String code, String title, List<FieldViolation> errors,
+                             Long retryAfterSeconds) {
         super(code);
         this.status = status;
         this.code = code;
         this.title = title;
         this.errors = List.copyOf(errors);
+        this.retryAfterSeconds = retryAfterSeconds;
+    }
+
+    /** 429 or 503 with a {@code Retry-After} header (ADR 0009). */
+    public static ProblemException retryLater(HttpStatus status, String code, String title, long seconds) {
+        return new ProblemException(status, code, title, List.of(), Math.max(1, seconds));
     }
 
     public ProblemException(HttpStatus status, String code, String title) {
@@ -58,5 +70,10 @@ public class ProblemException extends RuntimeException {
 
     public List<FieldViolation> errors() {
         return errors;
+    }
+
+    /** Seconds for the {@code Retry-After} header, or null. */
+    public Long retryAfterSeconds() {
+        return retryAfterSeconds;
     }
 }

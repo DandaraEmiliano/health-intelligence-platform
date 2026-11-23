@@ -947,6 +947,28 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
+  /api/v1/accounts/me/export:
+    get:
+      tags: [Account]
+      operationId: exportAccountData
+      summary: Copy of all the data the platform holds about the account holder (LGPD art. 18, II and V)
+      description: |
+        One JSON document with a section per area: account, consents (full history), profile,
+        health records, documents (metadata; each PDF is downloaded through its own content link),
+        laboratory reports with every result in any review state, assistant conversations and
+        notifications. Security audit logs are kept separately and are not included. Every export
+        is audited. Sent with `Content-Disposition: attachment` and `Cache-Control: no-store`.
+      responses:
+        '200':
+          description: The export
+          headers:
+            Content-Disposition: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccountExport' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
 components:
   securitySchemes:
     oidc:
@@ -1598,6 +1620,26 @@ components:
         suggestedQuestionsForDoctor: ['Esse valor precisa de investigação adicional?']
         safety: { refused: false, reasonCode: null }
         createdAt: '2026-11-12T22:45:00Z'
+
+    AccountExport:
+      type: object
+      required: [schemaVersion, generatedAt, notice, data]
+      properties:
+        schemaVersion: { const: '1.0' }
+        generatedAt: { type: string, format: date-time }
+        notice: { type: string }
+        data:
+          type: object
+          description: One key per section; each module owns the shape of its section, which reuses the shapes of its own API.
+          properties:
+            account: { type: ['object', 'null'] }
+            consents: { type: array, items: { type: object } }
+            profile: { oneOf: [{ $ref: '#/components/schemas/Patient' }, { type: 'null' }] }
+            healthRecords: { type: object }
+            documents: { type: array, items: { $ref: '#/components/schemas/Document' } }
+            laboratoryReports: { type: array, items: { $ref: '#/components/schemas/LaboratoryReport' } }
+            assistantConversations: { type: array, items: { type: object } }
+            notifications: { type: array, items: { $ref: '#/components/schemas/Notification' } }
 
     Notification:
       type: object

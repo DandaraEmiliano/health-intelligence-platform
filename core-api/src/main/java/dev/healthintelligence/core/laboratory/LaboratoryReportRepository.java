@@ -43,6 +43,10 @@ interface LaboratoryReportRepository extends Repository<LaboratoryReport, UUID> 
     @Query("select count(r) from LaboratoryReport r where r.patientId = :patientId and r.status <> 'SUPERSEDED'")
     long countVisible(@Param("patientId") PatientId patientId);
 
+    /** Every report the patient can see, oldest first, for the data export. */
+    @Query("select r from LaboratoryReport r where r.patientId = :patientId and r.status <> 'SUPERSEDED' order by r.collectedAt nulls first, r.id")
+    List<LaboratoryReport> findAllVisible(@Param("patientId") PatientId patientId);
+
     @Query("select count(r) from LaboratoryReport r where r.patientId = :patientId and r.status = 'PENDING_REVIEW'")
     long countPendingReview(@Param("patientId") PatientId patientId);
 

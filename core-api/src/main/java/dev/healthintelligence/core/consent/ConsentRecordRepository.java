@@ -12,6 +12,9 @@ interface ConsentRecordRepository extends Repository<ConsentRecord, UUID> {
 
     ConsentRecord save(ConsentRecord record);
 
+    /** The whole history, oldest first, for the data export. */
+    List<ConsentRecord> findByUserIdOrderByRecordedAtAscIdAsc(UUID userId);
+
     /** Latest record of each type for the user (ix_consent_record_current). Ids are time-ordered. */
     @NativeQuery("""
             select distinct on (consent_type) *

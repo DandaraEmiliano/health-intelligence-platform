@@ -603,6 +603,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounts/me/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Copy of all the data the platform holds about the account holder (LGPD art. 18, II and V)
+         * @description One JSON document with a section per area: account, consents (full history), profile,
+         *     health records, documents (metadata; each PDF is downloaded through its own content link),
+         *     laboratory reports with every result in any review state, assistant conversations and
+         *     notifications. Security audit logs are kept separately and are not included. Every export
+         *     is audited. Sent with `Content-Disposition: attachment` and `Cache-Control: no-store`.
+         */
+        get: operations["exportAccountData"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1046,6 +1070,24 @@ export interface components {
             };
             /** Format: date-time */
             createdAt: string;
+        };
+        AccountExport: {
+            /** @constant */
+            schemaVersion: "1.0";
+            /** Format: date-time */
+            generatedAt: string;
+            notice: string;
+            /** @description One key per section; each module owns the shape of its section, which reuses the shapes of its own API. */
+            data: {
+                account?: Record<string, never> | null;
+                consents?: Record<string, never>[];
+                profile?: components["schemas"]["Patient"] | null;
+                healthRecords?: Record<string, never>;
+                documents?: components["schemas"]["Document"][];
+                laboratoryReports?: components["schemas"]["LaboratoryReport"][];
+                assistantConversations?: Record<string, never>[];
+                notifications?: components["schemas"]["Notification"][];
+            };
         };
         Notification: {
             /** Format: uuid */
@@ -2494,6 +2536,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    exportAccountData: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The export */
+            200: {
+                headers: {
+                    "Content-Disposition"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountExport"];
+                };
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];

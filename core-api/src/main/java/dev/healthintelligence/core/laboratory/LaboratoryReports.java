@@ -35,6 +35,12 @@ class LaboratoryReports {
         return withResults(scope, page);
     }
 
+    /** All reports with all their results (any review state), for the data export. */
+    @Transactional(readOnly = true)
+    List<ReportWithResults> all(PatientScope scope) {
+        return withResults(scope, reports.findAllVisible(scope.patient()));
+    }
+
     @Transactional(readOnly = true)
     long countPendingReview(PatientScope scope) {
         return reports.countPendingReview(scope.patient());

@@ -237,6 +237,21 @@ describe("signed in", () => {
     expect(writes().some((call) => call.method === "DELETE" && call.path === "/api/v1/accounts/me")).toBe(true);
   });
 
+  it("downloads a copy of all the account data as a JSON file", async () => {
+    const createObjectURL = vi.fn(() => "blob:export");
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    renderApp("/perfil");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Baixar meus dados" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Arquivo gerado");
+    expect(api.calls.some((c) => c.path === "/api/v1/accounts/me/export")).toBe(true);
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(click).toHaveBeenCalledTimes(1);
+    click.mockRestore();
+  });
+
   it("explains when the account is being deleted", async () => {
     vi.stubGlobal("fetch", async () =>
       new Response(JSON.stringify({ type: "about:blank", title: "Forbidden", status: 403, code: "ACCOUNT_NOT_ACTIVE", correlationId: "c" }), { status: 403 }));

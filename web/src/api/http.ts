@@ -13,6 +13,8 @@ export interface RequestOptions {
   body?: unknown;
   contentType?: string;
   ifMatch?: string;
+  /** Same key on a retry, so the API replays the first answer instead of doing it twice (ADR 0009). */
+  idempotencyKey?: string;
 }
 
 /**
@@ -25,6 +27,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}, 
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (options.body !== undefined) headers.set("Content-Type", options.contentType ?? "application/json");
   if (options.ifMatch) headers.set("If-Match", options.ifMatch);
+  if (options.idempotencyKey) headers.set("Idempotency-Key", options.idempotencyKey);
 
   const response = await fetchImpl(`${config.apiBaseUrl}${path}`, {
     method: options.method ?? "GET",

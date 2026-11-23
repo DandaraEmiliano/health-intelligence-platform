@@ -246,11 +246,11 @@ describe("signed in", () => {
     expect(screen.queryByRole("navigation", { name: "Principal" })).not.toBeInTheDocument();
   });
 
-  it("shows what a planned feature will do, without fake data", async () => {
+  it("opens the assistant, with the reminder that it does not diagnose", async () => {
     renderApp("/assistente");
 
     expect(await screen.findByRole("heading", { name: "Assistente" })).toBeInTheDocument();
-    expect(screen.getByText("Planejado para a Fase 5.")).toBeInTheDocument();
+    expect(screen.getByText("não faz diagnóstico")).toBeInTheDocument();
   });
 });
 

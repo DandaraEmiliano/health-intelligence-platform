@@ -30,6 +30,10 @@ const PROBLEM_MESSAGES: Record<string, string> = {
   REVIEW_INCOMPLETE: "Ainda há resultados sem decisão. Confirme, corrija ou rejeite todos antes de concluir.",
   INVALID_STATE: "Este laudo já foi revisado e não pode mais ser alterado.",
   LABORATORY_REPORT_NOT_FOUND: "Este laudo não existe mais.",
+  AI_CONSENT_REQUIRED: "Para usar o assistente, autorize o processamento por IA em Meu perfil.",
+  AI_UNAVAILABLE: "O assistente está indisponível agora. Sua pergunta não foi respondida; tente de novo em instantes.",
+  RATE_LIMITED: "Você fez muitas perguntas em pouco tempo. Espere um pouco e tente de novo.",
+  CONVERSATION_NOT_FOUND: "Esta conversa não existe mais.",
 };
 
 export type FieldErrors = Record<string, string>;

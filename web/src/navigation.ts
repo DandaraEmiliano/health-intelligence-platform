@@ -57,7 +57,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     label: "Assistente",
     tone: "pink",
     icon: IconSparkles,
-    plannedPhase: 5,
     description: "Pergunte sobre seus resultados verificados e receba explicações com fonte.",
   },
   { path: "/perfil", label: "Meu perfil", tone: "gray", icon: IconUser, description: "Seus dados e consentimentos." },

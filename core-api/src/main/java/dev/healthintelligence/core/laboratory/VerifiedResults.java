@@ -27,11 +27,14 @@ public class VerifiedResults {
     public record AnalyteInfo(UUID id, String code, String displayName, String category) {
     }
 
-    /** One verified numeric or text value. Units are as printed; never converted (ADR 0007). */
+    /**
+     * One verified numeric or text value. Units are as printed; never converted (ADR 0007).
+     * {@code rawName} and {@code valueRaw} are as printed on the report (or as the patient corrected them).
+     */
     public record Point(UUID resultId, UUID reportId, LocalDate collectedAt, String kind, BigDecimal value,
                         String comparator, String valueText, String unit, String unitNormalized, String rangeText,
                         BigDecimal low, BigDecimal high, String appliesTo, String flag, String flagSource,
-                        String laboratoryName, AnalyteInfo analyte) {
+                        String laboratoryName, AnalyteInfo analyte, String rawName, String valueRaw) {
 
         public boolean outOfRange() {
             return flag != null && OUT_OF_RANGE.contains(flag);
@@ -94,7 +97,7 @@ public class VerifiedResults {
         return new Point(result.id(), result.reportId(), result.collectedAt(), v.valueKind(), v.valueNumeric(),
                 v.valueComparator(), v.valueText(), v.unitRaw(), v.unitNormalized(), v.refRangeText(), v.refLow(),
                 v.refHigh(), v.refAppliesTo(), flag, source, report == null ? null : report.laboratoryName(),
-                catalog.find(result.analyteId()).map(VerifiedResults::info).orElse(null));
+                catalog.find(result.analyteId()).map(VerifiedResults::info).orElse(null), v.rawName(), v.valueRaw());
     }
 
     private static AnalyteInfo info(Analyte analyte) {

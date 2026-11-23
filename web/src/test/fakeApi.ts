@@ -20,13 +20,17 @@ export interface FakeApiState {
   reports: Record<string, { version: number; data: Record<string, unknown> & { results: Record<string, unknown>[] } }>;
   /** Makes the next PUT/PATCH fail with 412, as if someone else changed the resource. */
   conflictOnNextWrite: boolean;
+  /** Assistant conversations by id, with their messages oldest first. */
+  conversations: Record<string, { data: Record<string, unknown>; messages: Record<string, unknown>[] }>;
+  /** How the next questions are answered: an assistant message, or a problem code with its status. */
+  answers: ({ status: number; code: string } | Record<string, unknown>)[];
 }
 
 let sequence = 0;
 const now = "2026-11-18T12:00:00Z";
 
 export function fakeState(partial: Partial<FakeApiState> = {}): FakeApiState {
-  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], reports: {}, tracked: [], series: {}, timeline: [], calls: [], conflictOnNextWrite: false, ...partial };
+  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], reports: {}, tracked: [], series: {}, timeline: [], calls: [], conflictOnNextWrite: false, conversations: {}, answers: [], ...partial };
 }
 
 export function acceptedConsents(ai = true): FakeApiState["consents"] {
@@ -76,6 +80,23 @@ export function pendingReport(id = "rep-1"): FakeApiState["reports"][string] {
         result(2, "Colesterol HDL", "48", { warnings: [{ code: "MULTIPLE_RANGES" }] }),
       ],
     },
+  };
+}
+
+/** A structured answer citing one verified result, shaped like the core returns it. */
+export function assistantAnswer(extra: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    role: "ASSISTANT",
+    answer: "Sua glicose de 10/11/2026 foi 112 mg/dL, acima da faixa informada pelo laboratório.",
+    facts: [{ resultId: "res-1", reportId: "rep-1", label: "Glicose", value: "112", unit: "mg/dL", referenceRange: "70 a 99", collectedAt: "2026-11-10" }],
+    explanations: [{ text: "A glicose é o açúcar no sangue.", sources: [{ type: "GLOSSARY", id: "glucose" }] }],
+    uncertainty: "LOW",
+    insufficientData: false,
+    seekProfessionalCare: { recommended: true, urgency: "ROUTINE" },
+    suggestedQuestionsForDoctor: ["Preciso repetir esse exame?"],
+    safety: { refused: false, reasonCode: null },
+    createdAt: now,
+    ...extra,
   };
 }
 
@@ -155,6 +176,32 @@ export function fakeFetch(state: FakeApiState): typeof fetch {
         stored.version += 1;
       }
       return json(200, { ...stored.data, ...summary(stored.data) }, stored.version);
+    }
+    if (path === "/api/v1/ai/conversations") {
+      if (method === "POST") {
+        const conversation = { id: `conv-${++sequence}`, title: null, createdAt: now, updatedAt: now };
+        state.conversations[conversation.id] = { data: conversation, messages: [] };
+        return json(201, conversation);
+      }
+      return json(200, { items: Object.values(state.conversations).map((c) => c.data).reverse(), nextCursor: null });
+    }
+    const chat = path.match(/^\/api\/v1\/ai\/conversations\/([^/]+)(\/messages)?$/);
+    if (chat) {
+      const stored = state.conversations[chat[1]];
+      if (!stored) return problem(404, "CONVERSATION_NOT_FOUND");
+      if (method === "DELETE") {
+        delete state.conversations[chat[1]];
+        return json(204);
+      }
+      if (chat[2] && method === "POST") {
+        const next = state.answers.shift() ?? assistantAnswer();
+        if ("code" in next && typeof next.status === "number") return problem(next.status, String(next.code));
+        const answer = { ...next, messageId: `msg-${++sequence}` };
+        stored.messages.push({ messageId: `msg-${++sequence}`, role: "USER", content: body.content, createdAt: now }, answer);
+        stored.data.title ??= body.content;
+        return json(201, answer);
+      }
+      return json(200, { ...stored.data, messages: stored.messages, nextCursor: null });
     }
     if (path === "/api/v1/documents") return json(200, { items: state.documents, nextCursor: null });
     const doc = path.match(/^\/api\/v1\/documents\/([^/]+)(\/content)?$/);

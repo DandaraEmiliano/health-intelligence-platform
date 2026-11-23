@@ -865,7 +865,11 @@ paths:
       operationId: sendMessage
       summary: Ask the assistant a question
       description: |
-        The answer is built from the patient's verified data only (ADR 0004).
+        The answer is built from the patient's verified data only (ADR 0004). Requires `AI_PROCESSING`
+        consent. Questions are rate-limited per user (`RATE_LIMITED`); replays of an `Idempotency-Key`
+        return the first answer with `Idempotent-Replayed: true` and are not counted. When ai-service
+        cannot answer (unreachable, timeout, invalid answer) the response is 503 `AI_UNAVAILABLE` and
+        nothing is stored.
         `Accept: text/event-stream` (streaming) is a should-have, specified in Phase 5.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -1065,7 +1069,7 @@ components:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
     TooManyRequests:
-      description: Rate limit exceeded
+      description: Rate limit exceeded (`RATE_LIMITED`); retry after `Retry-After` seconds
       headers:
         Retry-After: { schema: { type: integer } }
       content:
@@ -1536,6 +1540,7 @@ components:
             required: [resultId, label, value, collectedAt]
             properties:
               resultId: { type: string, format: uuid }
+              reportId: { type: string, format: uuid, description: Laboratory report the result belongs to, for linking to the exam }
               label: { type: string }
               value: { type: string, description: As displayed, including comparator }
               unit: { type: [string, 'null'] }

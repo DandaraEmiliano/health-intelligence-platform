@@ -165,3 +165,26 @@ export const analyticsApi = {
       `/api/v1/health-timeline?types=LABORATORY_REPORT&limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
     ).then((r) => r.data),
 };
+
+export type Conversation = Schemas["Conversation"];
+export type ConversationDetail = Schemas["ConversationDetail"];
+export type UserMessage = Schemas["UserMessage"];
+export type AssistantMessage = Schemas["AssistantMessage"];
+export type ChatMessage = UserMessage | AssistantMessage;
+
+const conversations = "/api/v1/ai/conversations";
+
+export const assistantApi = {
+  list: () =>
+    apiRequest<{ items: Conversation[]; nextCursor: string | null }>(`${conversations}?limit=50`).then((r) => r.data.items),
+  /** The first 100 messages; longer conversations are out of scope for the MVP screen. */
+  get: (id: string) => apiRequest<ConversationDetail>(`${conversations}/${id}?limit=100`).then((r) => r.data),
+  create: () => apiRequest<Conversation>(conversations, { method: "POST", body: {} }).then((r) => r.data),
+  remove: (id: string) => apiRequest<void>(`${conversations}/${id}`, { method: "DELETE" }),
+  ask: (id: string, content: string, idempotencyKey: string) =>
+    apiRequest<AssistantMessage>(`${conversations}/${id}/messages`, {
+      method: "POST",
+      body: { content },
+      idempotencyKey,
+    }).then((r) => r.data),
+};

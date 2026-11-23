@@ -87,6 +87,12 @@ public abstract class IntegrationTest {
         registry.add("hip.identity.admin.enabled", () -> "false");
         registry.add("hip.accounts.purge.after", () -> "0s");
         registry.add("hip.accounts.purge.interval", () -> "1h");
+        // The assistant calls a fake ai-service (and fake token endpoint); short timeout, low limit.
+        registry.add("hip.assistant.ai-service.base-url", FakeAiService.INSTANCE::baseUrl);
+        registry.add("hip.assistant.ai-service.token-uri", () -> FakeAiService.INSTANCE.baseUrl() + "/token");
+        registry.add("hip.assistant.ai-service.client-secret", () -> "test-service-secret");
+        registry.add("hip.assistant.ai-service.timeout", () -> "1s");
+        registry.add("hip.assistant.rate-limit.max-questions", () -> "5");
         // Tokens are verified by TestTokens' key; no identity provider is needed.
         registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", () -> TestTokens.ISSUER);
     }

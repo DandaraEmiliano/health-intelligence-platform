@@ -531,7 +531,11 @@ export interface paths {
         put?: never;
         /**
          * Ask the assistant a question
-         * @description The answer is built from the patient's verified data only (ADR 0004).
+         * @description The answer is built from the patient's verified data only (ADR 0004). Requires `AI_PROCESSING`
+         *     consent. Questions are rate-limited per user (`RATE_LIMITED`); replays of an `Idempotency-Key`
+         *     return the first answer with `Idempotent-Replayed: true` and are not counted. When ai-service
+         *     cannot answer (unreachable, timeout, invalid answer) the response is 503 `AI_UNAVAILABLE` and
+         *     nothing is stored.
          *     `Accept: text/event-stream` (streaming) is a should-have, specified in Phase 5.
          */
         post: operations["sendMessage"];
@@ -1003,6 +1007,11 @@ export interface components {
             facts: {
                 /** Format: uuid */
                 resultId: string;
+                /**
+                 * Format: uuid
+                 * @description Laboratory report the result belongs to
+                 */
+                reportId?: string;
                 label: string;
                 /** @description As displayed */
                 value: string;
@@ -1174,7 +1183,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description Rate limit exceeded */
+        /** @description Rate limit exceeded (`RATE_LIMITED`); retry after `Retry-After` seconds */
         TooManyRequests: {
             headers: {
                 "Retry-After"?: number;

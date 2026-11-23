@@ -22,20 +22,20 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
-/** A patient with a document whose extraction job is waiting for a result. */
-abstract class ReportTestSupport extends IntegrationTest {
+/** A patient with a document whose extraction job is waiting for a result. Also used by the assistant's tests. */
+public abstract class ReportTestSupport extends IntegrationTest {
 
     /** A beta-layout fixture: multiple ranges, lab flags, thousands separators, two pages. */
-    static final String FIXTURE = "../synthetic-data/fixtures/lab-reports/SP-001-2022-03-16-beta.expected.json";
+    protected static final String FIXTURE = "../synthetic-data/fixtures/lab-reports/SP-001-2022-03-16-beta.expected.json";
 
-    @Autowired TestTokens.Issuer tokens;
-    @Autowired JsonMapper json;
-    @Autowired SqsClient sqs;
+    protected @Autowired TestTokens.Issuer tokens;
+    protected @Autowired JsonMapper json;
+    protected @Autowired SqsClient sqs;
 
-    String token;
-    String patientId;
-    String documentId;
-    String jobId;
+    protected String token;
+    protected String patientId;
+    protected String documentId;
+    protected String jobId;
 
     @BeforeEach
     void documentWaitingForExtraction() throws Exception {
@@ -47,7 +47,7 @@ abstract class ReportTestSupport extends IntegrationTest {
         jobId = single("select id::text from core.extraction_job where document_id = ?::uuid", documentId);
     }
 
-    ObjectNode result(String status) throws Exception {
+    protected ObjectNode result(String status) throws Exception {
         ObjectNode message = json.createObjectNode();
         message.put("schemaVersion", "1.0");
         message.put("messageId", UUID.randomUUID().toString());
@@ -63,7 +63,7 @@ abstract class ReportTestSupport extends IntegrationTest {
         return message;
     }
 
-    void publish(JsonNode message) {
+    protected void publish(JsonNode message) {
         String url = sqs.getQueueUrl(r -> r.queueName("document-extraction-results")).queueUrl();
         sqs.sendMessage(r -> r.queueUrl(url).messageBody(message.toString()));
     }
@@ -79,7 +79,7 @@ abstract class ReportTestSupport extends IntegrationTest {
         throw new AssertionError("no result with " + code);
     }
 
-    static <T> T await(Supplier<T> read, java.util.function.Predicate<T> done) throws InterruptedException {
+    protected static <T> T await(Supplier<T> read, java.util.function.Predicate<T> done) throws InterruptedException {
         long deadline = System.currentTimeMillis() + 10_000;
         T value = read.get();
         while (!done.test(value)) {
@@ -92,7 +92,7 @@ abstract class ReportTestSupport extends IntegrationTest {
         return value;
     }
 
-    static String single(String sql, String parameter) throws Exception {
+    protected static String single(String sql, String parameter) throws Exception {
         try (Connection connection = connect("core_owner", CORE_OWNER_PASSWORD);
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, parameter);
@@ -101,5 +101,21 @@ abstract class ReportTestSupport extends IntegrationTest {
                 return rs.getString(1);
             }
         }
+    }
+
+    /** Publishes the result and waits until the report exists; returns its id. */
+    protected String ingest(ObjectNode message) throws Exception {
+        String document = message.get("documentId").stringValue();
+        publish(message);
+        await(() -> json.readTree(api().get("/api/v1/documents/" + document, token).body()),
+                d -> d.get("status").stringValue().equals("PROCESSED"));
+        return single("select id::text from core.laboratory_report where document_id = ?::uuid", document);
+    }
+
+    /** Confirms every remaining result and finishes the review. */
+    protected void finishReview(String reportId) {
+        String etag = api().get("/api/v1/laboratory-reports/" + reportId, token).headers().firstValue("ETag").orElseThrow();
+        assertThat(api().postJsonWithHeaders("/api/v1/laboratory-reports/" + reportId + "/review", token,
+                "{\"decisions\":[],\"confirmAllRemaining\":true,\"finalize\":true}", "If-Match", etag).statusCode()).isEqualTo(200);
     }
 }

@@ -146,6 +146,9 @@ export function fakeFetch(state: FakeApiState): typeof fetch {
       return json(200, state.patient.data, state.patient.version);
     }
     if (path === "/api/v1/accounts/me" && method === "DELETE") return json(202);
+    if (path === "/api/v1/accounts/me/export") {
+      return json(200, { schemaVersion: "1.0", generatedAt: "2026-11-23T12:00:00Z", notice: "synthetic", data: { profile: state.patient?.data ?? null } });
+    }
     if (path === "/api/v1/health-analytics/analytes") return json(200, { items: state.tracked });
     const series = path.match(/^\/api\/v1\/health-analytics\/analytes\/([^/]+)\/series$/);
     if (series) return state.series[series[1]] ? json(200, state.series[series[1]]) : problem(404, "ANALYTE_NOT_FOUND");

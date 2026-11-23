@@ -94,4 +94,12 @@ class UserAccount {
     AccountStatus status() {
         return status;
     }
+
+    String email() {
+        return email;
+    }
+
+    Set<Role> roles() {
+        return Set.copyOf(roles);
+    }
 }

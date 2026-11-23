@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 @RestController
 @RequestMapping("/api/v1/laboratory-reports")
@@ -32,16 +31,14 @@ class LaboratoryReportController {
     private final CurrentPatient currentPatient;
     private final LaboratoryReports reports;
     private final ReviewService review;
-    private final JsonMapper json;
     private final ResultViews views;
 
     LaboratoryReportController(CurrentPatient currentPatient, LaboratoryReports reports, ReviewService review,
-                               JsonMapper json, ResultViews views) {
+                               ResultViews views) {
         this.views = views;
         this.currentPatient = currentPatient;
         this.reports = reports;
         this.review = review;
-        this.json = json;
     }
 
     @GetMapping
@@ -65,7 +62,7 @@ class LaboratoryReportController {
     @GetMapping("/{reportId}")
     ResponseEntity<Detail> getLaboratoryReport(@PathVariable("reportId") UUID id) {
         var found = reports.get(currentPatient.scope(), id);
-        return ResponseEntity.ok().eTag(ETags.of(found.report().version())).body(detail(found));
+        return ResponseEntity.ok().eTag(ETags.of(found.report().version())).body(views.detail(found));
     }
 
     @PostMapping("/{reportId}/review")
@@ -73,16 +70,7 @@ class LaboratoryReportController {
             @RequestHeader(name = "If-Match", required = false) String ifMatch,
             @Valid @RequestBody ReviewRequest request) {
         var updated = review.review(currentPatient.scope(), id, ifMatch, request);
-        return ResponseEntity.ok().eTag(ETags.of(updated.report().version())).body(detail(updated));
-    }
-
-    private Detail detail(LaboratoryReports.ReportWithResults found) {
-        LaboratoryReport report = found.report();
-        Summary summary = Summary.of(found);
-        return new Detail(summary.id(), summary.documentId(), summary.laboratoryName(), summary.collectedAt(),
-                summary.status(), summary.resultCount(), summary.pendingCount(), report.collectedAtRaw(),
-                json.readTree(report.validationWarnings()), report.verifiedAt(),
-                found.results().stream().map(r -> views.result(report, r)).toList());
+        return ResponseEntity.ok().eTag(ETags.of(updated.report().version())).body(views.detail(updated));
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

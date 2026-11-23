@@ -86,7 +86,11 @@ export const documentApi = {
     apiRequest<{ url: string; expiresAt: string }>(`/api/v1/documents/${id}/content`).then((r) => r.data),
 };
 
+export type AccountExport = Schemas["AccountExport"];
+
 export const accountApi = {
+  /** Everything the platform holds about the account holder, as one JSON document (LGPD art. 18). */
+  exportData: () => apiRequest<AccountExport>("/api/v1/accounts/me/export").then((r) => r.data),
   /** 202: access is blocked now; everything is purged by a scheduled job. */
   requestDeletion: () => apiRequest<void>("/api/v1/accounts/me", { method: "DELETE" }),
 };

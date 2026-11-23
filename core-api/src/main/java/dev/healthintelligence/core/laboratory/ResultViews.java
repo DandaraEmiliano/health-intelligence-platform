@@ -2,11 +2,13 @@ package dev.healthintelligence.core.laboratory;
 
 import java.math.BigDecimal;
 
+import dev.healthintelligence.core.laboratory.LaboratoryReportController.Detail;
 import dev.healthintelligence.core.laboratory.LaboratoryReportController.Flag;
 import dev.healthintelligence.core.laboratory.LaboratoryReportController.Measurement;
 import dev.healthintelligence.core.laboratory.LaboratoryReportController.Range;
 import dev.healthintelligence.core.laboratory.LaboratoryReportController.Result;
 import dev.healthintelligence.core.laboratory.LaboratoryReportController.Source;
+import dev.healthintelligence.core.laboratory.LaboratoryReportController.Summary;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -21,6 +23,15 @@ class ResultViews {
     ResultViews(JsonMapper json, AnalyteCatalog catalog) {
         this.json = json;
         this.catalog = catalog;
+    }
+
+    Detail detail(LaboratoryReports.ReportWithResults found) {
+        LaboratoryReport report = found.report();
+        Summary summary = Summary.of(found);
+        return new Detail(summary.id(), summary.documentId(), summary.laboratoryName(), summary.collectedAt(),
+                summary.status(), summary.resultCount(), summary.pendingCount(), report.collectedAtRaw(),
+                json.readTree(report.validationWarnings()), report.verifiedAt(),
+                found.results().stream().map(r -> result(report, r)).toList());
     }
 
     Result result(LaboratoryReport report, LaboratoryResult result) {

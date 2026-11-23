@@ -37,6 +37,13 @@ def _provider(settings):
 async def lifespan(app: FastAPI):
     """Starts the extraction worker next to the API (one process locally; separate in AWS later)."""
     settings = get_settings()
+    # Without credentials the assistant answers 503 instead of failing every call.
+    app.state.assistant_provider = None
+    if settings.llm_provider == "anthropic" and _has_anthropic_credentials():
+        from app.extraction.providers import AnthropicProvider
+
+        app.state.assistant_provider = AnthropicProvider(model=settings.llm_model, effort=settings.assistant_effort,
+                                                         max_tokens=16000, timeout_seconds=60)  # fmt: skip
     worker = None
     if settings.extraction_worker_enabled and settings.llm_provider == "anthropic" and not _has_anthropic_credentials():
         # Without credentials every job would fail for good; leave the documents queued instead.
@@ -72,6 +79,9 @@ def create_app() -> FastAPI:
         redoc_url=None,
     )
     app.include_router(health.router)
+    from app.assistant.api import router as assistant_router
+
+    app.include_router(assistant_router)
     setup_metrics(app)
     setup_tracing(app)
     return app

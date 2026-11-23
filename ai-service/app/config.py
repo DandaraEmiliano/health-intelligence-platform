@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     llm_provider: str = "anthropic"
     llm_model: str = "claude-opus-5-5"
     llm_effort: str = "high"
+    # The assistant answers in a conversation; a lower effort keeps it responsive. Tune with the eval.
+    assistant_effort: str = "medium"
+
+    # Service-to-service authentication (ADR 0002): only core-api's client-credentials tokens.
+    oidc_issuer: str = "http://localhost:8180/realms/hip"
+    oidc_audience: str = "ai-service"
+    allowed_client_ids: list[str] = ["core-api-service"]
 
     def app_database_url(self) -> str:
         return self._url(self.db_app_user, self.db_app_password)

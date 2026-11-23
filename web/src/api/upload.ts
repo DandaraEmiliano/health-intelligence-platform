@@ -1,7 +1,7 @@
 import { config } from "../config";
 import { ApiProblemError, isProblem } from "./client";
 import type { HealthDocument } from "./resources";
-import { tokenStore } from "./tokenStore";
+import { csrfToken } from "../auth/session";
 
 /**
  * Uploads one PDF with progress. XMLHttpRequest because fetch cannot report upload progress.
@@ -17,8 +17,9 @@ export function uploadDocument(
   return new Promise((resolve, reject) => {
     const xhr = xhrFactory();
     xhr.open("POST", `${config.apiBaseUrl}/api/v1/documents`);
-    const token = tokenStore.get();
-    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.withCredentials = true;
+    const token = csrfToken();
+    if (token) xhr.setRequestHeader("X-XSRF-TOKEN", token);
     xhr.setRequestHeader("Idempotency-Key", idempotencyKey);
     xhr.setRequestHeader("Accept", "application/json, application/problem+json");
     xhr.upload.onprogress = (event) => {

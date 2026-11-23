@@ -16,7 +16,7 @@ variable "database_client_security_group_ids" {
 }
 
 variable "redis_client_security_group_ids" {
-  description = "Security groups allowed to reach Redis (core-api)."
+  description = "Security groups allowed to reach Redis (core-api and the BFF)."
   type        = list(string)
 }
 

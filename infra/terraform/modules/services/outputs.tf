@@ -14,6 +14,7 @@ output "cluster_name" {
 output "security_group_ids" {
   value = {
     core_api   = aws_security_group.core_api.id
+    bff        = aws_security_group.bff.id
     ai_service = aws_security_group.ai_service.id
   }
 }

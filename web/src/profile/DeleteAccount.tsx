@@ -1,23 +1,22 @@
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { useAuth } from "react-oidc-context";
 
 import { problemMessage } from "../api/messages";
 import { accountApi } from "../api/resources";
+import { signOut } from "../auth/session";
 import { Field } from "../ui/Field";
 
 const CONFIRMATION = "EXCLUIR";
 
 /** Irreversible, so it explains what goes and asks for a typed confirmation. */
 export function DeleteAccount() {
-  const auth = useAuth();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
   const [error, setError] = useState<string | undefined>();
   const request = useMutation({
     mutationFn: accountApi.requestDeletion,
-    onSuccess: () => void auth.signoutRedirect(),
+    onSuccess: () => signOut(),
   });
 
   if (!open) {

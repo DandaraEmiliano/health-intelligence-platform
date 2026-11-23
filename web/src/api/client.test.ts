@@ -1,10 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createApiClient, isProblem } from "./client";
+import { csrfToken } from "../auth/session";
+import { isProblem } from "./client";
+import { apiRequest } from "./http";
 
 function fakeFetch(status: number, body: unknown) {
-  return vi.fn(async (request: Request) => {
-    void request;
+  return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    void input;
+    void init;
     return new Response(JSON.stringify(body), {
       status,
       headers: { "Content-Type": status >= 400 ? "application/problem+json" : "application/json" },
@@ -12,42 +15,42 @@ function fakeFetch(status: number, body: unknown) {
   });
 }
 
-describe("api client", () => {
-  it("sends the current access token as a bearer token", async () => {
-    const fetchMock = fakeFetch(200, { id: "p1" });
-    const client = createApiClient(() => "synthetic-token", "http://api.test", fetchMock as unknown as typeof fetch);
-
-    await client.GET("/api/v1/patients/me");
-
-    const request = fetchMock.mock.calls[0][0];
-    expect(request.headers.get("Authorization")).toBe("Bearer synthetic-token");
-    expect(request.url).toBe("http://api.test/api/v1/patients/me");
+describe("API transport through the BFF (ADR 0014)", () => {
+  afterEach(() => {
+    document.cookie = "XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
   });
 
-  it("sends no Authorization header when signed out", async () => {
-    const fetchMock = fakeFetch(401, {});
-    const client = createApiClient(() => undefined, "http://api.test", fetchMock as unknown as typeof fetch);
+  it("sends the session cookie and never an Authorization header", async () => {
+    const fetchMock = fakeFetch(200, { id: "p1" });
 
-    await client.GET("/api/v1/patients/me");
+    await apiRequest("/api/v1/patients/me", {}, fetchMock as unknown as typeof fetch);
 
-    expect(fetchMock.mock.calls[0][0].headers.has("Authorization")).toBe(false);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe("/api/v1/patients/me");
+    expect(init?.credentials).toBe("same-origin");
+    expect(new Headers(init?.headers).has("Authorization")).toBe(false);
+    expect(new Headers(init?.headers).has("X-XSRF-TOKEN")).toBe(false);
+  });
+
+  it("echoes the CSRF cookie on unsafe methods", async () => {
+    document.cookie = "XSRF-TOKEN=token%2Bvalue; path=/";
+    const fetchMock = fakeFetch(201, {});
+
+    await apiRequest("/api/v1/patients", { method: "POST", body: { fullName: "Ana" } }, fetchMock as unknown as typeof fetch);
+
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get("X-XSRF-TOKEN")).toBe("token+value");
+  });
+
+  it("reads the CSRF token from the cookie string", () => {
+    expect(csrfToken("a=1; XSRF-TOKEN=abc; b=2")).toBe("abc");
+    expect(csrfToken("a=1")).toBeUndefined();
   });
 
   it("exposes RFC 9457 problem details as the error", async () => {
-    const problem = {
-      type: "https://docs.health-intelligence-platform.dev/problems/not-found",
-      title: "Not found",
-      status: 404,
-      code: "NOT_FOUND",
-      correlationId: "c-1",
-    };
-    const client = createApiClient(() => "t", "http://api.test", fakeFetch(404, problem) as unknown as typeof fetch);
+    const problem = { type: "about:blank", title: "Not found", status: 404, code: "NOT_FOUND", correlationId: "c-1" };
 
-    const { error, response } = await client.GET("/api/v1/patients/me");
-
-    expect(response.status).toBe(404);
-    expect(isProblem(error)).toBe(true);
-    expect(error).toMatchObject({ code: "NOT_FOUND" });
+    await expect(apiRequest("/api/v1/patients/me", {}, fakeFetch(404, problem) as unknown as typeof fetch))
+      .rejects.toMatchObject({ problem: { code: "NOT_FOUND" } });
   });
 });
 
@@ -55,24 +58,5 @@ describe("isProblem", () => {
   it("rejects bodies without status and code", () => {
     expect(isProblem({ message: "x" })).toBe(false);
     expect(isProblem(null)).toBe(false);
-  });
-});
-
-describe("tokenStore", async () => {
-  const { tokenStore } = await import("./tokenStore");
-  const { api } = await import("./api");
-
-  it("is read at request time by the application client", async () => {
-    const fetchMock = vi.fn(async (request: Request) => {
-      void request;
-      return new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    tokenStore.set("renewed-token");
-    await api.GET("/api/v1/patients/me", { fetch: fetchMock as unknown as typeof fetch });
-    tokenStore.set(undefined);
-
-    expect(fetchMock.mock.calls[0][0].headers.get("Authorization")).toBe("Bearer renewed-token");
   });
 });

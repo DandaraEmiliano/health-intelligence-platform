@@ -18,7 +18,7 @@ module "data" {
   vpc_id                             = module.network.vpc_id
   data_subnet_ids                    = module.network.data_subnet_ids
   database_client_security_group_ids = [module.services.security_group_ids.core_api, module.services.security_group_ids.ai_service]
-  redis_client_security_group_ids    = [module.services.security_group_ids.core_api]
+  redis_client_security_group_ids    = [module.services.security_group_ids.core_api, module.services.security_group_ids.bff]
   db_multi_az                        = var.db_multi_az
 }
 

@@ -7,20 +7,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { acceptedConsents, fakeFetch, fakeState, patientRecord, type FakeApiState } from "./test/fakeApi";
 
-const signinRedirect = vi.fn(async () => undefined);
-const authState = {
-  isLoading: false,
-  isAuthenticated: false,
-  error: undefined as Error | undefined,
-  user: undefined as { access_token: string; profile: { given_name?: string; email?: string } } | undefined,
-  signinRedirect,
-  signoutRedirect: vi.fn(async () => undefined),
-};
-
-vi.mock("react-oidc-context", () => ({ useAuth: () => authState }));
-
 const { App } = await import("./App");
 const { fetchReadiness } = await import("./api/health");
+const { browser } = await import("./auth/session");
 
 let api: FakeApiState;
 
@@ -34,32 +23,36 @@ function renderApp(path = "/") {
   return render(<App />, { wrapper });
 }
 
-function signIn() {
-  Object.assign(authState, { isAuthenticated: true, user: { access_token: "t", profile: { email: "ana@example.test" } } });
-}
-
 const writes = () => api.calls.filter((call) => call.method !== "GET");
 
 describe("signed out", () => {
   beforeEach(() => {
-    Object.assign(authState, { isLoading: false, isAuthenticated: false, error: undefined, user: undefined });
-    api = fakeState();
+    api = fakeState({ session: null });
     vi.stubGlobal("fetch", fakeFetch(api));
   });
 
-  it("shows the landing page and starts sign-in", async () => {
+  it("shows the landing page and starts sign-in at the BFF", async () => {
+    const go = vi.spyOn(browser, "go").mockImplementation(() => {});
     renderApp("/exames");
 
-    expect(screen.getByRole("heading", { name: "Health Intelligence Platform" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Health Intelligence Platform" })).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Principal" })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Entrar" }));
-    expect(signinRedirect).toHaveBeenCalledOnce();
+    expect(go).toHaveBeenCalledWith("/oauth2/authorization/keycloak");
   });
 
   it("offers account creation through the identity provider", async () => {
+    const go = vi.spyOn(browser, "go").mockImplementation(() => {});
     renderApp();
-    await userEvent.click(screen.getByRole("button", { name: "Criar conta" }));
-    expect(signinRedirect).toHaveBeenCalledWith({ prompt: "create" });
+    await userEvent.click(await screen.findByRole("button", { name: "Criar conta" }));
+    expect(go).toHaveBeenCalledWith("/oauth2/authorization/keycloak?prompt=create");
+  });
+
+  it("never asks for or keeps a token in the browser", async () => {
+    renderApp();
+    await screen.findByRole("button", { name: "Entrar" });
+    expect(api.calls.every((call) => !call.headers.authorization)).toBe(true);
+    expect(window.localStorage.length + window.sessionStorage.length).toBe(0);
   });
 
   it("always shows the synthetic-data banner", () => {
@@ -70,7 +63,6 @@ describe("signed out", () => {
 
 describe("onboarding", () => {
   beforeEach(() => {
-    signIn();
     api = fakeState();
     vi.stubGlobal("fetch", fakeFetch(api));
   });
@@ -119,7 +111,6 @@ describe("onboarding", () => {
 
 describe("signed in", () => {
   beforeEach(() => {
-    signIn();
     api = fakeState({ consents: acceptedConsents(), patient: patientRecord() });
     vi.stubGlobal("fetch", fakeFetch(api));
   });
@@ -222,6 +213,7 @@ describe("signed in", () => {
   });
 
   it("deletes the account only after the typed confirmation, then signs out", async () => {
+    const logout = vi.spyOn(browser, "postLogout").mockImplementation(async () => {});
     renderApp("/perfil");
 
     await userEvent.click(await screen.findByRole("button", { name: "Quero excluir minha conta" }));
@@ -233,7 +225,7 @@ describe("signed in", () => {
     await userEvent.type(within(form).getByLabelText(/Para confirmar/), "excluir");
     await userEvent.click(within(form).getByRole("button", { name: "Excluir minha conta" }));
 
-    await waitFor(() => expect(authState.signoutRedirect).toHaveBeenCalled());
+    await waitFor(() => expect(logout).toHaveBeenCalled());
     expect(writes().some((call) => call.method === "DELETE" && call.path === "/api/v1/accounts/me")).toBe(true);
   });
 
@@ -253,8 +245,10 @@ describe("signed in", () => {
   });
 
   it("explains when the account is being deleted", async () => {
-    vi.stubGlobal("fetch", async () =>
-      new Response(JSON.stringify({ type: "about:blank", title: "Forbidden", status: 403, code: "ACCOUNT_NOT_ACTIVE", correlationId: "c" }), { status: 403 }));
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) =>
+      String(input).endsWith("/bff/user")
+        ? new Response(JSON.stringify({ email: "ana@example.test", name: "Ana" }), { status: 200 })
+        : new Response(JSON.stringify({ type: "about:blank", title: "Forbidden", status: 403, code: "ACCOUNT_NOT_ACTIVE", correlationId: "c" }), { status: 403 }));
     renderApp();
 
     expect(await screen.findByRole("heading", { name: "Sua conta está sendo excluída" })).toBeInTheDocument();

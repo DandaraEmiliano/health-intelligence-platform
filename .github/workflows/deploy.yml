@@ -62,6 +62,14 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/${{ env.NAME }}/ai-service:${{ env.TAG }}
+      - name: Build and push bff
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: bff/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/${{ env.NAME }}/bff:${{ env.TAG }}
       - name: Build and push web
         uses: docker/build-push-action@v6
         with:
@@ -69,9 +77,6 @@ jobs:
           file: web/Dockerfile
           platforms: linux/arm64
           push: true
-          build-args: |
-            VITE_API_BASE_URL=https://${{ vars.DOMAIN_NAME }}
-            VITE_OIDC_AUTHORITY=${{ vars.OIDC_ISSUER_URL }}
           tags: ${{ steps.ecr.outputs.registry }}/${{ env.NAME }}/web:${{ env.TAG }}
 
       - uses: hashicorp/setup-terraform@v3
@@ -96,4 +101,4 @@ jobs:
           terraform apply -input=false -auto-approve
 
       - name: Wait for the services to be stable
-        run: aws ecs wait services-stable --cluster "$NAME" --services core-api ai-service web
+        run: aws ecs wait services-stable --cluster "$NAME" --services core-api ai-service bff web

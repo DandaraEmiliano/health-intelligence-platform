@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.health-intelligence-platform.dev/internal/assistant-answer-request.v1.schema.json",
+  "title": "AssistantAnswerRequest",
+  "description": "Body of POST /internal/v1/assistant/answers, sent by core-api to ai-service with a client-credentials token (audience ai-service). The fact pack holds only the current patient's VERIFIED data, built and authorized by the core (ADR 0004). ai-service never reads the core schema and keeps no conversation text.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "patientId", "question", "history", "factPack"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "requestId": { "type": "string", "format": "uuid" },
+    "patientId": { "description": "Opaque; used only to scope retrieval, never to look the patient up.", "type": "string", "format": "uuid" },
+    "question": { "description": "The patient's message. Untrusted input.", "type": "string", "minLength": 1, "maxLength": 2000 },
+    "history": {
+      "description": "Previous turns of this conversation, oldest first, as plain text.",
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "content"],
+        "properties": {
+          "role": { "enum": ["USER", "ASSISTANT"] },
+          "content": { "type": "string", "maxLength": 4000 }
+        }
+      }
+    },
+    "factPack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["results", "allergies", "medications", "conditions"],
+      "properties": {
+        "patient": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ageYears": { "type": ["integer", "null"], "minimum": 0, "maximum": 130 },
+            "biologicalSex": { "enum": ["FEMALE", "MALE", "INTERSEX", "UNDISCLOSED", null] }
+          }
+        },
+        "results": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["factId", "label", "kind", "displayValue"],
+            "properties": {
+              "factId": { "description": "The laboratory result id; answers cite it.", "type": "string", "format": "uuid" },
+              "analyteCode": { "type": ["string", "null"] },
+              "label": { "type": "string", "maxLength": 200 },
+              "collectedAt": { "type": ["string", "null"], "format": "date" },
+              "kind": { "enum": ["NUMERIC", "TEXT"] },
+              "displayValue": { "description": "As shown to the patient, e.g. '< 0,5' or 'Não reagente'.", "type": "string", "maxLength": 200 },
+              "valueNumeric": { "type": ["string", "null"], "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$" },
+              "comparator": { "enum": ["<", "<=", ">", ">=", null] },
+              "unit": { "type": ["string", "null"], "maxLength": 50 },
+              "referenceRange": { "type": ["string", "null"], "maxLength": 1000 },
+              "low": { "type": ["string", "null"], "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$" },
+              "high": { "type": ["string", "null"], "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$" },
+              "flag": { "enum": ["HIGH", "LOW", "ABNORMAL", "CRITICAL", "IN_RANGE", null] },
+              "flagSource": { "enum": ["LABORATORY", "COMPUTED", null] },
+              "laboratoryName": { "type": ["string", "null"], "maxLength": 200 }
+            }
+          }
+        },
+        "allergies": {
+          "type": "array", "maxItems": 200,
+          "items": { "type": "object", "additionalProperties": false, "required": ["substance"],
+            "properties": { "substance": { "type": "string" }, "type": { "type": ["string", "null"] }, "severity": { "type": ["string", "null"] } } }
+        },
+        "medications": {
+          "type": "array", "maxItems": 200,
+          "items": { "type": "object", "additionalProperties": false, "required": ["name", "active"],
+            "properties": { "name": { "type": "string" }, "dosageText": { "type": ["string", "null"] }, "frequencyText": { "type": ["string", "null"] }, "active": { "type": "boolean" } } }
+        },
+        "conditions": {
+          "type": "array", "maxItems": 200,
+          "items": { "type": "object", "additionalProperties": false, "required": ["description"],
+            "properties": { "description": { "type": "string" }, "status": { "type": ["string", "null"] } } }
+        }
+      }
+    }
+  }
+}

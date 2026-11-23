@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.health-intelligence-platform.dev/internal/assistant-answer-response.v1.schema.json",
+  "title": "AssistantAnswerResponse",
+  "description": "ai-service's answer. Facts are cited only by factId from the request; the core turns them into the patient-facing facts. Every number in answer and explanations was checked against the fact pack (ADR 0004). outcome maps to ai_message.guardrail_outcome.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "outcome",
+    "answer",
+    "citedFactIds",
+    "explanations",
+    "uncertainty",
+    "insufficientData",
+    "seekProfessionalCare",
+    "suggestedQuestionsForDoctor",
+    "safety",
+    "promptVersion"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "requestId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "outcome": {
+      "enum": [
+        "PASSED",
+        "REGENERATED",
+        "REFUSED",
+        "EMERGENCY_GUIDANCE",
+        "FAILED"
+      ]
+    },
+    "answer": {
+      "description": "Text for the patient, pt-BR.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "citedFactIds": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "explanations": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "sources"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 1500
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "id"
+              ],
+              "properties": {
+                "type": {
+                  "const": "GLOSSARY"
+                },
+                "id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "uncertainty": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    "insufficientData": {
+      "type": "boolean"
+    },
+    "seekProfessionalCare": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recommended",
+        "urgency"
+      ],
+      "properties": {
+        "recommended": {
+          "type": "boolean"
+        },
+        "urgency": {
+          "enum": [
+            "NONE",
+            "ROUTINE",
+            "SOON",
+            "EMERGENCY"
+          ]
+        }
+      }
+    },
+    "suggestedQuestionsForDoctor": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "refused",
+        "reasonCode"
+      ],
+      "properties": {
+        "refused": {
+          "type": "boolean"
+        },
+        "reasonCode": {
+          "enum": [
+            "DIAGNOSIS_REQUEST",
+            "PRESCRIPTION_REQUEST",
+            "DOSAGE_CHANGE_REQUEST",
+            "OUT_OF_SCOPE",
+            "EMERGENCY_SIGNS",
+            null
+          ]
+        }
+      }
+    },
+    "promptVersion": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "usage": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "inputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "outputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "latencyMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "description": "LLM usage for observability; null when the answer was decided without calling the model (triage)."
+    }
+  }
+}

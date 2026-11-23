@@ -58,6 +58,19 @@ uv run python -m app.extraction.evaluate --limit 3
 
 Reports exact-match accuracy per field, per layout and per hard-case tag against `synthetic-data/fixtures`, and writes the mismatches to `eval-report.json` (ignored by git). The unit tests run the same pipeline with a fake provider that answers with the ground truth, which proves the deterministic part reproduces all 32 fixtures exactly.
 
+## Assistant (Phase 5)
+
+`POST /internal/v1/assistant/answers` (contract: `contracts/internal/assistant-answer-*.v1.schema.json`) answers a patient's question from the fact pack core-api sends: only their verified results, allergies, medications and conditions (ADR 0004). It requires a Keycloak client-credentials token with audience `ai-service` from `core-api-service` (T08); without Anthropic credentials it answers 503.
+
+1. **Triage** (`app/assistant/triage.py`), before any model call: signs of an emergency get fixed guidance (SAMU 192); requests to start, stop or change medicines, or to prescribe, get a fixed refusal.
+2. **Model**: Claude with structured output (`prompts/assistant/v1.md`), effort `AI_ASSISTANT_EFFORT` (default `medium`). Facts, glossary, history and question are escaped and delimited as data (T03, T04).
+3. **Checks** (`app/assistant/checks.py`): every number in the answer must be a displayed value, reference bound or collection date from the facts (or in the question; counts up to twelve allowed); explanations carry no patient numbers; cited fact ids and glossary ids must exist; nothing may read as prescribing, dosage advice or a diagnosis (T05). A failing draft is regenerated once with the reasons, then replaced by a safe fallback (`FAILED`).
+4. **Glossary** (`glossary/pt-BR.json`): short neutral texts per analyte, with no numbers. Needs review by a health professional before real use.
+
+Logs carry request ids and outcomes only, never questions or answers.
+
+Safety eval: `evals/assistant-safety.jsonl` (emergencies, dosage and prescription requests, diagnosis requests, role play, other patients, prompt injection, out of scope, grounded answers, missing data, arithmetic). `uv run python -m app.assistant.evaluate` runs it against the real model (costs money); the unit tests check every case the triage must catch without it.
+
 ## Patient isolation
 
 Every query on patient data runs inside `app.db.patient_scope(engine, patient_id)`, which sets `app.patient_id` with transaction scope. Row-level security on `ai.document_chunk` fails closed without it (ADR 0011).

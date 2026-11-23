@@ -3,9 +3,9 @@ name: ai-service
 on:
   push:
     branches: [main]
-    paths: ["ai-service/**", "contracts/events/**", "synthetic-data/fixtures/**", "infra/docker/postgres/**", ".github/workflows/ai-service.yml"]
+    paths: ["ai-service/**", "contracts/events/**", "contracts/internal/**", "synthetic-data/fixtures/**", "infra/docker/postgres/**", ".github/workflows/ai-service.yml"]
   pull_request:
-    paths: ["ai-service/**", "contracts/events/**", "synthetic-data/fixtures/**", "infra/docker/postgres/**", ".github/workflows/ai-service.yml"]
+    paths: ["ai-service/**", "contracts/events/**", "contracts/internal/**", "synthetic-data/fixtures/**", "infra/docker/postgres/**", ".github/workflows/ai-service.yml"]
 
 permissions:
   contents: read

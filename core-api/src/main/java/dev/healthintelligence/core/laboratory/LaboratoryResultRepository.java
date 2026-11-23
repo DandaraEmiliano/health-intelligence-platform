@@ -29,6 +29,13 @@ interface LaboratoryResultRepository extends Repository<LaboratoryResult, UUID> 
                                         @Param("fromDate") java.time.LocalDate fromDate,
                                         @Param("toDate") java.time.LocalDate toDate);
 
+    /** One result, only if it is verified data (same rule as {@link #findVerified}). */
+    @Query("""
+            select r from LaboratoryResult r, LaboratoryReport rep
+            where r.id = :id and rep.id = r.reportId and rep.patientId = :patientId and r.patientId = :patientId
+              and rep.status = 'VERIFIED' and r.reviewStatus in ('VERIFIED', 'CORRECTED')""")
+    java.util.Optional<LaboratoryResult> findVerifiedById(@Param("id") UUID id, @Param("patientId") PatientId patientId);
+
     @Query("select r from LaboratoryResult r where r.reportId in :reportIds and r.patientId = :patientId order by r.sequence")
     List<LaboratoryResult> findByReports(@Param("reportIds") Collection<UUID> reportIds,
                                          @Param("patientId") PatientId patientId);

@@ -40,6 +40,9 @@ interface LaboratoryReportRepository extends Repository<LaboratoryReport, UUID> 
     Optional<LaboratoryReport> findForReview(@Param("id") UUID id, @Param("patientId") PatientId patientId);
 
     /** Reports the patient still has to review, for the home page. */
+    @Query("select count(r) from LaboratoryReport r where r.patientId = :patientId and r.status <> 'SUPERSEDED'")
+    long countVisible(@Param("patientId") PatientId patientId);
+
     @Query("select count(r) from LaboratoryReport r where r.patientId = :patientId and r.status = 'PENDING_REVIEW'")
     long countPendingReview(@Param("patientId") PatientId patientId);
 

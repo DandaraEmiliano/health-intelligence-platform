@@ -26,13 +26,17 @@ export interface FakeApiState {
   answers: ({ status: number; code: string } | Record<string, unknown>)[];
   /** In-app notifications, newest first. */
   notifications: Record<string, unknown>[];
+  /** Canned answers for the summary, the out-of-range list and comparisons ("left|right" key). */
+  summary: Record<string, unknown> | null;
+  outOfRange: Record<string, unknown>[];
+  comparisons: Record<string, Record<string, unknown>>;
 }
 
 let sequence = 0;
 const now = "2026-11-18T12:00:00Z";
 
 export function fakeState(partial: Partial<FakeApiState> = {}): FakeApiState {
-  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], reports: {}, tracked: [], series: {}, timeline: [], calls: [], conflictOnNextWrite: false, conversations: {}, answers: [], notifications: [], ...partial };
+  return { consents: [], patient: null, records: { allergies: [], medications: [], conditions: [] }, documents: [], reports: {}, tracked: [], series: {}, timeline: [], calls: [], conflictOnNextWrite: false, conversations: {}, answers: [], notifications: [], summary: null, outOfRange: [], comparisons: {}, ...partial };
 }
 
 export function acceptedConsents(ai = true): FakeApiState["consents"] {
@@ -146,6 +150,10 @@ export function fakeFetch(state: FakeApiState): typeof fetch {
     const series = path.match(/^\/api\/v1\/health-analytics\/analytes\/([^/]+)\/series$/);
     if (series) return state.series[series[1]] ? json(200, state.series[series[1]]) : problem(404, "ANALYTE_NOT_FOUND");
     if (path === "/api/v1/health-timeline") return json(200, { items: state.timeline, nextCursor: null });
+    if (path === "/api/v1/laboratory-reports/comparison") {
+      const found = state.comparisons[`${url.searchParams.get("left")}|${url.searchParams.get("right")}`];
+      return found ? json(200, found) : problem(404, "LABORATORY_REPORT_NOT_FOUND");
+    }
     if (path === "/api/v1/laboratory-reports/pending-review/count") {
       return json(200, { reports: Object.values(state.reports).filter((r) => r.data.status === "PENDING_REVIEW").length });
     }
@@ -190,6 +198,10 @@ export function fakeFetch(state: FakeApiState): typeof fetch {
       if (found.status === "UNREAD") Object.assign(found, { status: "READ", readAt: now });
       return json(204);
     }
+    if (path === "/api/v1/health-analytics/summary") {
+      return json(200, state.summary ?? { reportCount: 0, verifiedResultCount: 0, pendingReviewCount: 0, firstCollectedAt: null, lastCollectedAt: null, mostFrequentAnalytes: [], recentOutOfRange: [] });
+    }
+    if (path === "/api/v1/health-analytics/out-of-range") return json(200, { items: state.outOfRange, nextCursor: null });
     if (path === "/api/v1/ai/conversations") {
       if (method === "POST") {
         const conversation = { id: `conv-${++sequence}`, title: null, createdAt: now, updatedAt: now };

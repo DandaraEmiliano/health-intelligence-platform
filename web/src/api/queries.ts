@@ -8,6 +8,7 @@ import {
   analyticsApi,
   assistantApi,
   notificationApi,
+  resultsApi,
   healthRecordApi,
   patientApi,
   type ConsentType,
@@ -32,6 +33,9 @@ export const keys = {
   conversations: ["conversations"] as const,
   notifications: ["notifications"] as const,
   conversation: (id: string) => ["conversations", id] as const,
+  summary: ["analytics", "summary"] as const,
+  outOfRange: ["analytics", "out-of-range"] as const,
+  comparison: (left: string, right: string) => ["comparison", left, right] as const,
 };
 
 /** The profile with its ETag, or null when onboarding has not created it yet (404). */
@@ -239,5 +243,26 @@ export function useMarkNotificationsRead() {
       for (const id of ids) await notificationApi.markRead(id);
     },
     onSettled: () => client.invalidateQueries({ queryKey: keys.notifications }),
+  });
+}
+
+export function useHealthSummary() {
+  return useQuery({ queryKey: keys.summary, queryFn: resultsApi.summary });
+}
+
+export function useOutOfRange() {
+  return useInfiniteQuery({
+    queryKey: keys.outOfRange,
+    queryFn: ({ pageParam }) => resultsApi.outOfRange(pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+  });
+}
+
+export function useComparison(left: string | null, right: string | null) {
+  return useQuery({
+    queryKey: keys.comparison(left ?? "", right ?? ""),
+    queryFn: () => resultsApi.compare(left!, right!),
+    enabled: Boolean(left && right && left !== right),
   });
 }

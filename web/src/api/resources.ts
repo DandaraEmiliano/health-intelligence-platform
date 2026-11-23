@@ -198,3 +198,18 @@ export const notificationApi = {
     ).then((r) => r.data.items),
   markRead: (id: string) => apiRequest<void>(`/api/v1/notifications/${id}/read`, { method: "POST" }),
 };
+
+export type HealthSummary = Schemas["HealthSummary"];
+export type ReportComparison = Schemas["ReportComparison"];
+
+export const resultsApi = {
+  summary: () => apiRequest<HealthSummary>("/api/v1/health-analytics/summary").then((r) => r.data),
+  outOfRange: (cursor?: string) =>
+    apiRequest<{ items: LaboratoryResult[]; nextCursor: string | null }>(
+      `/api/v1/health-analytics/out-of-range?limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    ).then((r) => r.data),
+  compare: (left: string, right: string) =>
+    apiRequest<ReportComparison>(
+      `/api/v1/laboratory-reports/comparison?left=${encodeURIComponent(left)}&right=${encodeURIComponent(right)}`,
+    ).then((r) => r.data),
+};

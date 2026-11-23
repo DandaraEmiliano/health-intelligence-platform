@@ -27,7 +27,10 @@ export function SeriesChart({ points, unit }: { points: SeriesPoint[]; unit: str
   max += margin;
   const t0 = Math.min(...times);
   const t1 = Math.max(...times);
-  const x = (t: number) => (t1 === t0 ? (W + PAD.left - PAD.right) / 2 : PAD.left + ((t - t0) / (t1 - t0)) * (W - PAD.left - PAD.right));
+  // Inner margin so the first and last points (and their reference bands) are not cut at the edges.
+  const INSET = 28;
+  const x = (t: number) =>
+    t1 === t0 ? (W + PAD.left - PAD.right) / 2 : PAD.left + INSET + ((t - t0) / (t1 - t0)) * (W - PAD.left - PAD.right - 2 * INSET);
   const y = (v: number) => PAD.top + (1 - (v - min) / (max - min)) * (H - PAD.top - PAD.bottom);
   const path = numeric.map((_, i) => `${i === 0 ? "M" : "L"}${x(times[i]).toFixed(1)},${y(values[i]).toFixed(1)}`).join(" ");
   const ticks = [min + margin, (min + max) / 2, max - margin];
@@ -58,7 +61,10 @@ export function SeriesChart({ points, unit }: { points: SeriesPoint[]; unit: str
           </circle>
         ))}
         {numeric.map((p, i) => (i === 0 || i === numeric.length - 1 || numeric.length <= 6) && (
-          <text key={`d${p.resultId}`} x={x(times[i])} y={H - 12} textAnchor="middle" className="axis">{formatDate(p.collectedAt)}</text>
+          <text key={`d${p.resultId}`} x={x(times[i])} y={H - 12} className="axis"
+            textAnchor={numeric.length > 1 && i === 0 ? "start" : numeric.length > 1 && i === numeric.length - 1 ? "end" : "middle"}>
+            {formatDate(p.collectedAt)}
+          </text>
         ))}
       </svg>
       <figcaption className="hint">Faixas sombreadas: referência impressa em cada laudo. Círculo vazado: valor informado como limite (por exemplo, “&lt; 0,5”).</figcaption>

@@ -249,12 +249,13 @@ a.report-link:hover { outline: 2px solid var(--tone-400); }
 
 /* Timeline */
 .analyte-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
-.analyte-card { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; padding: 0.8rem 0.9rem; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); color: var(--text); text-decoration: none; }
+.analyte-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.3rem 0.6rem; align-items: center; padding: 0.8rem 0.9rem; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); color: var(--text); text-decoration: none; }
 .analyte-card:hover { border-color: var(--tone-400); }
 .analyte-card .title { font-weight: 600; }
 .analyte-card .value { font-size: 1.3rem; font-weight: 600; color: var(--tone-800); }
 .analyte-card .unit { font-size: 0.85rem; font-weight: 400; color: var(--muted); }
 .analyte-card .sub { font-size: 0.8rem; color: var(--muted); }
+.analyte-card .pill { grid-column: 1 / -1; justify-self: start; }
 .sparkline path { fill: none; stroke: var(--tone-400); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .history { list-style: none; margin: 0; padding: 0 0 0 0.6rem; border-left: 2px solid var(--teal-50); display: grid; gap: 0.5rem; }
 .history li { display: grid; gap: 0.2rem; padding-left: 0.8rem; position: relative; }

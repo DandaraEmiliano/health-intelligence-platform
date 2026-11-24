@@ -131,7 +131,6 @@ legend { font-size: 0.86rem; color: var(--muted); padding: 0; margin-bottom: 0.3
 a.stat:hover { outline: 2px solid var(--tone-400); }
 
 /* Banner */
-.env-banner { margin: 0; padding: 0.35rem 1rem; text-align: center; font-size: 0.8rem; background: var(--amber-50); color: var(--amber-800); }
 .loading { padding: 3rem; text-align: center; color: var(--muted); }
 .error-box { background: var(--coral-50); color: var(--coral-800); border-radius: var(--radius); padding: 0.8rem 1rem; font-size: 0.9rem; }
 .success-box { background: var(--teal-50); color: var(--teal-800); border-radius: var(--radius); padding: 0.6rem 1rem; font-size: 0.9rem; }

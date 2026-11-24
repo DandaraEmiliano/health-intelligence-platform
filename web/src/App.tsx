@@ -77,7 +77,6 @@ function RequireOnboarding({ children }: { children: ReactNode }) {
 export function App() {
   return (
     <>
-      <p className="env-banner" role="note">Ambiente de desenvolvimento: use somente dados sintéticos.</p>
       <RequireAuth>
         <RequireOnboarding>
           <Shell>

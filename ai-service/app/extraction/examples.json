@@ -1,0 +1,485 @@
+{
+ "7f6c96a8cc67709404dd0b4bf94c2c18eff604416378c2f6b2ae46f7fa3f8968": {
+  "file": "laudo-exemplo-2025-09-20.pdf",
+  "report": {
+   "is_lab_report": true,
+   "laboratory_name": "LABORATÓRIO EXEMPLO (FICTÍCIO)",
+   "collected_at_raw": "20/09/2025 - 07:31",
+   "reported_at_raw": "21/09/2025 - 10:26",
+   "results": [
+    {
+     "raw_name": "Hemoglobina",
+     "raw_value": "11,6",
+     "unit_raw": "g/dL",
+     "reference_range_raw": "12,0 a 16,0",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Hemoglobina.......:      11,6 g/dL    12,0 a 16,0"
+    },
+    {
+     "raw_name": "Hematócrito",
+     "raw_value": "35,2",
+     "unit_raw": "%",
+     "reference_range_raw": "36,0 a 46,0",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Hematócrito.......:      35,2 %       36,0 a 46,0"
+    },
+    {
+     "raw_name": "V.C.M.",
+     "raw_value": "79,8",
+     "unit_raw": "fL",
+     "reference_range_raw": "81,0 a 100,0",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "V.C.M.............:      79,8 fL      81,0 a 100,0"
+    },
+    {
+     "raw_name": "Leucócitos",
+     "raw_value": "6.100",
+     "unit_raw": "/mm3",
+     "reference_range_raw": "4.500 a 10.000",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Leucócitos........:     6.100 /mm3    4.500 a 10.000"
+    },
+    {
+     "raw_name": "Plaquetas",
+     "raw_value": "238.000",
+     "unit_raw": "/mm3",
+     "reference_range_raw": "150.000 a 450.000",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Plaquetas.........:   238.000 /mm3    150.000 a 450.000"
+    },
+    {
+     "raw_name": "Glicose",
+     "raw_value": "104",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "70 a 99",
+     "lab_flag": null,
+     "method": "Enzimático (hexoquinase)",
+     "page": 1,
+     "excerpt": "Glicose...........:       104 mg/dL   70 a 99"
+    },
+    {
+     "raw_name": "Colesterol total",
+     "raw_value": "221",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "< 190 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Colesterol total..:       221 mg/dL   < 190 mg/dL"
+    },
+    {
+     "raw_name": "Colesterol HDL",
+     "raw_value": "44",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "> 40 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Colesterol HDL....:        44 mg/dL   > 40 mg/dL"
+    },
+    {
+     "raw_name": "Colesterol LDL",
+     "raw_value": "148",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "< 115 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Colesterol LDL....:       148 mg/dL   < 115 mg/dL"
+    },
+    {
+     "raw_name": "Triglicérides",
+     "raw_value": "172",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "< 150 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Triglicérides.....:       172 mg/dL   < 150 mg/dL"
+    },
+    {
+     "raw_name": "TGO (AST)",
+     "raw_value": "21",
+     "unit_raw": "U/L",
+     "reference_range_raw": "Até 35 U/L",
+     "lab_flag": null,
+     "method": "Cinético UV",
+     "page": 2,
+     "excerpt": "TGO (AST).........:        21 U/L     Até 35 U/L"
+    },
+    {
+     "raw_name": "TGP (ALT)",
+     "raw_value": "38",
+     "unit_raw": "U/L",
+     "reference_range_raw": "Até 35 U/L",
+     "lab_flag": null,
+     "method": "Cinético UV",
+     "page": 2,
+     "excerpt": "TGP (ALT).........:        38 U/L     Até 35 U/L"
+    },
+    {
+     "raw_name": "Gama GT",
+     "raw_value": "31",
+     "unit_raw": "U/L",
+     "reference_range_raw": "Inferior a 40 U/L",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Gama GT...........:        31 U/L     Inferior a 40 U/L"
+    },
+    {
+     "raw_name": "Creatinina",
+     "raw_value": "0,72",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "0,50 a 0,90",
+     "lab_flag": null,
+     "method": "Jaffé cinético",
+     "page": 2,
+     "excerpt": "Creatinina........:      0,72 mg/dL   0,50 a 0,90"
+    },
+    {
+     "raw_name": "TSH",
+     "raw_value": "2,10",
+     "unit_raw": "mUI/L",
+     "reference_range_raw": "0,27 a 4,20",
+     "lab_flag": null,
+     "method": "Eletroquimioluminescência",
+     "page": 2,
+     "excerpt": "TSH...............:      2,10 mUI/L   0,27 a 4,20"
+    }
+   ]
+  }
+ },
+ "bb2c7d4e767629625fde91cc555346372ae7b746361f894efe90aac4a0752810": {
+  "file": "laudo-exemplo-2026-03-21.pdf",
+  "report": {
+   "is_lab_report": true,
+   "laboratory_name": "LABORATÓRIO EXEMPLO (FICTÍCIO)",
+   "collected_at_raw": "21/03/2026 - 07:40",
+   "reported_at_raw": "22/03/2026 - 09:58",
+   "results": [
+    {
+     "raw_name": "Hemoglobina",
+     "raw_value": "12,3",
+     "unit_raw": "g/dL",
+     "reference_range_raw": "12,0 a 16,0",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Hemoglobina.......:      12,3 g/dL    12,0 a 16,0"
+    },
+    {
+     "raw_name": "Hematócrito",
+     "raw_value": "37,0",
+     "unit_raw": "%",
+     "reference_range_raw": "36,0 a 46,0",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Hematócrito.......:      37,0 %       36,0 a 46,0"
+    },
+    {
+     "raw_name": "V.C.M.",
+     "raw_value": "82,4",
+     "unit_raw": "fL",
+     "reference_range_raw": "81,0 a 100,0",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "V.C.M.............:      82,4 fL      81,0 a 100,0"
+    },
+    {
+     "raw_name": "Leucócitos",
+     "raw_value": "5.700",
+     "unit_raw": "/mm3",
+     "reference_range_raw": "4.500 a 10.000",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Leucócitos........:     5.700 /mm3    4.500 a 10.000"
+    },
+    {
+     "raw_name": "Plaquetas",
+     "raw_value": "251.000",
+     "unit_raw": "/mm3",
+     "reference_range_raw": "150.000 a 450.000",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Plaquetas.........:   251.000 /mm3    150.000 a 450.000"
+    },
+    {
+     "raw_name": "Glicose",
+     "raw_value": "97",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "70 a 99",
+     "lab_flag": null,
+     "method": "Enzimático (hexoquinase)",
+     "page": 1,
+     "excerpt": "Glicose...........:        97 mg/dL   70 a 99"
+    },
+    {
+     "raw_name": "Colesterol total",
+     "raw_value": "204",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "< 190 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Colesterol total..:       204 mg/dL   < 190 mg/dL"
+    },
+    {
+     "raw_name": "Colesterol HDL",
+     "raw_value": "50",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "> 40 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Colesterol HDL....:        50 mg/dL   > 40 mg/dL"
+    },
+    {
+     "raw_name": "Colesterol LDL",
+     "raw_value": "129",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "< 115 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Colesterol LDL....:       129 mg/dL   < 115 mg/dL"
+    },
+    {
+     "raw_name": "Triglicérides",
+     "raw_value": "141",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "< 150 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Triglicérides.....:       141 mg/dL   < 150 mg/dL"
+    },
+    {
+     "raw_name": "TGO (AST)",
+     "raw_value": "19",
+     "unit_raw": "U/L",
+     "reference_range_raw": "Até 35 U/L",
+     "lab_flag": null,
+     "method": "Cinético UV",
+     "page": 2,
+     "excerpt": "TGO (AST).........:        19 U/L     Até 35 U/L"
+    },
+    {
+     "raw_name": "TGP (ALT)",
+     "raw_value": "30",
+     "unit_raw": "U/L",
+     "reference_range_raw": "Até 35 U/L",
+     "lab_flag": null,
+     "method": "Cinético UV",
+     "page": 2,
+     "excerpt": "TGP (ALT).........:        30 U/L     Até 35 U/L"
+    },
+    {
+     "raw_name": "Gama GT",
+     "raw_value": "27",
+     "unit_raw": "U/L",
+     "reference_range_raw": "Inferior a 40 U/L",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Gama GT...........:        27 U/L     Inferior a 40 U/L"
+    },
+    {
+     "raw_name": "Creatinina",
+     "raw_value": "0,70",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "0,50 a 0,90",
+     "lab_flag": null,
+     "method": "Jaffé cinético",
+     "page": 2,
+     "excerpt": "Creatinina........:      0,70 mg/dL   0,50 a 0,90"
+    },
+    {
+     "raw_name": "TSH",
+     "raw_value": "2,35",
+     "unit_raw": "mUI/L",
+     "reference_range_raw": "0,27 a 4,20",
+     "lab_flag": null,
+     "method": "Eletroquimioluminescência",
+     "page": 2,
+     "excerpt": "TSH...............:      2,35 mUI/L   0,27 a 4,20"
+    }
+   ]
+  }
+ },
+ "887944529ae7f2281064c726f09f41b2ba663b2578bbf32f56113bc15cc3a615": {
+  "file": "laudo-exemplo-2026-09-19.pdf",
+  "report": {
+   "is_lab_report": true,
+   "laboratory_name": "LABORATÓRIO EXEMPLO (FICTÍCIO)",
+   "collected_at_raw": "19/09/2026 - 07:25",
+   "reported_at_raw": "20/09/2026 - 11:02",
+   "results": [
+    {
+     "raw_name": "Hemoglobina",
+     "raw_value": "12,9",
+     "unit_raw": "g/dL",
+     "reference_range_raw": "12,0 a 16,0",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Hemoglobina.......:      12,9 g/dL    12,0 a 16,0"
+    },
+    {
+     "raw_name": "Hematócrito",
+     "raw_value": "38,6",
+     "unit_raw": "%",
+     "reference_range_raw": "36,0 a 46,0",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Hematócrito.......:      38,6 %       36,0 a 46,0"
+    },
+    {
+     "raw_name": "V.C.M.",
+     "raw_value": "84,1",
+     "unit_raw": "fL",
+     "reference_range_raw": "81,0 a 100,0",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "V.C.M.............:      84,1 fL      81,0 a 100,0"
+    },
+    {
+     "raw_name": "Leucócitos",
+     "raw_value": "5.400",
+     "unit_raw": "/mm3",
+     "reference_range_raw": "4.500 a 10.000",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Leucócitos........:     5.400 /mm3    4.500 a 10.000"
+    },
+    {
+     "raw_name": "Plaquetas",
+     "raw_value": "246.000",
+     "unit_raw": "/mm3",
+     "reference_range_raw": "150.000 a 450.000",
+     "lab_flag": null,
+     "method": "Automação hematológica",
+     "page": 1,
+     "excerpt": "Plaquetas.........:   246.000 /mm3    150.000 a 450.000"
+    },
+    {
+     "raw_name": "Glicose",
+     "raw_value": "91",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "70 a 99",
+     "lab_flag": null,
+     "method": "Enzimático (hexoquinase)",
+     "page": 1,
+     "excerpt": "Glicose...........:        91 mg/dL   70 a 99"
+    },
+    {
+     "raw_name": "Colesterol total",
+     "raw_value": "186",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "< 190 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Colesterol total..:       186 mg/dL   < 190 mg/dL"
+    },
+    {
+     "raw_name": "Colesterol HDL",
+     "raw_value": "57",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "> 40 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Colesterol HDL....:        57 mg/dL   > 40 mg/dL"
+    },
+    {
+     "raw_name": "Colesterol LDL",
+     "raw_value": "108",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "< 115 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Colesterol LDL....:       108 mg/dL   < 115 mg/dL"
+    },
+    {
+     "raw_name": "Triglicérides",
+     "raw_value": "112",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "< 150 mg/dL",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Triglicérides.....:       112 mg/dL   < 150 mg/dL"
+    },
+    {
+     "raw_name": "TGO (AST)",
+     "raw_value": "17",
+     "unit_raw": "U/L",
+     "reference_range_raw": "Até 35 U/L",
+     "lab_flag": null,
+     "method": "Cinético UV",
+     "page": 2,
+     "excerpt": "TGO (AST).........:        17 U/L     Até 35 U/L"
+    },
+    {
+     "raw_name": "TGP (ALT)",
+     "raw_value": "24",
+     "unit_raw": "U/L",
+     "reference_range_raw": "Até 35 U/L",
+     "lab_flag": null,
+     "method": "Cinético UV",
+     "page": 2,
+     "excerpt": "TGP (ALT).........:        24 U/L     Até 35 U/L"
+    },
+    {
+     "raw_name": "Gama GT",
+     "raw_value": "22",
+     "unit_raw": "U/L",
+     "reference_range_raw": "Inferior a 40 U/L",
+     "lab_flag": null,
+     "method": "Enzimático colorimétrico",
+     "page": 2,
+     "excerpt": "Gama GT...........:        22 U/L     Inferior a 40 U/L"
+    },
+    {
+     "raw_name": "Creatinina",
+     "raw_value": "0,74",
+     "unit_raw": "mg/dL",
+     "reference_range_raw": "0,50 a 0,90",
+     "lab_flag": null,
+     "method": "Jaffé cinético",
+     "page": 2,
+     "excerpt": "Creatinina........:      0,74 mg/dL   0,50 a 0,90"
+    },
+    {
+     "raw_name": "TSH",
+     "raw_value": "1,98",
+     "unit_raw": "mUI/L",
+     "reference_range_raw": "0,27 a 4,20",
+     "lab_flag": null,
+     "method": "Eletroquimioluminescência",
+     "page": 2,
+     "excerpt": "TSH...............:      1,98 mUI/L   0,27 a 4,20"
+    }
+   ]
+  }
+ }
+}

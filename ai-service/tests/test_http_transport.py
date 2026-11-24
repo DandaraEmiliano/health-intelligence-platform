@@ -104,6 +104,7 @@ def test_intake_validates_and_queues(client) -> None:
     assert http.post(PATH, content=json.dumps(request_for(FIXTURE)), headers=auth).status_code == 503
 
     app.state.http_worker = HttpExtractionWorker(FakeCore(), good_provider(), max_attempts=1, sleep=lambda s: None)
+    app.state.model_available = True
     assert http.post(PATH, content="{}", headers=auth).status_code == 400
     assert http.post(PATH, content=json.dumps(request_for(FIXTURE)), headers=auth).status_code == 202
     assert app.state.http_worker.pending.qsize() == 1

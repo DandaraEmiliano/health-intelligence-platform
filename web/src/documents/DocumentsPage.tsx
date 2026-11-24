@@ -1,4 +1,4 @@
-import { IconCloudUpload, IconExternalLink, IconFileTypePdf, IconTrash } from "@tabler/icons-react";
+import { IconCloudUpload, IconDownload, IconExternalLink, IconFileTypePdf, IconTrash } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState, type DragEvent } from "react";
 import { Link } from "react-router";
@@ -11,6 +11,13 @@ import { navItem } from "../navigation";
 import { formatDateTime } from "../ui/format";
 import { PageHeader } from "../ui/PageHeader";
 import { formatSize, STATUS_VIEW } from "./statusView";
+
+/** Fictitious reports the demo reads without a model (synthetic-data/generator/examples.py). */
+const EXAMPLE_REPORTS = [
+  { file: "laudo-exemplo-2025-09-20.pdf", label: "Setembro de 2025" },
+  { file: "laudo-exemplo-2026-03-21.pdf", label: "Março de 2026" },
+  { file: "laudo-exemplo-2026-09-19.pdf", label: "Setembro de 2026" },
+];
 
 interface UploadItem {
   key: string;
@@ -115,6 +122,23 @@ export function DocumentsPage() {
             event.target.value = "";
           }}
         />
+      </div>
+
+      <div className="card examples">
+        <h3>Quer testar sem usar seus exames?</h3>
+        <p className="muted">
+          Baixe os laudos de exemplo de uma paciente fictícia, de três datas diferentes, e envie aqui. Eles são lidos na
+          hora, e depois de revisar os resultados você vê a evolução em Linha do tempo e Exames.
+        </p>
+        <ul className="example-links">
+          {EXAMPLE_REPORTS.map((example) => (
+            <li key={example.file}>
+              <a href={`/exemplos/${example.file}`} download={example.file}>
+                <IconDownload size={18} stroke={1.8} aria-hidden="true" /> Laudo de exemplo · {example.label}
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {uploads.length > 0 && (

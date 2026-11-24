@@ -145,6 +145,13 @@ class AnthropicProvider:
             raise ProviderError("LLM_PROVIDER_ERROR", f"HTTP {e.status_code}", retryable=e.status_code >= 500) from e
 
 
+class UnavailableProvider:
+    """No model credentials: every call is a transient failure, so the document is kept for later."""
+
+    def generate_structured(self, prompt: RenderedPrompt, output_model: type[T]) -> StructuredResult[T]:
+        raise ProviderError("LLM_PROVIDER_ERROR", "no model credentials", retryable=True)
+
+
 class FakeProvider:
     """Deterministic provider for tests (ADR 0008): answers from a function of the prompt."""
 

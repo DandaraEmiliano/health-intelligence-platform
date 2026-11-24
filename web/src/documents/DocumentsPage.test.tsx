@@ -85,6 +85,17 @@ describe("DocumentsPage", () => {
     expect(api.calls.some((call) => call.method === "DELETE" && call.path === "/api/v1/documents/d-9")).toBe(true);
   });
 
+  it("offers the fictitious example reports for download", async () => {
+    renderPage();
+    const links = await screen.findAllByRole("link", { name: /Laudo de exemplo/ });
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/exemplos/laudo-exemplo-2025-09-20.pdf",
+      "/exemplos/laudo-exemplo-2026-03-21.pdf",
+      "/exemplos/laudo-exemplo-2026-09-19.pdf",
+    ]);
+    expect(links.every((link) => link.hasAttribute("download"))).toBe(true);
+  });
+
   it("says when AI reading is off", async () => {
     api.consents = acceptedConsents(false);
     renderPage();

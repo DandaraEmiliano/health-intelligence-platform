@@ -35,7 +35,8 @@ flowchart LR
 ## What to expect
 
 - **Slow first page.** Each service sleeps after about 15 minutes without traffic and takes about a minute to wake up.
-- **The AI is off.** Without `ANTHROPIC_API_KEY`, uploads stay "em processamento" and the assistant says it is unavailable. Everything else works: accounts, onboarding, uploads and downloads, health records, and data export and deletion. To turn it on, add the key in Render (hip-ai → Environment), from an Anthropic account with a spending limit.
+- **Example reports work without the AI.** The Documentos page offers three fictitious reports to download (`web/public/exemplos`, made by `synthetic-data/generator/examples.py`). ai-service recognises those exact files by SHA-256 and reads them from a stored transcription, so a visitor can see reading, review, the timeline and the out-of-range list at no cost.
+- **Other PDFs need the AI.** Without `ANTHROPIC_API_KEY`, any other upload stays "em processamento" and the assistant says it is unavailable. Everything else works: accounts, onboarding, uploads and downloads, health records, and data export and deletion. To turn it on, add the key in Render (hip-ai → Environment), from an Anthropic account with a spending limit.
 - **Sign-ins do not survive restarts.** Key Value keeps nothing on disk. If it restarts, everyone signs in again.
 - **Free hours are shared.** The 750 free instance hours a month cover every free service in the Render workspace.
 

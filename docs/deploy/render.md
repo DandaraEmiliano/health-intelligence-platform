@@ -73,7 +73,7 @@ The script creates the four roles, the `core` and `ai` schemas and pgvector, and
 
 ### 4–5. Render
 
-1. Create a free Render account. Then go to **New → Blueprint** and either connect the GitHub repository or paste its public URL. Only the GitHub connection gives automatic deploys on every push to `main`. With the public URL, use **Manual Deploy**.
+1. Create a free Render account. Then go to **New → Blueprint** and either connect the GitHub repository or paste its public URL. Either way, every push to `main` deploys again (`autoDeployTrigger: commit`).
 2. Render reads `render.yaml` and asks for these values:
 
 | Variable | Service | Value |

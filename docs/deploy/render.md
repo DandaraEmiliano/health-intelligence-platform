@@ -1,65 +1,102 @@
 # Free demo on Render
 
-A public demo of the platform at no cost: **Render** (free web services and Key Value) plus **Neon** (free PostgreSQL that does not expire). Synthetic data only: this deployment is not hardened for real patients (ADR 0015).
+**Live demo: https://hip-app.onrender.com** (synthetic data only; create an account on the first page).
 
-| Piece | Where | Plan |
+The demo costs nothing. It runs on **Render** (free web services and Key Value) and **Neon** (free PostgreSQL that does not expire). It is not hardened for real patients (ADR 0015), so never upload a real lab report.
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    user([Browser]) -->|HTTPS| app
+    subgraph Render["Render (free plan, Virginia)"]
+        app["hip-app<br/>web app + core-api<br/>built-in sign-in"]
+        ai["hip-ai<br/>ai-service"]
+        redis[("hip-redis<br/>sessions")]
+    end
+    subgraph Neon["Neon (free plan, N. Virginia)"]
+        db[("PostgreSQL 16 + pgvector<br/>schemas core and ai<br/>PDFs in core.document_content")]
+    end
+    app -->|"extraction request (HTTP + shared token)"| ai
+    ai -->|"extraction result (HTTP + shared token)"| app
+    app --> redis
+    app --> db
+    ai --> db
+    ai -.->|"only with ANTHROPIC_API_KEY"| llm([Anthropic])
+```
+
+| Piece | What it is | Plan |
 | --- | --- | --- |
-| `hip-app`: core-api, the web app and the built-in sign-in | Render web service (Docker, `render/app.Dockerfile`) | Free |
-| `hip-ai`: ai-service | Render web service (Docker, `ai-service/Dockerfile`) | Free |
-| `hip-redis`: sessions, rate limits, idempotency keys | Render Key Value | Free |
-| PostgreSQL 16 + pgvector | Neon | Free |
+| `hip-app` | core-api, the web app and the built-in sign-in, in one image (`render/app.Dockerfile`) | Render, free |
+| `hip-ai` | ai-service (`ai-service/Dockerfile`) | Render, free |
+| `hip-redis` | sessions, rate limits, idempotency keys | Render Key Value, free |
+| database | PostgreSQL 16 + pgvector | Neon, free |
 
-What to expect from free plans:
-- Each web service sleeps after about 15 minutes without traffic and takes about a minute to wake up. The first page after a pause is slow, and the first upload or question may take longer while `hip-ai` wakes up too.
-- Key Value keeps nothing on disk. If it restarts, everyone is signed out.
-- Without `ANTHROPIC_API_KEY`, uploads stay "em processamento" and the assistant says it is unavailable. Everything else works: accounts, onboarding, uploads and downloads, health records, and data export and deletion.
+## What to expect
 
-## 1. Prepare the database on Neon
+- **Slow first page.** Each service sleeps after about 15 minutes without traffic and takes about a minute to wake up.
+- **The AI is off.** Without `ANTHROPIC_API_KEY`, uploads stay "em processamento" and the assistant says it is unavailable. Everything else works: accounts, onboarding, uploads and downloads, health records, and data export and deletion. To turn it on, add the key in Render (hip-ai → Environment), from an Anthropic account with a spending limit.
+- **Sign-ins do not survive restarts.** Key Value keeps nothing on disk. If it restarts, everyone signs in again.
+- **Free hours are shared.** The 750 free instance hours a month cover every free service in the Render workspace.
 
-1. Create a free Neon account and a project with **PostgreSQL 16**, in **AWS US East (N. Virginia)**, which is close to the Render region in `render.yaml`. The database is `neondb`.
-2. Copy the connection string of the owner role from the dashboard (Connect → `psql`).
-3. Generate four passwords and run the bootstrap once from your machine (you need `psql`: `brew install libpq`).
+## Deploying it again from scratch
 
-```bash
-export NEON_DATABASE_URL='postgresql://neondb_owner:...@ep-....us-east-1.aws.neon.tech/neondb?sslmode=require'
+```mermaid
+flowchart TD
+    A["1. Neon: create project<br/>PostgreSQL 16, US East 1"] --> B["2. Copy the connection string<br/>Connect → pooling OFF → Copy snippet"]
+    B --> C["3. On your machine: secrets file<br/>+ bootstrap-neon.sh"]
+    C --> D["4. Render: New → Blueprint<br/>this repository"]
+    D --> E["5. Fill in the asked-for values<br/>and Deploy Blueprint"]
+    E --> F["6. Wait ~10 min, open hip-app URL"]
 ```
 
-```bash
-export CORE_OWNER_PASSWORD=$(openssl rand -hex 24) CORE_APP_PASSWORD=$(openssl rand -hex 24) AI_OWNER_PASSWORD=$(openssl rand -hex 24) AI_APP_PASSWORD=$(openssl rand -hex 24)
-```
+### 1–2. Neon
+
+1. Create a free Neon account and a project with **PostgreSQL 16** in **AWS US East 1 (N. Virginia)**. The database is `neondb`.
+2. Click **Connect**, turn **Connection pooling off**, and copy the connection string. Migrations need the direct host, the one without `-pooler`.
+
+### 3. Prepare the database (once, from your machine)
+
+You need `psql` (`brew install libpq`). Create a private secrets file. `.run/` is ignored by git.
 
 ```bash
-./scripts/render/bootstrap-neon.sh
+mkdir -p .run && umask 077 && { echo "NEON_DATABASE_URL='paste-the-connection-string-here'"; for v in CORE_OWNER_PASSWORD CORE_APP_PASSWORD AI_OWNER_PASSWORD AI_APP_PASSWORD; do echo "$v=$(openssl rand -hex 24)"; done; } > .run/render-secrets.env
 ```
+
+Paste the connection string into the file, then run the bootstrap:
 
 ```bash
-echo "CORE_OWNER_PASSWORD=$CORE_OWNER_PASSWORD"; echo "CORE_APP_PASSWORD=$CORE_APP_PASSWORD"; echo "AI_OWNER_PASSWORD=$AI_OWNER_PASSWORD"; echo "AI_APP_PASSWORD=$AI_APP_PASSWORD"
+set -a && . .run/render-secrets.env && set +a && ./scripts/render/bootstrap-neon.sh
 ```
 
-Keep the four values for step 2, in a password manager, not in the repository. The script creates the roles, the `core` and `ai` schemas and pgvector. Tables are created by core-api (Flyway) and ai-service (Alembic) when they first start.
+The script creates the four roles, the `core` and `ai` schemas and pgvector, and never prints the passwords. Tables are created by core-api (Flyway) and ai-service (Alembic) on their first start. Running it again only resets the passwords.
 
-## 2. Create the services on Render
+### 4–5. Render
 
-1. Create a free Render account and connect it to the GitHub repository.
-2. **New → Blueprint**, choose the repository: Render reads `render.yaml` and lists `hip-app`, `hip-ai` and `hip-redis`.
-3. Fill in the values it asks for:
+1. Create a free Render account. Then go to **New → Blueprint** and either connect the GitHub repository or paste its public URL. Only the GitHub connection gives automatic deploys on every push to `main`. With the public URL, use **Manual Deploy**.
+2. Render reads `render.yaml` and asks for these values:
 
 | Variable | Service | Value |
 | --- | --- | --- |
-| `CORE_DB_URL` | hip-app | `jdbc:postgresql://<neon host>/neondb?sslmode=require` (the host from the Neon connection string) |
-| `CORE_OWNER_PASSWORD`, `CORE_APP_PASSWORD` | hip-app | from step 1 |
-| `AI_SERVICE_URL` | hip-app | `https://hip-ai.onrender.com` (adjust after the first deploy if Render chose another name) |
-| `AI_DB_HOST` | hip-ai | the Neon host, without `postgresql://` or the database name |
-| `AI_OWNER_PASSWORD`, `AI_APP_PASSWORD` | hip-ai | from step 1 |
-| `AI_CORE_API_URL` | hip-ai | `https://hip-app.onrender.com` (same remark) |
-| `ANTHROPIC_API_KEY` | hip-ai | leave empty, or a key from an account with a spending limit |
+| `CORE_DB_URL` | hip-app | `jdbc:postgresql://<neon host>/neondb?sslmode=require` |
+| `CORE_OWNER_PASSWORD`, `CORE_APP_PASSWORD` | hip-app | from `.run/render-secrets.env` |
+| `AI_SERVICE_URL` | hip-app | `https://hip-ai.onrender.com` |
+| `AI_DB_HOST` | hip-ai | the Neon host only, e.g. `ep-xxxx.c-16.us-east-1.aws.neon.tech` |
+| `AI_OWNER_PASSWORD`, `AI_APP_PASSWORD` | hip-ai | from `.run/render-secrets.env` |
+| `AI_CORE_API_URL` | hip-ai | `https://hip-app.onrender.com` |
+| `ANTHROPIC_API_KEY` | hip-ai | leave empty, or see *What to expect* |
 
-`HIP_INTERNAL_TOKEN` (shared by both services) and `DOCUMENTS_LINK_SECRET` are generated by Render.
+Render generates `HIP_INTERNAL_TOKEN` (shared by both services) and `DOCUMENTS_LINK_SECRET`.
 
-4. Apply. The first build takes several minutes. When both services are live, check each one's public URL in the dashboard. If either differs from what you typed, correct `AI_SERVICE_URL` or `AI_CORE_API_URL` and redeploy that service.
-5. Open the `hip-app` URL, create an account on the landing page and follow the onboarding.
+3. Click **Deploy Blueprint**. The first build takes about 10 minutes. If Render gave a service another URL (the name was taken), correct `AI_SERVICE_URL` or `AI_CORE_API_URL` and redeploy.
 
-Every push to `main` deploys again (`autoDeployTrigger: commit`).
+### 6. Check
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://hip-app.onrender.com/actuator/health/readiness
+```
+
+`200` means it is up. Anonymous calls to `/api/...` should answer `401`.
 
 ## How it differs from the full architecture
 
@@ -72,7 +109,3 @@ Every push to `main` deploys again (`autoDeployTrigger: commit`).
 | nginx serves the SPA | core-api serves it, with the same headers | `hip.spa.directory` |
 
 All of this lives in the `render` Spring profile (`core-api/src/main/resources/application-render.yml`). The defaults and the AWS design are unchanged.
-
-## Trying it locally first
-
-The same images run on your machine with 512 MB limits, like the free plan. To do so, start a PostgreSQL prepared with the bootstrap script, a Redis, `hip/ai-service` with the `hip-ai` variables and `hip/render-app` with the `hip-app` variables. Then open `http://localhost:<port>`. `RENDER_EXTERNAL_URL` must be that local URL.

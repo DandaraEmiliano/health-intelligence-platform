@@ -2,7 +2,9 @@
 
 A healthcare platform that turns fragmented laboratory reports (PDF) into a structured, patient-verified health history, with an AI assistant that explains results using only the patient's own verified data.
 
-> **Status:** Phases 1–7 done locally. Not deployed: the AWS infrastructure is written and validated in CI but never applied, and the AI has only been tested with a fake provider (see *What is left*).
+> **Live demo:** https://hip-app.onrender.com (synthetic data only; the first page can take a minute to wake up).
+>
+> **Status:** Phases 1–7 done. A free demo runs on Render + Neon with the AI turned off. The AWS infrastructure is written and validated in CI but never applied, and the AI has only been tested with a fake provider (see *What is left*).
 >
 > **Data policy:** this repository uses **synthetic data only**. Never commit real patient data, real lab reports or credentials.
 
@@ -75,7 +77,7 @@ Then run each service as described in [`core-api/README.md`](core-api/README.md)
 
 ### Free demo on Render
 
-A public demo with synthetic data, at no cost: Render free web services plus Neon PostgreSQL, from [`render.yaml`](render.yaml). It is a `render` profile with the same code: built-in sign-in instead of Keycloak and the BFF, PDFs in PostgreSQL, and HTTP instead of SQS (ADR 0015). Step by step: [`docs/deploy/render.md`](docs/deploy/render.md).
+**Live at https://hip-app.onrender.com.** A public demo with synthetic data, at no cost: Render free web services plus Neon PostgreSQL, from [`render.yaml`](render.yaml). It is a `render` profile with the same code: built-in sign-in instead of Keycloak and the BFF, PDFs in PostgreSQL, and HTTP instead of SQS (ADR 0015). Step by step: [`docs/deploy/render.md`](docs/deploy/render.md).
 
 ## Repository layout
 
@@ -110,8 +112,7 @@ infra/                 Compose support files (Postgres init, Keycloak realm, SQS
 
 1. **Real-model evaluation.** Put `ANTHROPIC_API_KEY` in `.env` and run the extraction evaluation and `ai-service/evals/assistant-safety.jsonl`.
 2. **Before AWS.** Everything listed in [`infra/terraform/README.md`](infra/terraform/README.md): account and state bucket, domain and certificate, where Keycloak runs, secret values, database bootstrap, RDS CA for `verify-full`, and the legal decisions (transfer to the LLM provider, retention).
-3. **Public demo.** Create the Neon and Render accounts and follow [`docs/deploy/render.md`](docs/deploy/render.md); the code and the Blueprint are ready.
-4. **Legal and regulatory validation.** The items marked in [`docs/security/privacy-requirements-map.md`](docs/security/privacy-requirements-map.md), and whether the product falls under ANVISA's medical-device software rules.
+3. **Legal and regulatory validation.** The items marked in [`docs/security/privacy-requirements-map.md`](docs/security/privacy-requirements-map.md), and whether the product falls under ANVISA's medical-device software rules.
 
 ## Compliance disclaimer
 

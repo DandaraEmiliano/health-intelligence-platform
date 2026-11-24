@@ -1,5 +1,7 @@
 import { IconClipboardCheck, IconHeart, IconLock, IconMessageCircle } from "@tabler/icons-react";
+import { LocalSignIn } from "../auth/LocalSignIn";
 import { signIn } from "../auth/session";
+import { config } from "../config";
 
 export function Landing({ unavailable = false }: { unavailable?: boolean }) {
 
@@ -16,10 +18,14 @@ export function Landing({ unavailable = false }: { unavailable?: boolean }) {
       {unavailable && (
         <p role="alert" className="error-box">Não foi possível conectar ao serviço de login. Tente novamente em instantes.</p>
       )}
-      <div className="actions">
-        <button type="button" className="primary" onClick={() => signIn()}>Entrar</button>
-        <button type="button" onClick={() => signIn({ createAccount: true })}>Criar conta</button>
-      </div>
+      {config.authMode === "local" ? (
+        <LocalSignIn />
+      ) : (
+        <div className="actions">
+          <button type="button" className="primary" onClick={() => signIn()}>Entrar</button>
+          <button type="button" onClick={() => signIn({ createAccount: true })}>Criar conta</button>
+        </div>
+      )}
     </main>
   );
 }

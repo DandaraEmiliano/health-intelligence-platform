@@ -14,7 +14,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves the local account of the authenticated user from the access token, creating it on the
+ * Resolves the local account of the authenticated user from the access token (or, with the built-in
+ * sign-in, from the session's {@link LocalUser}), creating it on the
  * first request (just-in-time provisioning). Call it from the web layer, before the use case's own
  * transaction starts.
  */
@@ -37,13 +38,26 @@ public class CurrentUser {
 
     /** The account whatever its status, for the deletion request itself (repeating it is harmless). */
     UserAccount resolve() {
-        Jwt jwt = currentJwt();
-        String subject = jwt.getSubject();
-        String email = jwt.getClaimAsString("email");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String subject;
+        String email;
+        Set<Role> roles;
+        if (authentication instanceof JwtAuthenticationToken token) {
+            Jwt jwt = token.getToken();
+            subject = jwt.getSubject();
+            email = jwt.getClaimAsString("email");
+            roles = knownRoles(jwt);
+        } else if (authentication != null && authentication.getPrincipal() instanceof LocalUser user) {
+            // Built-in sign-in (hip.auth.mode=local): every account is a patient.
+            subject = user.subject();
+            email = user.email();
+            roles = EnumSet.of(Role.PATIENT);
+        } else {
+            throw new IllegalStateException("CurrentUser requires an authenticated request");
+        }
         if (subject == null || subject.isBlank() || email == null || email.isBlank()) {
             throw ProblemException.forbidden("ACCOUNT_CLAIMS_MISSING");
         }
-        Set<Role> roles = knownRoles(jwt);
 
         UserAccount account = accounts.findAndSync(subject, email, roles).orElseGet(() -> {
             try {
@@ -53,14 +67,6 @@ public class CurrentUser {
             }
         });
         return account;
-    }
-
-    private static Jwt currentJwt() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication instanceof JwtAuthenticationToken token) {
-            return token.getToken();
-        }
-        throw new IllegalStateException("CurrentUser requires an authenticated JWT request");
     }
 
     private static Set<Role> knownRoles(Jwt jwt) {

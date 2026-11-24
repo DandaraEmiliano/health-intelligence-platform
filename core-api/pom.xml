@@ -128,6 +128,12 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!-- Sessions for the built-in sign-in (hip.auth.mode=local, the Render profile). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-session-data-redis</artifactId>
+        </dependency>
+
         <!-- Module boundaries (ADR 0001) -->
         <dependency>
             <groupId>org.springframework.modulith</groupId>

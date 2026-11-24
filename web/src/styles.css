@@ -208,6 +208,10 @@ a.stat:hover { outline: 2px solid var(--tone-400); }
 .dropzone { border: 2px dashed var(--blue-400); background: var(--blue-50); color: var(--blue-800); border-radius: var(--radius-lg); padding: 2rem 1rem; display: grid; gap: 0.6rem; justify-items: center; text-align: center; transition: background 120ms; }
 .dropzone.over { background: #d6e7f8; border-style: solid; }
 .dropzone .muted { color: var(--blue-600); }
+.examples h3 { margin: 0 0 0.3rem; font-size: 1rem; }
+.examples p { margin: 0 0 0.6rem; font-size: 0.92rem; }
+.example-links { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
+.example-links a { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500; }
 .uploads { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
 .upload { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.8rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9rem; }
 .upload .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

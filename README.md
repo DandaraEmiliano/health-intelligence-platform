@@ -2,7 +2,7 @@
 
 A healthcare platform that turns fragmented laboratory reports (PDF) into a structured, patient-verified health history, with an AI assistant that explains results using only the patient's own verified data.
 
-> **Live demo:** https://hip-app.onrender.com (synthetic data only; the first page can take a minute to wake up).
+> **Live demo:** https://hip-app.onrender.com (synthetic data only; the first page can take a minute to wake up). Create an account, download an example report on the Documentos page and upload it to see the timeline.
 >
 > **Status:** Phases 1–7 done. A free demo runs on Render + Neon with the AI turned off. The AWS infrastructure is written and validated in CI but never applied, and the AI has only been tested with a fake provider (see *What is left*).
 >

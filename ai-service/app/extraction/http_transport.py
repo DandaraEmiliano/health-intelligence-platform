@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import ValidationError
 
 from app.auth import require_service_token
+from app.extraction import examples
 from app.extraction.pipeline import DocumentMissing, Retry, extract
 from app.extraction.providers import LlmProvider
 from app.extraction.worker import ExtractionRequest
@@ -162,6 +163,9 @@ async def receive_extraction_request(
         message = ExtractionRequest.model_validate_json(await request.body())
     except (ValidationError, ValueError) as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="invalid extraction request") from e
+    if not getattr(request.app.state, "model_available", True) and not examples.is_example(message.document.sha256):
+        # No model credentials and not one of the demo's example reports: core-api keeps it for later.
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail="extraction is not available")
     if not worker.submit(message):
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail="busy")
     return Response(status_code=status.HTTP_202_ACCEPTED)

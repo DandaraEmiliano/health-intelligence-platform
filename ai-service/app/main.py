@@ -46,19 +46,26 @@ async def lifespan(app: FastAPI):
                                                          max_tokens=16000, timeout_seconds=60)  # fmt: skip
     worker = None
     app.state.http_worker = None
-    if settings.extraction_worker_enabled and settings.llm_provider == "anthropic" and not _has_anthropic_credentials():
-        # Without credentials every job would fail for good; leave the documents queued instead.
-        log.warning("extraction worker not started: no Anthropic credentials (documents stay queued)")
-    elif settings.extraction_worker_enabled and settings.messaging_transport == "http":
+    model_available = settings.llm_provider != "anthropic" or _has_anthropic_credentials()
+    # Over HTTP the worker also runs without credentials: it reads the demo's example reports,
+    # and the intake refuses every other document with 503 so core-api keeps it for later.
+    app.state.model_available = model_available
+    if settings.extraction_worker_enabled and settings.messaging_transport == "http":
         from app.extraction.http_transport import CoreApi, HttpExtractionWorker
+        from app.extraction.providers import UnavailableProvider
 
         worker = HttpExtractionWorker(
             CoreApi(settings.core_api_url, settings.internal_token.get_secret_value()),
-            _provider(settings),
+            _provider(settings) if model_available else UnavailableProvider(),
             settings.extraction_max_receives,
         )
         worker.start()
         app.state.http_worker = worker
+        if not model_available:
+            log.warning("no Anthropic credentials: only the example reports are read (others stay queued)")
+    elif settings.extraction_worker_enabled and not model_available:
+        # Without credentials every job would fail for good; leave the documents queued instead.
+        log.warning("extraction worker not started: no Anthropic credentials (documents stay queued)")
     elif settings.extraction_worker_enabled:
         from app.extraction.storage import s3_client, s3_fetcher, sqs_client
         from app.extraction.worker import ExtractionWorker

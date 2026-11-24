@@ -3,9 +3,9 @@ name: synthetic-data
 on:
   push:
     branches: [main]
-    paths: ["synthetic-data/**", "contracts/events/**", ".github/workflows/synthetic-data.yml"]
+    paths: ["synthetic-data/**", "contracts/events/**", "web/public/exemplos/**", "ai-service/app/extraction/examples.json", ".github/workflows/synthetic-data.yml"]
   pull_request:
-    paths: ["synthetic-data/**", "contracts/events/**", ".github/workflows/synthetic-data.yml"]
+    paths: ["synthetic-data/**", "contracts/events/**", "web/public/exemplos/**", "ai-service/app/extraction/examples.json", ".github/workflows/synthetic-data.yml"]
 
 permissions:
   contents: read
@@ -40,3 +40,8 @@ jobs:
 
       - name: Verify ground truth
         run: uv run python -m generator.verify
+
+      - name: Demo example reports and their stored readings match a fresh generation
+        run: |
+          uv run python -m generator.examples
+          git diff --exit-code -- ../web/public/exemplos ../ai-service/app/extraction/examples.json

@@ -6,6 +6,7 @@ from collections.abc import Callable
 from datetime import UTC, date, datetime
 from uuid import uuid4
 
+from app.extraction import examples
 from app.extraction.model import ExtractedReport
 from app.extraction.pdf import PdfProblem, read_pdf
 from app.extraction.prompts import render_extraction
@@ -66,7 +67,8 @@ def extract(
         content = fetch(document["bucket"], document["objectKey"])
     except DocumentMissing:
         return failed("DOCUMENT_NOT_FOUND", False)
-    if hashlib.sha256(content).hexdigest() != document["sha256"]:
+    sha256 = hashlib.sha256(content).hexdigest()
+    if sha256 != document["sha256"]:
         return failed("CHECKSUM_MISMATCH", False)
 
     try:
@@ -76,13 +78,15 @@ def extract(
     if pdf.is_scanned:
         return finish("UNSUPPORTED_SCANNED")
 
-    prompt = render_extraction(pdf.pages)
-    try:
-        answer = provider.generate_structured(prompt, ExtractedReport)
-    except ProviderError as e:
-        if e.retryable and not last_attempt:
-            raise Retry(e.detail) from e
-        return failed(e.code, e.retryable, e.detail)
+    # The demo's example reports are read from their stored transcription, without a model.
+    answer = examples.lookup(sha256)
+    if answer is None:
+        try:
+            answer = provider.generate_structured(render_extraction(pdf.pages), ExtractedReport)
+        except ProviderError as e:
+            if e.retryable and not last_attempt:
+                raise Retry(e.detail) from e
+            return failed(e.code, e.retryable, e.detail)
 
     usage = {
         "provider": answer.usage.provider,

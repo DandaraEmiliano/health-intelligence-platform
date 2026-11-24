@@ -45,9 +45,20 @@ async def lifespan(app: FastAPI):
         app.state.assistant_provider = AnthropicProvider(model=settings.llm_model, effort=settings.assistant_effort,
                                                          max_tokens=16000, timeout_seconds=60)  # fmt: skip
     worker = None
+    app.state.http_worker = None
     if settings.extraction_worker_enabled and settings.llm_provider == "anthropic" and not _has_anthropic_credentials():
         # Without credentials every job would fail for good; leave the documents queued instead.
         log.warning("extraction worker not started: no Anthropic credentials (documents stay queued)")
+    elif settings.extraction_worker_enabled and settings.messaging_transport == "http":
+        from app.extraction.http_transport import CoreApi, HttpExtractionWorker
+
+        worker = HttpExtractionWorker(
+            CoreApi(settings.core_api_url, settings.internal_token.get_secret_value()),
+            _provider(settings),
+            settings.extraction_max_receives,
+        )
+        worker.start()
+        app.state.http_worker = worker
     elif settings.extraction_worker_enabled:
         from app.extraction.storage import s3_client, s3_fetcher, sqs_client
         from app.extraction.worker import ExtractionWorker
@@ -82,6 +93,10 @@ def create_app() -> FastAPI:
     from app.assistant.api import router as assistant_router
 
     app.include_router(assistant_router)
+    if get_settings().messaging_transport == "http":
+        from app.extraction.http_transport import router as extraction_router
+
+        app.include_router(extraction_router)
     setup_metrics(app)
     setup_tracing(app)
     return app

@@ -1,9 +1,11 @@
 """Bearer tokens for internal endpoints (ADR 0002, threat model T08).
 
 Only Keycloak-issued client-credentials tokens with audience `ai-service` from an allowed client
-(core-api) are accepted. Signing keys come from the realm's JWKS and are cached.
+(core-api) are accepted. Signing keys come from the realm's JWKS and are cached. Where there is no
+identity provider (the Render profile), a shared secret (HIP_INTERNAL_TOKEN) replaces the tokens.
 """
 
+import hmac
 from collections.abc import Callable
 from functools import lru_cache
 from typing import Annotated
@@ -39,6 +41,12 @@ def require_service_token(
 ) -> dict:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise _unauthorized("missing bearer token")
+    shared = settings.internal_token.get_secret_value()
+    if shared:
+        # No identity provider: the shared secret is the only credential, compared in constant time.
+        if len(shared) < 32 or not hmac.compare_digest(credentials.credentials.encode(), shared.encode()):
+            raise _unauthorized("invalid token")
+        return {"azp": settings.allowed_client_ids[0]}
     try:
         claims = jwt.decode(
             credentials.credentials,

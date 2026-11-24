@@ -45,6 +45,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 class SecurityConfiguration {
 
     static final String ROLES_CLAIM = "roles";
+    static final String DOCUMENT_LINKS = "/api/v1/document-content/";
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, CorrelationIds correlationIds) throws Exception {
@@ -57,7 +58,8 @@ class SecurityConfiguration {
                 .headers(headers -> headers
                         .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
                         .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
-                                request -> request.getRequestURI().startsWith("/api/"),
+                                request -> request.getRequestURI().startsWith("/api/")
+                                        && !request.getRequestURI().startsWith(DOCUMENT_LINKS),
                                 new StaticHeadersWriter("Content-Security-Policy",
                                         "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"))))
                 .authorizeHttpRequests(auth -> auth
@@ -66,6 +68,9 @@ class SecurityConfiguration {
                         .requestMatchers("/actuator/prometheus").permitAll()
                         // Present only when springdoc is enabled (local and test profiles).
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        // Signed, short-lived PDF links (database store only); the link is the credential,
+                        // like an S3 pre-signed URL. The browser's PDF viewer needs them without the CSP.
+                        .requestMatchers(DOCUMENT_LINKS + "**").permitAll()
                         // The MVP API serves patients only; ADMIN has no clinical access (ADR 0002).
                         .requestMatchers("/api/**").hasRole("PATIENT")
                         .anyRequest().authenticated())

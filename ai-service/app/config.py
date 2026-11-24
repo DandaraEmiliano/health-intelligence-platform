@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     db_owner_user: str = "ai_owner"
     db_owner_password: SecretStr = Field(default=SecretStr(""), alias="AI_OWNER_PASSWORD")
     db_connect_timeout_seconds: int = 3
+    # "require" for hosted databases such as Neon; empty for the local one.
+    db_sslmode: str | None = None
 
     # Queues and storage (ADR 0003, ADR 0012). Endpoints are set only for the local emulators.
     aws_region: str = Field(default="sa-east-1", alias="AWS_REGION")
@@ -28,6 +30,10 @@ class Settings(BaseSettings):
     # Receives after which a transient failure is reported as FAILED instead of retried
     # (the queue's maxReceiveCount is 5; reporting on the last one keeps it out of the DLQ).
     extraction_max_receives: int = 5
+    # "sqs" (ADR 0003) or "http": core-api POSTs requests here and results are POSTed back to it,
+    # for deployments without a queue service (the Render profile).
+    messaging_transport: str = "sqs"
+    core_api_url: str = "http://localhost:8080"
 
     # Extraction worker and LLM provider (ADR 0008). The API key comes from ANTHROPIC_API_KEY.
     extraction_worker_enabled: bool = True
@@ -44,6 +50,9 @@ class Settings(BaseSettings):
     oidc_jwks_url: str | None = None
     oidc_audience: str = "ai-service"
     allowed_client_ids: list[str] = ["core-api-service"]
+    # Shared secret instead of Keycloak tokens where there is no identity provider (the Render
+    # profile); the same value core-api has. At least 32 characters.
+    internal_token: SecretStr = Field(default=SecretStr(""), alias="HIP_INTERNAL_TOKEN")
 
     def app_database_url(self) -> str:
         return self._url(self.db_app_user, self.db_app_password)
@@ -61,7 +70,8 @@ class Settings(BaseSettings):
             host=self.db_host,
             port=self.db_port,
             database=self.db_name,
-            query={"connect_timeout": str(self.db_connect_timeout_seconds)},
+            query={"connect_timeout": str(self.db_connect_timeout_seconds)}
+            | ({"sslmode": self.db_sslmode} if self.db_sslmode else {}),
         ).render_as_string(hide_password=False)
 
 

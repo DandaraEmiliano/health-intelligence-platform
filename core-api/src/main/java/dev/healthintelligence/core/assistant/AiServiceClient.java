@@ -111,6 +111,8 @@ class AiServiceClient {
     private final String tokenUri;
     private final String clientId;
     private final String clientSecret;
+    /** The shared internal token, where there is no identity provider (the Render profile). */
+    private final String staticToken;
 
     private String token;
     private Instant tokenExpiresAt = Instant.MIN;
@@ -120,6 +122,7 @@ class AiServiceClient {
                     @Value("${hip.assistant.ai-service.token-uri}") String tokenUri,
                     @Value("${hip.assistant.ai-service.client-id}") String clientId,
                     @Value("${hip.assistant.ai-service.client-secret}") String clientSecret,
+                    @Value("${hip.internal.token:}") String staticToken,
                     JsonMapper json, Clock clock) throws IOException {
         // HTTP/1.1: the JDK client otherwise asks for an h2c upgrade, which uvicorn rejects with 400.
         HttpClient http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
@@ -136,6 +139,7 @@ class AiServiceClient {
         this.tokenUri = tokenUri;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
+        this.staticToken = staticToken;
         try (InputStream in = new ClassPathResource(RESPONSE_SCHEMA).getInputStream()) {
             this.responseSchema = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12)
                     .getSchema(json.readTree(in));
@@ -182,6 +186,9 @@ class AiServiceClient {
     }
 
     private synchronized String accessToken() {
+        if (!staticToken.isBlank()) {
+            return staticToken;
+        }
         if (token != null && Instant.now(clock).isBefore(tokenExpiresAt.minus(TOKEN_MARGIN))) {
             return token;
         }

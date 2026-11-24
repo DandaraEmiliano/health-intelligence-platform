@@ -39,6 +39,11 @@ public final class FakeAiService {
     private final HttpServer server;
     private final List<JsonNode> requests = new CopyOnWriteArrayList<>();
     private final List<String> authorizations = new CopyOnWriteArrayList<>();
+    /** Extraction requests delivered by HTTP (messaging transport http), with their Authorization header. */
+    public record Delivery(String authorization, String eventType, JsonNode body) {
+    }
+
+    private final List<Delivery> extractionRequests = new CopyOnWriteArrayList<>();
     private final AtomicInteger tokenRequests = new AtomicInteger();
     private volatile Mode mode = Mode.ANSWER;
 
@@ -53,6 +58,7 @@ public final class FakeAiService {
         server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         server.createContext("/token", this::token);
         server.createContext("/internal/v1/assistant/answers", this::answer);
+        server.createContext("/internal/v1/queues/document-extraction-requests", this::extractionRequest);
         server.start();
     }
 
@@ -75,8 +81,20 @@ public final class FakeAiService {
         return List.copyOf(requests);
     }
 
+    public List<Delivery> extractionRequests() {
+        return List.copyOf(extractionRequests);
+    }
+
     public List<String> authorizations() {
         return List.copyOf(authorizations);
+    }
+
+    private void extractionRequest(HttpExchange exchange) throws IOException {
+        JsonNode body = json.readTree(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+        extractionRequests.add(new Delivery(exchange.getRequestHeaders().getFirst("Authorization"),
+                exchange.getRequestHeaders().getFirst("X-Event-Type"), body));
+        exchange.sendResponseHeaders(202, -1);
+        exchange.close();
     }
 
     private void token(HttpExchange exchange) throws IOException {

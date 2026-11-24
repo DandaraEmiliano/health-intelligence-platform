@@ -2,7 +2,7 @@
 
 A healthcare platform that turns fragmented laboratory reports (PDF) into a structured, patient-verified health history, with an AI assistant that explains results using only the patient's own verified data.
 
-> **Status:** Phase 4 — Core Backend (in progress). Phase 3 — Project Foundation is done.
+> **Status:** Phases 1–7 done locally. Not deployed: the AWS infrastructure is written and validated in CI but never applied, and the AI has only been tested with a fake provider (see *What is left*).
 >
 > **Data policy:** this repository uses **synthetic data only**. Never commit real patient data, real lab reports or credentials.
 
@@ -17,10 +17,12 @@ A healthcare platform that turns fragmented laboratory reports (PDF) into a stru
 
 | Component | Responsibility | Stack |
 | --- | --- | --- |
-| `core-api` | Modular monolith: authorization, domain, persistence, public API, AI conversations | Java 21+, Spring Boot, Spring Modulith, PostgreSQL, Flyway |
+| `web` | Patient SPA; never holds a token | React, TypeScript, Vite, nginx (CSP) |
+| `bff` | Backend-for-Frontend: sign-in, HttpOnly session, token relay to core-api (ADR 0014) | Java 25, Spring Boot, Spring Session Redis |
+| `core-api` | Modular monolith: authorization, domain, persistence, public API, AI conversations | Java 25, Spring Boot, Spring Modulith, PostgreSQL, Flyway |
 | `ai-service` | PDF extraction, validation, embeddings, RAG, guardrails, LLM calls (private, never public) | Python 3.12, FastAPI, Pydantic, pgvector |
 | Keycloak | Identity provider (OIDC), MFA, service-to-service tokens | Keycloak |
-| Infrastructure | Object storage, queues, cache, observability | S3, SQS (LocalStack locally), Redis, OpenTelemetry, Prometheus, Grafana |
+| Infrastructure | Object storage, queues, cache, observability | S3, SQS (S3Mock and ElasticMQ locally), Redis, OpenTelemetry, Prometheus, Grafana; AWS as Terraform in [`infra/terraform`](infra/terraform) |
 
 See [`docs/adr/`](docs/adr/) for the reasoning behind each decision.
 
@@ -95,10 +97,16 @@ infra/                 Compose support files (Postgres init, Keycloak realm, SQS
 | 1. Product Discovery | MVP scope, requirements, user journeys, backlog | Approved |
 | 2. Architecture | ADRs, contracts, DDL v1, OpenAPI draft, threat model | Done |
 | 3. Project Foundation | Compose, service skeletons, CI, synthetic dataset, web skeleton, observability | Done |
-| 4. Core Backend | Identity, patient, documents, laboratory results, timeline, audit | In progress |
-| 5. AI Engineering | Extraction, RAG, assistant, guardrails, evaluation | Planned |
-| 6. Analytics and Notifications | Trends, comparisons, in-app notifications | Planned |
-| 7. Production Readiness | AWS (Terraform), CD, performance, security review | Planned |
+| 4. Core Backend | Identity, patient, documents, laboratory results, timeline, audit | Done |
+| 5. AI Engineering | Extraction, assistant, guardrails, evaluation set | Done (fake provider only; real-model evaluation pending) |
+| 6. Analytics and Notifications | Trends, out-of-range, comparisons, in-app notifications | Done |
+| 7. Production Readiness | LGPD export, hardened images, CSP, BFF, AWS Terraform, gated CD | Done locally; never applied to AWS |
+
+### What is left
+
+1. **Real-model evaluation.** Put `ANTHROPIC_API_KEY` in `.env` and run the extraction evaluation and `ai-service/evals/assistant-safety.jsonl`.
+2. **Before AWS.** Everything listed in [`infra/terraform/README.md`](infra/terraform/README.md): account and state bucket, domain and certificate, where Keycloak runs, secret values, database bootstrap, RDS CA for `verify-full`, and the legal decisions (transfer to the LLM provider, retention).
+3. **Legal and regulatory validation.** The items marked in [`docs/security/privacy-requirements-map.md`](docs/security/privacy-requirements-map.md), and whether the product falls under ANVISA's medical-device software rules.
 
 ## Compliance disclaimer
 

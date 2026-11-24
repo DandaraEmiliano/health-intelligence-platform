@@ -1,6 +1,7 @@
 package dev.healthintelligence.core;
 
 import java.io.IOException;
+import java.util.List;
 
 import dev.healthintelligence.core.shared.CorrelationIds;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -8,6 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.Header;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
@@ -23,6 +27,8 @@ import org.springframework.session.web.http.DefaultCookieSerializer;
 class LocalSignInSecurityConfiguration {
 
     static final String SESSION_COOKIE = "__Host-hip-session";
+    static final String SPA_CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+            + "font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'";
 
     @Bean
     SecurityFilterChain localSignInSecurityFilterChain(HttpSecurity http, CorrelationIds correlationIds) throws Exception {
@@ -30,7 +36,16 @@ class LocalSignInSecurityConfiguration {
                 .cors(cors -> cors.disable()) // same origin only
                 .csrf(csrf -> csrf.spa())
                 .securityContext(context -> context.securityContextRepository(new HttpSessionSecurityContextRepository()))
-                .headers(SecurityConfiguration::apiHeaders)
+                .headers(headers -> {
+                    SecurityConfiguration.apiHeaders(headers);
+                    // The page itself, when this service serves the SPA: as nginx does (web/nginx).
+                    headers.addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                            request -> !request.getRequestURI().startsWith("/api/"),
+                            new StaticHeadersWriter(List.of(
+                                    new Header("Content-Security-Policy", SPA_CSP),
+                                    new Header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()"),
+                                    new Header("Cross-Origin-Opener-Policy", "same-origin")))));
+                })
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/actuator/**").denyAll()

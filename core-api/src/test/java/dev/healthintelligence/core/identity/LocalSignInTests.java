@@ -25,9 +25,25 @@ class LocalSignInTests extends IntegrationTest {
     static final HttpClient HTTP = HttpClient.newHttpClient();
     static final String PASSWORD = "uma senha longa 123";
 
+    /** A stand-in for the built SPA (render/app.Dockerfile copies web/dist here). */
+    static final java.nio.file.Path SPA = spa();
+
+    static java.nio.file.Path spa() {
+        try {
+            java.nio.file.Path dir = java.nio.file.Files.createTempDirectory("hip-spa");
+            java.nio.file.Files.createDirectories(dir.resolve("assets"));
+            java.nio.file.Files.writeString(dir.resolve("index.html"), "<!doctype html><title>hip</title><div id=root></div>");
+            java.nio.file.Files.writeString(dir.resolve("assets/index-abc123.js"), "console.log('hip')");
+            return dir;
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     @DynamicPropertySource
     static void localSignIn(DynamicPropertyRegistry registry) {
         registry.add("hip.auth.mode", () -> "local");
+        registry.add("hip.spa.directory", SPA::toString);
     }
 
     @Autowired JsonMapper json;
@@ -198,6 +214,29 @@ class LocalSignInTests extends IntegrationTest {
         assertThat(browser.get("/internal/v1/document-objects/" + UUID.randomUUID()).statusCode()).isIn(401, 403);
         assertThat(browser.get("/actuator/env").statusCode()).isIn(401, 403);
         assertThat(browser.get("/actuator/health").statusCode()).isEqualTo(200);
+    }
+
+    @Test
+    void theAppIsServedOnTheSameOriginWithItsHeaders() throws Exception {
+        Browser browser = new Browser();
+        HttpResponse<String> page = browser.get("/exames/comparar");
+        assertThat(page.statusCode()).isEqualTo(200);
+        assertThat(page.body()).contains("<div id=root>");
+        assertThat(page.headers().firstValue("Content-Security-Policy").orElseThrow()).contains("script-src 'self'")
+                .contains("frame-ancestors 'none'");
+        assertThat(page.headers().firstValue("Cache-Control").orElseThrow()).contains("no-store");
+        assertThat(page.headers().firstValue("X-Frame-Options").orElseThrow()).isEqualTo("DENY");
+
+        HttpResponse<String> asset = browser.get("/assets/index-abc123.js");
+        assertThat(asset.statusCode()).isEqualTo(200);
+        assertThat(asset.headers().firstValue("Cache-Control").orElseThrow()).contains("max-age=31536000").contains("immutable");
+
+        // Never the page in place of a missing file or an API answer.
+        assertThat(browser.get("/assets/missing.js").statusCode()).isEqualTo(404);
+        assertThat(browser.get("/favicon.ico").statusCode()).isEqualTo(404);
+        assertThat(browser.get("/api/v1/consents").body()).doesNotContain("<div id=root>");
+        assertThat(browser.get("/api/v1/consents").headers().firstValue("Content-Security-Policy").orElseThrow())
+                .startsWith("default-src 'none'");
     }
 
     private static String single(String sql, String parameter) throws Exception {

@@ -60,6 +60,10 @@ hip:
   # (the Render profile). Empty: internal paths need a JWT and service tokens come from Keycloak.
   internal:
     token: ${HIP_INTERNAL_TOKEN:}
+  auth:
+    # oidc: Keycloak tokens, through the BFF (ADR 0002, ADR 0014). local: built-in e-mail and password
+    # sign-in with a server-side session, for deployments without Keycloak (the Render profile).
+    mode: ${AUTH_MODE:oidc}
   messaging:
     # sqs (ADR 0003) or http: outbox messages POSTed to the consumer, results POSTed back.
     transport: ${MESSAGING_TRANSPORT:sqs}

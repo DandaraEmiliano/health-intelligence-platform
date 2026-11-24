@@ -9,6 +9,7 @@ import dev.healthintelligence.core.shared.CorrelationIds;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -48,6 +49,7 @@ class SecurityConfiguration {
     static final String DOCUMENT_LINKS = "/api/v1/document-content/";
 
     @Bean
+    @ConditionalOnExpression("'${hip.auth.mode:oidc}' != 'local'")
     SecurityFilterChain securityFilterChain(HttpSecurity http, CorrelationIds correlationIds) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // stateless bearer-token API, no cookies
@@ -55,13 +57,7 @@ class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // JSON only: nothing may be rendered, framed or referred (threat model). Spring's
                 // defaults already add nosniff, X-Frame-Options DENY and no-cache for responses.
-                .headers(headers -> headers
-                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
-                        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
-                                request -> request.getRequestURI().startsWith("/api/")
-                                        && !request.getRequestURI().startsWith(DOCUMENT_LINKS),
-                                new StaticHeadersWriter("Content-Security-Policy",
-                                        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"))))
+                .headers(SecurityConfiguration::apiHeaders)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         // Scraped from the private network only; restricted further in Phase 7.
@@ -81,6 +77,16 @@ class SecurityConfiguration {
                 .build();
     }
 
+    /** JSON only: nothing under /api may be rendered, framed or referred (threat model). */
+    static void apiHeaders(org.springframework.security.config.annotation.web.configurers.HeadersConfigurer<HttpSecurity> headers) {
+        headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                        request -> request.getRequestURI().startsWith("/api/")
+                                && !request.getRequestURI().startsWith(DOCUMENT_LINKS),
+                        new StaticHeadersWriter("Content-Security-Policy",
+                                "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")));
+    }
+
     /** 401 with the standard {@code WWW-Authenticate} header and a Problem Details body (ADR 0009). */
     static AuthenticationEntryPoint problemEntryPoint(CorrelationIds correlationIds) {
         BearerTokenAuthenticationEntryPoint bearer = new BearerTokenAuthenticationEntryPoint();
@@ -95,6 +101,22 @@ class SecurityConfiguration {
         BearerTokenAccessDeniedHandler bearer = new BearerTokenAccessDeniedHandler();
         return (request, response, exception) -> {
             bearer.handle(request, response, exception);
+            writeProblem(response, "FORBIDDEN", "Forbidden", correlationIds.current());
+        };
+    }
+
+    /** 401 with a Problem Details body and no bearer challenge, for the session-based sign-in. */
+    static AuthenticationEntryPoint sessionEntryPoint(CorrelationIds correlationIds) {
+        return (request, response, exception) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            writeProblem(response, "UNAUTHORIZED", "Not signed in", correlationIds.current());
+        };
+    }
+
+    /** 403 with a Problem Details body, for the session-based sign-in (also a missing CSRF token). */
+    static AccessDeniedHandler sessionAccessDeniedHandler(CorrelationIds correlationIds) {
+        return (request, response, exception) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             writeProblem(response, "FORBIDDEN", "Forbidden", correlationIds.current());
         };
     }

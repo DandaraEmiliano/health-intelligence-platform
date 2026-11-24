@@ -3,7 +3,7 @@ package dev.healthintelligence.core.identity;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import org.springframework.web.client.RestClient;
  * account holds only {@code manage-users} and {@code view-users} (realm-management).
  */
 @Component
-@ConditionalOnProperty(name = "hip.identity.admin.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnExpression("${hip.identity.admin.enabled:true} and '${hip.auth.mode:oidc}' != 'local'")
 class KeycloakUsers implements IdentityProviderUsers {
 
     private final RestClient http;

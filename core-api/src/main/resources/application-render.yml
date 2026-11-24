@@ -1,0 +1,67 @@
+# The Render profile (docs/deploy/render.md, ADR 0015): one service with the SPA, the built-in sign-in,
+# PDFs in Postgres (Neon) and extraction over HTTP to ai-service. Nothing here is a secret; the
+# values come from environment variables set in render.yaml or the Render dashboard.
+spring:
+  datasource:
+    url: ${CORE_DB_URL}
+    hikari:
+      # Neon's free tier allows few connections and may sleep: small pool, quick to give up.
+      maximum-pool-size: 4
+      connection-timeout: 20000 # milliseconds
+  flyway:
+    url: ${CORE_DB_URL}
+  data:
+    redis:
+      url: ${REDIS_URL}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # No identity provider: no JWT is ever accepted (hip.auth.mode=local); only a placeholder.
+          issuer-uri: https://no-identity-provider.invalid
+
+server:
+  port: ${PORT:8080}
+  # Render terminates TLS and forwards; trust its X-Forwarded-* headers.
+  forward-headers-strategy: framework
+
+management:
+  tracing:
+    sampling:
+      # Nothing collects traces here; spare the small CPU.
+      probability: 0.0
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+hip:
+  # Render sets RENDER_EXTERNAL_URL to the service's public https URL.
+  public-base-url: ${RENDER_EXTERNAL_URL}
+  spa:
+    directory: /app/static
+  auth:
+    mode: local
+  identity:
+    admin:
+      enabled: false
+  documents:
+    store: database
+  messaging:
+    transport: http
+    http:
+      base-url: ${AI_SERVICE_URL}
+  assistant:
+    ai-service:
+      base-url: ${AI_SERVICE_URL}
+      # A free instance may be waking up (about a minute) before it answers.
+      timeout: 120s
+  outbox:
+    relay:
+      # Each failed delivery counts; with a sleeping ai-service give it room before giving up.
+      max-attempts: 50
+      fixed-delay: 5s
+  cors:
+    allowed-origins: ${RENDER_EXTERNAL_URL}

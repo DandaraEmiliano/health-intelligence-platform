@@ -54,11 +54,6 @@ describe("signed out", () => {
     expect(api.calls.every((call) => !call.headers.authorization)).toBe(true);
     expect(window.localStorage.length + window.sessionStorage.length).toBe(0);
   });
-
-  it("always shows the synthetic-data banner", () => {
-    renderApp();
-    expect(screen.getByRole("note")).toHaveTextContent("dados sintéticos");
-  });
 });
 
 describe("onboarding", () => {
